@@ -3,7 +3,10 @@
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-const CONTACT = (import.meta.env.VITE_SUPPORT_EMAIL as string | undefined) ?? 'the support contact shown on Kopor’s app store page';
+const EMAIL = import.meta.env.VITE_SUPPORT_EMAIL as string | undefined;
+const WHATSAPP = import.meta.env.VITE_SUPPORT_WHATSAPP as string | undefined;
+const CONTACT = [EMAIL && `email ${EMAIL}`, WHATSAPP && `WhatsApp +${WHATSAPP.replace(/^\+/, '')}`].filter(Boolean).join(' or ')
+  || 'the support contact shown on Kopor’s app store page';
 const UPDATED = '14 October 2026';
 
 const PRIVACY: [string, string[]][] = [

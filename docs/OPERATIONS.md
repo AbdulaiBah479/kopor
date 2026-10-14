@@ -17,9 +17,9 @@ and start recording. Their records stay on their phone unless they create a clou
 
 ## Become the admin (once)
 
-1. Open Kopor on your phone → **More → Cloud & account → Create account** with your own phone number.
+1. Open Kopor on your phone → **More → Cloud & account → Create account** with your own phone number (072 082 348).
 2. In Supabase → **Edge Functions → Secrets**, add `KOPOR_ADMIN_PHONES` = your number in international form
-   without `+` (for example `23276123456`). Several admins: separate with commas.
+   without `+`: for you that is `23272082348`. Several admins: separate with commas.
 3. Re-open Kopor → **More**: an **Owner dashboard** row appears, for you only.
 
 The dashboard shows accounts, businesses, weekly activity, Pro subscribers, AI use today, locked accounts,
@@ -27,7 +27,7 @@ online payments, and new sign-ups per day. It only ever shows totals, never anyo
 
 ## Your routine
 
-**Daily (2 minutes):** look at the Owner dashboard. Answer support messages.
+**Daily (2 minutes):** look at the Owner dashboard. Answer support messages: customers reach you on WhatsApp +232 72 082 348 (Help → Chat with Kopor support) and by email at babdulai225.2@gmail.com (shown in Help and on the privacy and terms pages).
 
 **Weekly (10 minutes):**
 - GitHub → **Actions**: every row should be green. **Security** tab: no open alerts.
