@@ -29,7 +29,21 @@ const step = async (name, fn) => {
   catch (e) { failed++; console.log('✗', name, '\n   ', e.message.split('\n').slice(0, 8).join('\n    ')); await page.screenshot({ path: `screenshots/FAIL-${name.replace(/\W+/g, '-')}.png` }); }
 };
 const shot = (n) => page.screenshot({ path: `screenshots/${n}.png`, fullPage: true });
-const go = async (hash) => { await page.goto(BASE + '#' + hash); await page.locator('main.content').first().waitFor(); };
+// Start every screen visit with no sheet open (a failed step must not leave one blocking the next).
+const go = async (hash) => {
+  if (await page.locator('[data-vaul-drawer]').count()) { await page.keyboard.press('Escape'); await page.locator('[data-vaul-drawer]').waitFor({ state: 'detached', timeout: 3000 }).catch(() => {}); }
+  await page.goto(BASE + '#' + hash); await page.locator('main.content').first().waitFor();
+};
+// Tap a button inside a sheet the way a person does: close the keyboard, wait for the sheet to stop moving, tap.
+const tapInSheet = async (button) => {
+  await page.evaluate(() => (document.activeElement instanceof HTMLElement) && document.activeElement.blur());
+  let last = '', same = 0;
+  for (let i = 0; i < 40 && same < 3; i++) {
+    const b = await button.boundingBox(); const k = b ? `${Math.round(b.x)},${Math.round(b.y)}` : '';
+    same = k && k === last ? same + 1 : 0; last = k; await page.waitForTimeout(100);
+  }
+  await button.click({ force: same < 3 });
+};
 const noOverflow = async () => {
   const [sw, w] = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
   if (sw > w + 1) throw new Error(`horizontal overflow: ${sw}px > ${w}px`);
@@ -76,7 +90,7 @@ await step('sale with a product reduces stock', async () => {
   const form = page.getByTestId('sale-form');
   await form.locator('[name=item_name]').fill('Soap bar');
   await form.locator('[name=item_qty]').fill('3');
-  await form.getByRole('button', { name: /Save sale/ }).click();
+  await tapInSheet(form.getByRole('button', { name: /Save sale/ }));
   await page.getByText('Sale saved').waitFor();
   await go('/stock');
   await page.waitForFunction((b) => Number(document.querySelector('[data-product="Soap bar"] [data-qty]')?.getAttribute('data-qty')) === b - 3, before, { timeout: 5000 })
@@ -87,7 +101,7 @@ await step('expense', async () => {
   await go('/cash');
   await page.getByTestId('new-expense').click();
   await page.getByTestId('expense-form').locator('[name=amount]').fill('75');
-  await page.getByTestId('expense-form').getByRole('button', { name: /Save expense/ }).click();
+  await tapInSheet(page.getByTestId('expense-form').getByRole('button', { name: /Save expense/ }));
   await page.getByText('Expense saved').waitFor();
   await shot('03-cash');
 });
@@ -163,7 +177,7 @@ await step('sale with discount shows subtotal, tax and total', async () => {
   await form.locator('[name=discount]').fill('10');
   await page.getByTestId('totals').getByText('Le 80.50').waitFor(); // (80 − 10) × 1.15
   await shot('10-sale-tax');
-  await form.getByRole('button', { name: /Save sale/ }).click();
+  await tapInSheet(form.getByRole('button', { name: /Save sale/ }));
   await page.getByText('Sale saved').waitFor();
 });
 
@@ -174,7 +188,7 @@ await step('return items from a sale', async () => {
   await row.click();
   await page.getByRole('button', { name: 'Return items' }).click();
   await page.getByTestId('return-form').locator('[name=return_qty]').first().fill('2');
-  await page.getByRole('button', { name: 'Confirm return' }).click();
+  await tapInSheet(page.getByRole('button', { name: 'Confirm return' }));
   await page.getByText('Return recorded').waitFor();
 });
 
@@ -184,7 +198,7 @@ await step('close the day', async () => {
   const f = page.getByTestId('close-form');
   await f.locator('[name=counted]').fill('100');
   await shot('11-close-day');
-  await f.getByRole('button', { name: 'Save day close' }).click();
+  await tapInSheet(f.getByRole('button', { name: 'Save day close' }));
   await page.getByText('Day closed').waitFor();
 });
 
