@@ -34,7 +34,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
         // Mobile data is expensive: precache only the core app. Heavy optional tools (scanner, PDF, Excel,
         // printer, cloud, crash reporting) are cached the first time someone uses them.
-        globIgnores: ['**/Scanner-*', '**/pdf-*', '**/excel-*', '**/html2canvas*', '**/purify*', '**/index.es-*', '**/printer-*', '**/cloud-*', '**/sentry-*', '**/tour-*'],
+        globIgnores: ['**/Scanner-*', '**/pdf-*', '**/excel-*', '**/html2canvas*', '**/purify*', '**/index.es-*', '**/printer-*', '**/cloud-*', '**/sentry-*', '**/tour-*',
+          '**/inter-cyrillic*', '**/inter-greek*', '**/inter-vietnamese*'],
         runtimeCaching: [{
           urlPattern: ({ url }) => url.pathname.includes('/assets/'),
           handler: 'CacheFirst',
@@ -52,9 +53,11 @@ export default defineConfig({
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
+        // Name the lazily loaded cloud chunk so the service worker can skip precaching it.
+        chunkFileNames: (chunk) => (chunk.moduleIds.some((id) => id.includes('@supabase')) ? 'assets/cloud-[hash].js' : 'assets/[name]-[hash].js'),
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'], data: ['dexie', 'dexie-react-hooks'], i18n: ['i18next', 'react-i18next'],
-          cloud: ['@supabase/supabase-js'], sentry: ['@sentry/browser'],
+          sentry: ['@sentry/browser'], // (Supabase is left to automatic splitting so it stays lazy)
         },
       },
     },
