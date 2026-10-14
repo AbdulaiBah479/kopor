@@ -1,20 +1,15 @@
 // LIVE test of staff invite codes against the real Supabase project in .env.local.
 // Creates three throwaway accounts (owner, staff, attacker) and deletes them at the end.
-import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
+import { client as mk, pinAuth } from './_auth.mjs';
 
-const env = Object.fromEntries(readFileSync('.env.local', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).trim()]));
-const mk = () => createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
-// Throwaway accounts only; the app turns a 6-digit PIN into the password the same way (src/cloud/auth.ts).
 const TEST_PIN = String(135790);
-const pinPassword = (pin) => ['kopor', 'pin', pin].join('-');
 const num = () => '99' + String(Math.floor(Math.random() * 1e7)).padStart(7, '0');
 let ok = true;
 const check = (name, cond, extra = '') => { console.log(cond ? '✓' : '✗', name, extra); if (!cond) ok = false; };
 const signUp = async (sb, local, name) => {
-  const r = await sb.auth.signUp({ email: `p232${local}@phone.kopor.app`, password: pinPassword(TEST_PIN), options: { data: { name, phone: `232${local}` } } });
-  if (r.error) throw r.error;
+  const r = await pinAuth(sb, 'signup', `p232${local}@phone.kopor.app`, TEST_PIN, name);
+  if (!r.ok) throw new Error(r.error);
 };
 
 const owner = mk(), staff = mk(), attacker = mk();

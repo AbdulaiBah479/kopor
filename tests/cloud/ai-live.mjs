@@ -1,13 +1,10 @@
-// LIVE check of the AI proxy's provider chain. Usage: node tests/cloud/ai-live.mjs <test phone> <pin>
-import { readFileSync } from 'node:fs';
-import { createClient } from '@supabase/supabase-js';
+// LIVE check of the AI proxy's provider chain for a signed-in account. Usage: node tests/cloud/ai-live.mjs <test phone> <pin>
+import { client, pinAuth } from './_auth.mjs';
 
 const [phone, pin] = process.argv.slice(2);
-const env = Object.fromEntries(readFileSync('.env.local', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).trim()]));
-const sb = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
-const intl = '232' + phone.replace(/^0/, '');
-const { error } = await sb.auth.signInWithPassword({ email: `p${intl}@phone.kopor.app`, password: `kopor-pin-${pin}` });
-if (error) { console.log('sign-in failed', error.message); process.exit(1); }
+const sb = client();
+const r = await pinAuth(sb, 'signin', `p232${phone.replace(/^0/, '')}@phone.kopor.app`, pin);
+if (!r.ok) { console.log('sign-in failed', r.error); process.exit(1); }
 const t0 = Date.now();
 const { data, error: e2 } = await sb.functions.invoke('ai', { body: { messages: [
   { role: 'system', content: 'Answer in Sierra Leone Krio, one short sentence.' },

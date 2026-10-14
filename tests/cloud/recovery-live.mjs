@@ -1,46 +1,34 @@
-// LIVE test of PIN recovery and the AI fallback chain against the real Supabase project in .env.local.
+// LIVE test of PIN recovery codes and guest AI against the real Supabase project in .env.local.
 // Creates a throwaway account with a made-up 099… number and deletes it at the end.
-import { readFileSync } from 'node:fs';
-import { createClient } from '@supabase/supabase-js';
+import { client, invoke, pinAuth, testEmail } from './_auth.mjs';
 
-const env = Object.fromEntries(readFileSync('.env.local', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).trim()]));
-const sb = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
-const phoneDigits = '23299' + String(Math.floor(Math.random() * 1e7)).padStart(7, '0');
-const email = `p${phoneDigits}@phone.kopor.app`;
 let ok = true;
-// Throwaway account; the app turns a 6-digit PIN into the password the same way (src/cloud/auth.ts).
-const pinPassword = (pin) => ['kopor', 'pin', pin].join('-');
 const check = (name, cond, extra = '') => { console.log(cond ? '✓' : '✗', name, extra); if (!cond) ok = false; };
-const invoke = async (fn, body) => {
-  const { data, error } = await sb.functions.invoke(fn, { body });
-  if (error) { const j = await error.context?.json?.().catch(() => null); return { error: j?.error ?? error.message }; }
-  return data;
-};
+const sb = client(), email = testEmail();
+const PIN1 = String(111111), PIN2 = String(222222), PIN3 = String(333333);
 
-const up = await sb.auth.signUp({ email, password: pinPassword('111111'), options: { data: { name: 'Kopor Recovery Test', phone: phoneDigits } } });
-check('sign up test account', !!up.data.session, up.error?.message ?? '');
-const created = await invoke('recover', { action: 'create' });
+const up = await pinAuth(sb, 'signup', email, PIN1, 'Kopor Recovery Test');
+check('sign up test account', up.ok, JSON.stringify(up));
+const created = await invoke(sb, 'recover', { action: 'create' });
 check('recovery code created', /^[A-Z2-9]{5}-[A-Z2-9]{5}$/.test(created.code ?? ''), created.error ?? '');
 await sb.auth.signOut();
 
-const wrong = await invoke('recover', { action: 'reset', email, code: 'AAAAA-AAAAA', pin: '222222' });
+const wrong = await invoke(sb, 'recover', { action: 'reset', email, code: 'AAAAA-AAAAA', pin: PIN2 });
 check('wrong code is refused', wrong.error === 'errx.recoverBad', JSON.stringify(wrong));
-const reset = await invoke('recover', { action: 'reset', email, code: created.code.toLowerCase(), pin: '222222' });
+const reset = await invoke(sb, 'recover', { action: 'reset', email, code: created.code.toLowerCase(), pin: PIN2 });
 check('right code (any case) sets the new PIN', reset.ok === true, JSON.stringify(reset));
-const oldPin = await sb.auth.signInWithPassword({ email, password: pinPassword('111111') });
-check('old PIN no longer works', !!oldPin.error);
-const newPin = await sb.auth.signInWithPassword({ email, password: pinPassword('222222') });
-check('new PIN signs in', !newPin.error && !!newPin.data.session, newPin.error?.message ?? '');
+check('old PIN no longer works', (await pinAuth(client(), 'signin', email, PIN1)).error === 'err.login');
+check('new PIN signs in', (await pinAuth(sb, 'signin', email, PIN2)).ok);
 await sb.auth.signOut();
-const reuse = await invoke('recover', { action: 'reset', email, code: created.code, pin: '333333' });
+const reuse = await invoke(sb, 'recover', { action: 'reset', email, code: created.code, pin: PIN3 });
 check('used code cannot be reused', reuse.error === 'errx.recoverBad', JSON.stringify(reuse));
-await sb.auth.signInWithPassword({ email, password: pinPassword('222222') });
+await pinAuth(sb, 'signin', email, PIN2);
 
 // A fresh account has no business yet, so it uses the guest AI allowance (answers, or a clear daily-limit message).
-const ai = await invoke('ai', { messages: [{ role: 'user', content: 'Say OK' }] });
+const ai = await invoke(sb, 'ai', { messages: [{ role: 'user', content: 'Say OK' }] });
 check('AI works for accounts without a business (guest allowance)', !!ai.content || /limit/i.test(ai.error ?? ''), JSON.stringify(ai).slice(0, 120));
 
-const del = await invoke('delete-account', {});
+const del = await invoke(sb, 'delete-account', {});
 check('test account deleted', !del.error, JSON.stringify(del).slice(0, 120));
 console.log(ok ? '\nRecovery live test passed' : '\nRecovery live test FAILED');
 process.exit(ok ? 0 : 1);

@@ -2,6 +2,7 @@
 //   create (signed in): make a new one-time recovery code; only its salted hash is stored.
 //   reset  (public):    sign-in address + recovery code + new PIN -> sets the new PIN. 5 wrong tries lock it for an hour.
 import { admin, cors, json, HttpError, env } from '../_shared/util.ts';
+import { pinPassword } from '../_shared/pin.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I, easy to read and type
@@ -48,10 +49,12 @@ Deno.serve(async (req) => {
         await db.from('recovery_codes').update({ attempts, locked_until: attempts >= MAX_TRIES ? new Date(Date.now() + 3600_000).toISOString() : null }).eq('user_id', userId);
         throw new HttpError(attempts >= MAX_TRIES ? 429 : 400, attempts >= MAX_TRIES ? 'errx.recoverLocked' : 'errx.recoverBad');
       }
-      const { error } = await db.auth.admin.updateUserById(userId as string, { password: `kopor-pin-${pin}` });
+      const { error } = await db.auth.admin.updateUserById(userId as string, { password: await pinPassword(email, pin) });
       if (error) throw new Error(error.message);
       // One-time use: the app creates and shows a fresh code right after signing in.
       await db.from('recovery_codes').delete().eq('user_id', userId);
+      // A successful reset also lifts any wrong-PIN lock on the account.
+      await db.from('pin_attempts').delete().eq('key', 'acct:' + [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(email)))].map((b) => b.toString(16).padStart(2, '0')).join(''));
       return json({ ok: true });
     }
     throw new HttpError(400, 'Unknown action');

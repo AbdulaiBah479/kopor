@@ -16,10 +16,14 @@ const PRIVACY: [string, string[]][] = [
     'To provide the app: keep your records, sync your devices, send reminders you choose to send, and create invoices and reports.',
     'We do not sell your information and do not use it for advertising.',
   ]],
-  ['AI features', ['If you use voice entry, receipt scanning or the AI advisor, the text or photo and a short summary of your business figures are sent to an AI provider (such as Groq or Google) to produce the answer. Phone numbers are not included in the summary. Do not use AI features if you do not agree.']],
+  ['AI features', [
+    'If you use voice entry, receipt scanning or the AI advisor, the voice recording, text or photo and a short summary of your business figures are sent to an AI provider (Groq or Google) to produce the answer. Phone numbers are not included in the summary. Kopor does not keep voice recordings after they are written down.',
+    'To share the free AI allowance fairly, people without an account are counted per network address. The address is scrambled (hashed) and never stored in a readable form, and the count is deleted after a few days.',
+    'Do not use AI features if you do not agree. Everything else in Kopor works without them.',
+  ]],
   ['Payments', ['Mobile money and card payments are processed by Monime, a payment provider licensed by the Bank of Sierra Leone, under its own privacy policy. Kopor stores only the payment status and reference, never card numbers or mobile money PINs.']],
   ['Crash reports', ['If enabled, anonymous error reports (no names, phone numbers or business records) are sent to Sentry so we can fix problems.']],
-  ['Security', ['Records on your phone can be protected with a PIN. Backups can be encrypted with a password. Cloud data is protected with access rules so that only members of a business can see it, and payment keys are encrypted on the server.']],
+  ['Security', ['Records on your phone can be protected with a PIN. Backups can be encrypted with a password. Cloud accounts are locked for a while after repeated wrong PINs, and PINs are never stored in a readable form. Staff join a business only with a one-time invite code from the owner. Cloud data is protected with access rules so that only members of a business can see it, and payment keys are encrypted on the server.']],
   ['Keeping and deleting data', [
     'You can delete a business from your phone at any time in Settings. If you have an account, Settings → Delete my account removes you from all businesses, closes businesses where you are the only owner, and deletes your login.',
     'Your customers can ask you to correct or delete their details; you can do this in the Credit Book.',

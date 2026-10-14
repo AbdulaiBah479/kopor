@@ -4,7 +4,7 @@ do $$
 declare uids uuid[]; oids uuid[]; t text;
 begin
   select array_agg(id) into uids from auth.users
-  where raw_user_meta_data->>'name' = 'Kopor Cloud Test'
+  where raw_user_meta_data->>'name' in ('Kopor Cloud Test', 'Kopor Recovery Test')
      or email in ('p23299133346@phone.kopor.app', 'p23299072662@phone.kopor.app', 'p23299411107@phone.kopor.app');
   if uids is null then raise notice 'No test accounts found'; return; end if;
   select array_agg(distinct org_id) into oids from members where user_id = any(uids);

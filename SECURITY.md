@@ -21,6 +21,11 @@ Include what you found, how to reproduce it, and what an attacker could do with 
 - **Payments:** Kopor never holds money. Each business connects its own Monime account (licensed by the Bank of
   Sierra Leone). Monime tokens are encrypted at rest (AES-256-GCM) and only used inside server functions. Webhooks are
   verified with a per-business secret, and every status is re-checked with Monime's API before anything is marked paid.
+- **Cloud sign-in:** the password Supabase stores is an HMAC of the PIN with a server-only secret, and direct sign-ups are
+  disabled, so every PIN check goes through the `auth-pin` function: 5 wrong PINs lock the account (15 minutes,
+  doubling up to 24 hours) and each network has a daily cap. A 6-digit PIN therefore cannot be guessed online.
+- **Staff invites:** joining a business needs a one-time code from the owner (hashed, 7-day expiry) AND the invited
+  phone number.
 - **PIN recovery:** one-time recovery codes are stored only as salted hashes, with a lockout after 5 wrong tries.
 - **AI:** server keys never reach the phone; phone numbers are not sent to AI providers.
 - **App:** strict Content-Security-Policy, no third-party trackers, crash reports scrubbed of personal data.

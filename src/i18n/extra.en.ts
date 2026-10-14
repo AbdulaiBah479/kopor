@@ -78,6 +78,7 @@ const extra = {
     deleted: 'Account deleted',
   },
   errx: {
+    pinLocked: 'Too many wrong PINs, so this account is locked for a while to keep it safe. Try again later, or use "Forgot your PIN?" with your recovery code.', signupLimit: 'Too many new accounts from this network today. Please try again tomorrow.',
     inviteBad: 'This invite code is wrong, used or expired, or this account uses a different phone number than the one invited.', inviteRole: 'Only the business owner can invite staff.', inviteMember: 'Add a phone number for this person first, and save.', inviteSignIn: 'Sign in to your Kopor cloud account first (More → Cloud & account).',
     recoverBad: 'The phone number or recovery code is wrong.', recoverLocked: 'Too many tries. Try again in an hour.',
     offline: 'No internet connection. Your records are safe on this phone. Check your data or Wi-Fi and try again.',
