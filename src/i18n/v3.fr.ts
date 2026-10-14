@@ -1,0 +1,62 @@
+// French v3 strings.
+import type { V3Dict } from './v3.en';
+
+const v3: V3Dict = {
+  money: {
+    title: 'Argent', sub: 'Recevoir et envoyer du mobile money', receive: 'Recevoir', send: 'Envoyer', history: 'Mouvements d’argent',
+    wallets: 'Vos numéros mobile money', walletsHelp: 'Vos clients paient sur ces numéros. Ils apparaissent aussi sur vos factures, rappels et liens de paiement.',
+    orange: 'Numéro Orange Money', afrimoney: 'Numéro Afrimoney', qmoney: 'Numéro QMoney', saveWallets: 'Enregistrer les numéros', edit: 'Modifier les numéros',
+    noWallets: 'Ajoutez votre numéro Orange Money, Afrimoney ou QMoney pour commencer à recevoir de l’argent.', addWallets: 'Ajouter mes numéros',
+    amount: 'Montant (facultatif)', reason: 'Pour quoi ? (facultatif)', reasonPh: 'ex. 2 sacs de riz', from: 'Qui paie ? (facultatif)',
+    shareRequest: 'Demander', showQr: 'Afficher le QR code', qrHelp: 'Le client le scanne avec l’appareil photo de son téléphone pour savoir comment vous payer.',
+    requestMsg: 'Bonjour{{name}}, merci de payer {{amount}} à {{business}}{{reason}}.\n{{wallets}}\n{{link}}\nMerci !',
+    instantTitle: 'Paiements automatiques', instantHelp: 'Connectez Monime pour obtenir des liens et des codes USSD qui se confirment seuls quand le client paie.',
+    instantLink: 'Créer un lien de paiement', instantUssd: 'Créer un code USSD', connect: 'Activer les paiements automatiques',
+    got: 'J’ai reçu l’argent', recordAs: 'Enregistrer comme', asSale: 'Une vente', asDebt: 'Un client qui rembourse sa dette', asOther: 'Autre entrée d’argent', recorded: 'Argent enregistré',
+    pickCustomer: 'Quel client a payé ?',
+    sendHelp: 'Envoyez avec votre propre compte mobile money, puis enregistrez-le ici pour que vos comptes restent justes.', network: 'Réseau', to: 'Envoyer au (numéro)',
+    dial: 'Ouvrir {{network}} ({{code}})', noDial: 'Ouvrez l’application ou le menu {{network}} pour envoyer.', dialCode: 'Code du menu (facultatif)',
+    steps: 'Kopor ouvre votre menu mobile money. Choisissez « Envoyer », saisissez {{phone}} et {{amount}}, puis confirmez avec votre code.',
+    sentRecord: 'C’est envoyé, enregistrer', sendAs: 'Ce paiement était', asExpense: 'Une dépense', asSupplier: 'Le paiement d’un fournisseur', asLoan: 'Un prêt à quelqu’un',
+    autoSend: 'Envoyer automatiquement avec Monime', safety: 'Kopor ne demande jamais votre code mobile money. Tapez-le uniquement dans le menu de votre réseau.',
+    howItWorks: 'Comment fonctionne l’argent dans Kopor', notWallet: 'Kopor n’est pas un portefeuille et ne garde jamais votre argent : il va directement sur votre compte mobile money ou Monime.',
+    payTitle: 'Payer {{business}}', payWith: 'Payer avec', copyNumber: 'Copier le numéro', payNote: 'Après le paiement, montrez ou envoyez le SMS de confirmation à {{business}}.',
+    invalidLink: 'Ce lien de paiement n’est pas valide.', poweredBy: 'Envoyé avec Kopor, le carnet de commerce gratuit',
+  },
+  guide: {
+    open: 'Comment ça marche',
+    home: { title: 'Accueil', s1: 'Votre bénéfice du jour, de la semaine ou du mois est en haut.', s2: 'Touchez Vente, Dépense ou Crédit pour enregistrer en quelques secondes.', s3: 'Touchez Parler et dites-le en anglais ou en krio ; Kopor remplit le formulaire.', s4: 'Recevoir et Envoyer gèrent le mobile money.' },
+    credit: { title: 'Carnet de crédit', s1: 'Chaque client ou fournisseur a une page qui montre ce qu’il doit.', s2: '« Vous avez donné » : il vous doit plus. « Vous avez reçu » : il a payé.', s3: 'Les dettes en retard passent en rouge. Touchez Rappeler pour envoyer un WhatsApp ou un SMS poli.', s4: 'Partagez un relevé pour éviter toute dispute sur le montant.' },
+    cash: { title: 'Livre de caisse', s1: 'Chaque vente et dépense est ici, avec le moyen de paiement.', s2: 'Ajoutez des produits à une vente et le stock baisse tout seul.', s3: 'Une erreur ? Touchez l’écriture pour annuler ou faire un retour.', s4: 'À la fermeture, utilisez Clôturer la journée pour compter la caisse.' },
+    stock: { title: 'Stock', s1: 'Ajoutez chaque produit avec son prix d’achat et de vente.', s2: 'Kopor compte le stock à chaque vente et vous prévient avant la rupture.', s3: 'Quand vous réapprovisionnez, le coût est enregistré comme dépense automatiquement.', s4: 'Scannez les codes-barres pour trouver vite un produit.' },
+    groups: { title: 'Tontines et groupes', s1: 'Créez une tontine ou un groupe de cotisations et ajoutez les membres.', s2: 'Touchez la case d’un membre à chaque tour quand il paie.', s3: 'Kopor montre à qui c’est le tour de recevoir la cagnotte.', s4: 'Envoyez un rappel à tous ceux qui n’ont pas payé en une fois.' },
+    invoices: { title: 'Factures', s1: 'Créez une facture avec articles, remise et taxe.', s2: 'Partagez-la sur WhatsApp ou en PDF. Elle a un code que chacun peut vérifier.', s3: 'Les factures impayées vont automatiquement dans le carnet de crédit.', s4: 'Marquez-la payée et elle devient un reçu.' },
+    money: { title: 'Argent', s1: 'Enregistrez une fois vos numéros Orange Money, Afrimoney et QMoney.', s2: 'Recevoir : envoyez une demande ou montrez un QR code. Quand l’argent arrive, enregistrez-le d’un geste.', s3: 'Envoyer : Kopor ouvre votre menu mobile money avec le numéro prêt, puis enregistre le paiement.', s4: 'Connectez Monime pour les liens de paiement et virements automatiques.' },
+    team: { title: 'Équipe', s1: 'Ajoutez du personnel avec un rôle : gérant, caissier ou lecteur.', s2: 'Chaque personne peut avoir son propre code sur un téléphone partagé.', s3: 'Le journal d’activité montre qui a fait quoi, et quand.', s4: 'Les succursales gardent les comptes de chaque boutique séparés.' },
+    health: { title: 'Santé du commerce', s1: 'Votre score vient de la tenue des comptes, du bénéfice, du contrôle du crédit et de la croissance.', s2: 'Suivez les conseils pour l’améliorer.', s3: 'Ouvrez le rapport pour le montrer à une banque ou une microfinance.', s4: 'Le rapport porte un code pour qu’on puisse s’y fier.' },
+    assistant: { title: 'Conseiller IA', s1: 'Posez toute question sur votre commerce en anglais, krio ou français.', s2: 'Les réponses utilisent vos propres chiffres.', s3: 'Sans internet, Kopor répond quand même aux questions courantes à partir de vos comptes.', s4: 'Personne ne voit vos numéros de téléphone.' },
+  },
+  off: {
+    mode: 'Réponse hors ligne, d’après vos comptes', debts: 'Les clients qui vous doivent le plus : {{list}}. Total dû : {{total}}.', noDebts: 'Personne ne vous doit d’argent pour l’instant.',
+    restock: 'À racheter bientôt : {{list}}.', noRestock: 'Votre stock va bien pour l’instant.',
+    profit: '30 derniers jours : ventes {{sales}}, dépenses {{expenses}}, bénéfice {{profit}}. Les 30 jours précédents, les ventes étaient de {{prev}}.',
+    expenses: 'Vos plus gros coûts ce mois-ci : {{list}}.', noExpenses: 'Aucune dépense ce mois-ci.',
+    best: 'Meilleures ventes ce mois-ci : {{list}}.', noBest: 'Aucune vente de produit ce mois-ci.',
+    help: 'Sans internet, je peux répondre : qui me doit, quoi racheter, comment va mon commerce, mes plus gros coûts et mes meilleures ventes.',
+  },
+  recover: {
+    forgot: 'Code oublié ?', title: 'Réinitialiser votre code', codeTitle: 'Votre code de récupération',
+    codeHelp: 'Notez ce code ou envoyez-le-vous sur WhatsApp. Si vous oubliez votre code, il vous permet d’en choisir un nouveau.',
+    saveWa: 'L’enregistrer sur WhatsApp', done: 'Je l’ai enregistré', code: 'Code de récupération', newPin: 'Nouveau code à 6 chiffres', reset: 'Définir le nouveau code',
+    resetDone: 'Code changé. Vous êtes connecté.', bad: 'Le numéro ou le code de récupération est incorrect.', locked: 'Trop d’essais. Réessayez dans une heure.',
+    noCode: 'Pas de code de récupération ? Contactez l’assistance Kopor avec votre numéro.', make: 'Créer un nouveau code de récupération', made: 'Nouveau code créé. L’ancien ne fonctionne plus.',
+    msg: 'Mon code de récupération Kopor : {{code}}',
+  },
+  pwa: {
+    install: 'Installer Kopor', installHelp: 'Ajoutez Kopor à votre écran d’accueil. Il s’ouvre comme une application et marche sans internet.',
+    offline: 'Vous êtes hors ligne. Tout fonctionne et se synchronisera plus tard.', online: 'De nouveau en ligne',
+    update: 'Une nouvelle version de Kopor est prête.', reload: 'Mettre à jour', share: 'Partager Kopor',
+    shareMsg: 'J’utilise Kopor pour tenir mes comptes, mon crédit et mon mobile money au même endroit. C’est gratuit et ça marche hors ligne : {{link}}',
+  },
+};
+export default v3;

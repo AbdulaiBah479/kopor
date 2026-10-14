@@ -65,7 +65,7 @@ export function CreditList() {
     .sort((a, b) => Number(!!b.od) - Number(!!a.od) || Math.abs(b.b) - Math.abs(a.b));
 
   return (
-    <Page title={t('credit.title')} sub={t('credit.sub', { count: book.contacts.length })}
+    <Page guide="credit" title={t('credit.title')} sub={t('credit.sub', { count: book.contacts.length })}
       fab={can('record') && <button className="fab" onClick={() => openSheet(t('credit.addEntry'), <NewCreditSheet />)}><Icon name="plus" /> {t('credit.addEntry')}</button>}>
       <div className="grid2">
         <div className="stat"><div className="k">{t('credit.willGet')}</div><div className="v"><Money v={totals.get} className="good" /></div></div>

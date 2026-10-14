@@ -47,7 +47,7 @@ const extra: ExtraDict = {
       offline: 'Oui. Tout fonctionne hors ligne et est enregistré sur votre téléphone. Avec un compte cloud, la synchronisation se fait au retour d’internet.',
       backup: 'Réglages → Sauvegarde télécharge un fichier (avec mot de passe possible). Ou créez un compte cloud pour une sauvegarde automatique.',
       staff: 'Oui. Dans Équipe, ajoutez du personnel avec un rôle (gérant, caissier ou lecteur). Chacun peut avoir son PIN sur un téléphone partagé.',
-      payments: 'Connectez votre compte Monime dans Paiements. Chaque facture peut alors avoir un lien de paiement ou un code USSD.',
+      payments: 'Touchez Recevoir sur l’accueil. Enregistrez une fois vos numéros Orange Money, Afrimoney ou QMoney, puis envoyez une demande de paiement ou montrez un QR code. Quand l’argent arrive, touchez « J’ai reçu l’argent » pour l’enregistrer. Pour envoyer, touchez Envoyer : Kopor ouvre votre menu mobile money puis enregistre le paiement. Connectez Monime pour des paiements qui se confirment seuls.',
       ai: 'Touchez Parler et dites ce qui s’est passé, par ex. « Vendu 2 sacs de riz 1700 ». Kopor prépare l’écriture à vérifier.',
       printer: 'Oui, sur imprimante thermique Bluetooth (58 ou 80 mm). Réglages → Imprimante de reçus. Les imprimantes Bluetooth classiques passent par l’app gratuite RawBT.',
       tax: 'Réglages → Taxes et reçus. Indiquez le taux et si vos prix incluent déjà la taxe.',
@@ -80,6 +80,7 @@ const extra: ExtraDict = {
     deleted: 'Compte supprimé',
   },
   errx: {
+    recoverBad: 'Le numéro ou le code de récupération est incorrect.', recoverLocked: 'Trop d’essais. Réessayez dans une heure.',
     offline: 'Pas de connexion internet. Vos données sont en sécurité sur ce téléphone. Vérifiez vos données mobiles ou le Wi-Fi et réessayez.',
     returnTooMany: 'Impossible de retourner plus de {{name}} que vendu.', voidPaid: 'Seules les factures impayées peuvent être annulées. Enregistrez plutôt un retour.',
     proLimit: 'L’offre gratuite permet {{limit}}. Passez à Kopor Pro pour plus.', noBluetooth: 'L’impression Bluetooth n’est pas disponible dans ce navigateur. Utilisez Chrome sur Android ou l’option RawBT.',

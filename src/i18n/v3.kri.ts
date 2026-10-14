@@ -1,0 +1,62 @@
+// Krio v3 strings. Spelling follows the standard orthography in open English–Krio corpora (ɛ, ɔ).
+import type { V3Dict } from './v3.en';
+
+const v3: V3Dict = {
+  money: {
+    title: 'Mɔni', sub: 'Get ɛn sɛn mobayl mɔni', receive: 'Get mɔni', send: 'Sɛn mɔni', history: 'Mɔni we kam ɛn go',
+    wallets: 'Yu mobayl mɔni nɔmba dɛn', walletsHelp: 'Kɔstɔma dɛn de pe to dɛn nɔmba ya. Dɛn de sho bak na yu invɔys, rimayn ɛn yu link fɔ pe.',
+    orange: 'Orange Money nɔmba', afrimoney: 'Afrimoney nɔmba', qmoney: 'QMoney nɔmba', saveWallets: 'Sev nɔmba dɛn', edit: 'Chenj nɔmba dɛn',
+    noWallets: 'Ad yu Orange Money, Afrimoney ɔ QMoney nɔmba fɔ stat fɔ get mɔni.', addWallets: 'Ad mi nɔmba dɛn',
+    amount: 'Ɔmɔs (if yu want)', reason: 'Wetin i fɔ? (if yu want)', reasonPh: 'Lɛk: 2 bag rɛs', from: 'Udat de pe? (if yu want)',
+    shareRequest: 'Aks fɔ pe', showQr: 'Sho QR kod', qrHelp: 'Di kɔstɔma go skan dis wit in fon kamɛra fɔ si aw fɔ pe yu.',
+    requestMsg: 'Kushɛ{{name}}, duya pe {{amount}} to {{business}}{{reason}}.\n{{wallets}}\n{{link}}\nTɛnki!',
+    instantTitle: 'Pement we de wok insɛf', instantHelp: 'Kɔnɛkt Monime fɔ get link ɛn USSD kod we go kɔnfɔm insɛf we di kɔstɔma pe.',
+    instantLink: 'Get link fɔ pe', instantUssd: 'Get USSD kod fɔ pe', connect: 'Sɛt pement we de wok insɛf',
+    got: 'A dɔn get di mɔni', recordAs: 'Rayt am as', asSale: 'Sɛl', asDebt: 'Kɔstɔma we de pe in dɛt', asOther: 'Ɔda mɔni we kam', recorded: 'Mɔni dɔn rayt',
+    pickCustomer: 'Us kɔstɔma pe?',
+    sendHelp: 'Sɛn wit yu yon mobayl mɔni akawnt, dɔn rayt am ya so yu buk go tan rayt.', network: 'Nɛtwɔk', to: 'Sɛn to (fon nɔmba)',
+    dial: 'Opin {{network}} ({{code}})', noDial: 'Opin yu {{network}} ap ɔ mɛnyu fɔ sɛn.', dialCode: 'Mɛnyu kod (if yu want)',
+    steps: 'Kopor go opin yu mobayl mɔni mɛnyu. Pik "Send money", put {{phone}} ɛn {{amount}}, dɔn kɔnfɔm wit yu PIN.',
+    sentRecord: 'A dɔn sɛn am, rayt am', sendAs: 'Dis pement na', asExpense: 'Ɛkspens', asSupplier: 'Pe sɔplaya we a ɔw', asLoan: 'Mɔni we a lɛnt pɔsin',
+    autoSend: 'Sɛn insɛf wit Monime', safety: 'Kopor nɔ go ɛva aks fɔ yu mobayl mɔni PIN. Jɔs tayp am na yu nɛtwɔk in yon mɛnyu.',
+    howItWorks: 'Aw mɔni de wok na Kopor', notWallet: 'Kopor nɔto walɛt ɛn i nɔ de ol yu mɔni: i de go stret na yu yon mobayl mɔni ɔ Monime akawnt.',
+    payTitle: 'Pe {{business}}', payWith: 'Pe wit', copyNumber: 'Kɔpi nɔmba', payNote: 'Afta yu pe, sho ɔ sɛn di SMS we kɔnfɔm am to {{business}}.',
+    invalidLink: 'Dis link fɔ pe nɔ rayt.', poweredBy: 'Sɛn wit Kopor, di fri biznɛs buk',
+  },
+  guide: {
+    open: 'Aw i de wok',
+    home: { title: 'Om', s1: 'Yu prɔfit fɔ tide, dis wik ɔ dis mɔnt de na ɔp.', s2: 'Tap Sɛl, Ɛkspens ɔ Kredit fɔ rayt ɛnitin kwik kwik.', s3: 'Tap Tɔk ɛn se am na Inglish ɔ Krio; Kopor go rayt am fɔ yu.', s4: 'Get mɔni ɛn Sɛn mɔni de fɔ mobayl mɔni.' },
+    credit: { title: 'Kredit buk', s1: 'Ɛni kɔstɔma ɔ sɔplaya get in yon pej we sho wetin dɛn ɔw.', s2: '"Yu gi" min se dɛn ɔw yu mɔ. "Yu get" min se dɛn pe.', s3: 'Dɛt we pas di de go tɔn rɛd. Tap Rimayn fɔ sɛn fayn WhatsApp ɔ SMS.', s4: 'Sheb stetmɛnt so nɔbɔdi nɔ go agyu bɔt di ɔmɔs.' },
+    cash: { title: 'Kesh buk', s1: 'Ɛni sɛl ɛn ɛkspens de ya, wit aw dɛn pe.', s2: 'Ad prɔdak to sɛl ɛn yu stɔk go go dɔŋ insɛf.', s3: 'Yu mek mistek? Tap di entri fɔ pul am bak ɔ tek tin bak.', s4: 'We yu de lɔk, yuz "Klos di de" fɔ kɔnt yu drɔ.' },
+    stock: { title: 'Stɔk', s1: 'Ad ɛni prɔdak wit di prays we yu bay am ɛn di prays we yu de sɛl am.', s2: 'Kopor de kɔnt stɔk as yu de sɛl ɛn i go wɔn yu bifo i dɔn.', s3: 'We yu bay stɔk bak, di kɔst go sev as ɛkspens insɛf.', s4: 'Skan bakɔd fɔ fɛn prɔdak kwik.' },
+    groups: { title: 'Osusu ɛn grup', s1: 'Mek osusu ɔ dyuz grup ɛn ad di mɛmba dɛn.', s2: 'Tap mɛmba in bɔks ɛvri rawnd we dɛn pe.', s3: 'Kopor de sho udat in tɔn fɔ tek di pɔt.', s4: 'Sɛn rimayn to ɔlman we nɔ pe yet wantɛm.' },
+    invoices: { title: 'Invɔys', s1: 'Mek invɔys wit tin dɛn, diskawnt ɛn taks.', s2: 'Sheb am na WhatsApp ɔ as PDF. I get kod we ɛnibɔdi kin chɛk.', s3: 'Invɔys we nɔ pe de go na di kredit buk insɛf.', s4: 'Mak se i dɔn pe ɛn i go tɔn risit.' },
+    money: { title: 'Mɔni', s1: 'Sev yu Orange Money, Afrimoney ɛn QMoney nɔmba wan tɛm.', s2: 'Get mɔni: sɛn mɛsej fɔ pe ɔ sho QR kod. We di mɔni kam, rayt am wit wan tap.', s3: 'Sɛn mɔni: Kopor go opin yu mobayl mɔni mɛnyu wit di nɔmba rɛdi, dɔn rayt di pement.', s4: 'Kɔnɛkt Monime fɔ link ɛn pement we de wok insɛf.' },
+    team: { title: 'Tim', s1: 'Ad staf ɛn gi ɛni wan wok: manija, keshia ɔ luk nɔmɔ.', s2: 'Ɛni pɔsin kin get in yon PIN pan wan fon we ɔlman de yuz.', s3: 'Di aktiviti lɔg de sho udat du wetin ɛn wetin tɛm.', s4: 'Branch de kip ɛni shɔp in rɛkɔd sɛpret.' },
+    health: { title: 'Biznɛs wɛlbɔdi', s1: 'Yu skɔ kɔmɔt frɔm aw yu de rayt, prɔfit, kredit kɔntrol ɛn aw yu de gro.', s2: 'Fala di advays fɔ mek yu skɔ go ɔp.', s3: 'Opin di ripɔt fɔ sho bank ɔ maykrofinans.', s4: 'Di ripɔt get kod so dɛn kin trɔst am.' },
+    assistant: { title: 'AI advayza', s1: 'Aks ɛnitin bɔt yu biznɛs na Inglish, Krio ɔ Frɛnch.', s2: 'Di ansa dɛn de yuz yu yon nɔmba dɛn.', s3: 'If nɛt nɔ de, Kopor stil de ansa di kwɛstyɔn dɛn we pipul kin aks frɔm yu rɛkɔd.', s4: 'Nɔbɔdi nɔ de si yu fon nɔmba dɛn.' },
+  },
+  off: {
+    mode: 'Ansa widawt nɛt, frɔm yu rɛkɔd', debts: 'Kɔstɔma dɛn we ɔw yu pas: {{list}}. Ɔl wetin dɛn ɔw yu: {{total}}.', noDebts: 'Nɔbɔdi nɔ ɔw yu mɔni naw.',
+    restock: 'Bay dɛn ya bak kwik: {{list}}.', noRestock: 'Yu stɔk fayn fɔ naw.',
+    profit: 'Las 30 de: sɛl {{sales}}, ɛkspens {{expenses}}, prɔfit {{profit}}. Di 30 de bifo dat, sɛl na {{prev}}.',
+    expenses: 'Di tin dɛn we kɔst yu pas dis mɔnt: {{list}}.', noExpenses: 'No ɛkspens dis mɔnt.',
+    best: 'Wetin sɛl pas dis mɔnt: {{list}}.', noBest: 'No prɔdak sɛl dis mɔnt yet.',
+    help: 'Widawt nɛt a kin ansa: udat ɔw mi, wetin a fɔ bay bak, aw mi biznɛs de du, wetin kɔst mi pas, ɛn wetin sɛl pas.',
+  },
+  recover: {
+    forgot: 'Yu fɔgɛt yu PIN?', title: 'Chenj yu PIN', codeTitle: 'Yu kod fɔ gɛt yu akawnt bak',
+    codeHelp: 'Rayt dis kod ɔ sɛn am to yusɛf na WhatsApp. If yu fɔgɛt yu PIN, dis kod go ɛp yu fɔ put nyu wan.',
+    saveWa: 'Sev am na WhatsApp', done: 'A dɔn sev am', code: 'Kod fɔ gɛt akawnt bak', newPin: 'Nyu 6-nɔmba PIN', reset: 'Put nyu PIN',
+    resetDone: 'PIN dɔn chenj. Yu dɔn sayn in.', bad: 'Di fon nɔmba ɔ di kod nɔ rayt.', locked: 'Yu tray tumɔs. Tray bak afta wan awa.',
+    noCode: 'Yu nɔ get kod? Kɔl Kopor sɔpɔt wit yu fon nɔmba.', make: 'Mek nyu kod', made: 'Nyu kod dɔn mek. Di ol wan nɔ go wok igen.',
+    msg: 'Mi Kopor kod fɔ gɛt akawnt bak: {{code}}',
+  },
+  pwa: {
+    install: 'Put Kopor na yu fon', installHelp: 'Put Kopor na yu om skrin. I go opin lɛk ap ɛn i de wok widawt nɛt.',
+    offline: 'Nɛt nɔ de. Ɔltin stil de wok ɛn i go sink we nɛt kam bak.', online: 'Nɛt dɔn kam bak',
+    update: 'Nyu Kopor dɔn rɛdi.', reload: 'Ɔpdet naw', share: 'Sheb Kopor',
+    shareMsg: 'A de yuz Kopor fɔ kip mi biznɛs buk, kredit ɛn mobayl mɔni na wan ples. I fri ɛn i de wok widawt nɛt: {{link}}',
+  },
+};
+export default v3;

@@ -60,6 +60,19 @@ Deno.serve(async (req) => {
         });
       }
     }
+    // A standalone payment link or USSD code (Money → Receive) goes into the cash book as money received.
+    if (status === 'completed' && pr.kind !== 'payout' && !pr.invoice_id && !pr.group_id) {
+      const now = nowMs();
+      await db.from('transactions').insert({
+        id: crypto.randomUUID(), org_id: orgId, created_at: now, updated_at: now, created_by: null, branch_id: null, type: 'in', category: 'sale',
+        amount: pr.amount, method: 'bank', contact_id: null, note: `${pr.note ?? ''} · Monime ${pr.kind === 'ussd' ? 'USSD' : 'link'}`.trim(), date: today(),
+        items: [], ledger_id: null, invoice_id: null, discount: 0, tax: 0, refund_of: null,
+      });
+      await db.from('audit').insert({
+        id: crypto.randomUUID(), org_id: orgId, created_at: now, updated_at: now, member_name: 'Monime', action: 'create', entity: 'transactions',
+        entity_id: pr.id, summary: `Received ${pr.amount / 100} online`, at: now,
+      });
+    }
     return json({ ok: true });
   } catch (e) {
     console.error(e);

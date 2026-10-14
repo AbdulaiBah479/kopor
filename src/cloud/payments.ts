@@ -19,6 +19,9 @@ export const disconnectMonime = (orgId: string) => call<{ ok: true }>({ action: 
 /** Hosted checkout link (mobile money, card, bank) for an invoice. */
 export const createCheckout = (orgId: string, invoiceId: string) => call<{ url: string; requestId: string }>({ action: 'checkout', orgId, invoiceId });
 
+/** Hosted checkout link for any amount (Money → Receive). */
+export const createPayLink = (orgId: string, args: { amount: number; name: string }) => call<{ url: string; requestId: string }>({ action: 'link', orgId, ...args });
+
 /** USSD payment code the customer dials from any phone, even without internet. */
 export const createUssdCode = (orgId: string, args: { invoiceId?: string; groupId?: string; amount: number; name: string; phone?: string }) =>
   call<{ ussdCode: string; requestId: string }>({ action: 'ussd', orgId, ...args });

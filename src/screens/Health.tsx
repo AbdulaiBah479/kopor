@@ -28,7 +28,7 @@ export function Health() {
   const book = useBook();
   const h = health(book);
   return (
-    <Page title={t('health.title')} sub={t('health.sub')} back="/more">
+    <Page guide="health" title={t('health.title')} sub={t('health.sub')} back="/more">
       <div className="card row">
         <ScoreRing score={h.score} size={96} />
         <div><div style={{ fontSize: 22, fontWeight: 800 }}>{t(`health.labels.${h.label}`)}</div><div className="small muted">{t('health.updated')}</div></div>

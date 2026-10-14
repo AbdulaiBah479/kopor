@@ -21,20 +21,28 @@ type Msg = { role: 'system' | 'user' | 'assistant'; content: string | { type: st
 
 async function complete(messages: Msg[], opts: { vision?: boolean; json?: boolean } = {}): Promise<string> {
   const s = { ...AI_DEFAULTS, ...(await getAiSettings()) };
-  if (s.key) {
-    const res = await fetch(s.base.replace(/\/$/, '') + '/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.key}` },
-      body: JSON.stringify({
-        model: opts.vision ? s.visionModel : s.model, temperature: opts.json ? 0 : 0.3, messages,
-        ...(!opts.vision && /gpt-oss/.test(s.model) ? { reasoning_effort: 'low' } : {}),
-      }),
-    });
-    if (!res.ok) throw new Error(`AI ${res.status}`);
-    const j = await res.json();
-    return j.choices?.[0]?.message?.content ?? '';
-  }
   const sb = await getSupabase();
+  if (s.key) {
+    try {
+      const res = await fetch(s.base.replace(/\/$/, '') + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.key}` },
+        body: JSON.stringify({
+          model: opts.vision ? s.visionModel : s.model, temperature: opts.json ? 0 : 0.3, messages,
+          ...(!opts.vision && /gpt-oss/.test(s.model) ? { reasoning_effort: 'low' } : {}),
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!res.ok) throw new Error(`AI ${res.status}`);
+      const j = await res.json();
+      const content = j.choices?.[0]?.message?.content;
+      if (content) return content;
+      throw new Error('AI gave no answer');
+    } catch (e) {
+      // Own key rate-limited or failing: use the cloud's chain of free providers when signed in.
+      if (!sb) throw e;
+    }
+  }
   if (!sb) throw new Error('err.noAi');
   const { data, error } = await sb.functions.invoke('ai', { body: { messages, vision: !!opts.vision } });
   if (error || data?.error) throw new Error(data?.error ?? error?.message);
@@ -59,7 +67,9 @@ Reply ONLY with JSON: {"action":"sale|expense|credit_given|payment_received|unkn
 - amount = total money in major units (Leones). sale bought on credit => method "credit" and name = buyer.
 - credit_given: someone took goods/money and owes. payment_received: someone paid a debt.
 - expense category one of: ${EXPENSE_CATEGORIES.join(', ')}.
-- Krio: "don pay"=has paid, "tek"=took, "sel"=sold, "trust"=credit, "kopor"=money.
+- Krio (standard spelling, often typed without ɛ/ɔ): "dɔn pe"/"don pay"=has paid, "pe bak"=paid back, "tek"=took, "sɛl"/"sel"=sold, "bay"=bought,
+  "spɛn"=spent, "trɔs"/"trust"=credit, "ɔw"=owes, "dɛt"=debt, "lɛnt"=lent, "kopor"/"mɔni"=money, "tide"=today, "yɛstade"=yesterday,
+  numbers: wan, tu, tri, fo, fayv, siks, sɛvin, et, nayn, tɛn, ɔndrɛd=hundred, tawzin=thousand (e.g. "tri tawzin"=3000).
 Known customers: ${book.contacts.slice(0, 80).map((c) => c.name).join(', ') || 'none'}.
 Known products: ${book.products.slice(0, 80).map((p) => p.name).join(', ') || 'none'}.`;
   const out = ParsedSchema.parse(extractJson(await complete([{ role: 'system', content: sys }, { role: 'user', content: text }], { json: true })));

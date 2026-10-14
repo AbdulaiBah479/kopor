@@ -35,7 +35,7 @@ export default defineConfig({
         // Mobile data is expensive: precache only the core app. Heavy optional tools (scanner, PDF, Excel,
         // printer, cloud, crash reporting) are cached the first time someone uses them.
         globIgnores: ['**/Scanner-*', '**/pdf-*', '**/excel-*', '**/html2canvas*', '**/purify*', '**/index.es-*', '**/printer-*', '**/cloud-*', '**/sentry-*', '**/tour-*',
-          '**/inter-cyrillic*', '**/inter-greek*', '**/inter-vietnamese*'],
+          '**/inter-cyrillic*', '**/inter-greek*', '**/inter-vietnamese*', '**/og.*'],
         runtimeCaching: [{
           urlPattern: ({ url }) => url.pathname.includes('/assets/'),
           handler: 'CacheFirst',

@@ -45,7 +45,7 @@ const extra = {
       offline: 'Yes. Everything works offline and is saved on your phone. If you connect a cloud account, it syncs when you are back online.',
       backup: 'Settings → Backup downloads a file (you can add a password). Or create a cloud account to back up automatically.',
       staff: 'Yes. In Team, add staff with a role (manager, cashier or viewer). Each person can have their own PIN on a shared phone.',
-      payments: 'Connect your Monime account in Payments. Then each invoice can get a payment link or a USSD code the customer dials from any phone.',
+      payments: 'Tap Receive on Home. Save your Orange Money, Afrimoney or QMoney numbers once, then send a pay-me message or show a QR code. When the money arrives, tap "I received the money" to record it. To send, tap Send: Kopor opens your mobile money menu and then records the payment. Connect Monime for payments that confirm themselves.',
       ai: 'Tap Speak and say what happened, like "Sold 2 bags rice 1700". Kopor fills in the record for you to check and save.',
       printer: 'Yes, on Bluetooth thermal printers (58mm or 80mm). Set it up in Settings → Receipt printer. Classic Bluetooth printers work through the free RawBT app.',
       tax: 'Settings → Tax & receipts. Enter your rate (15% for GST) and whether your prices already include it.',
@@ -78,6 +78,7 @@ const extra = {
     deleted: 'Account deleted',
   },
   errx: {
+    recoverBad: 'The phone number or recovery code is wrong.', recoverLocked: 'Too many tries. Try again in an hour.',
     offline: 'No internet connection. Your records are safe on this phone. Check your data or Wi-Fi and try again.',
     returnTooMany: 'You cannot return more {{name}} than was sold.', voidPaid: 'Only unpaid invoices can be voided. Record a return instead.',
     proLimit: 'The free plan allows {{limit}}. Upgrade to Kopor Pro for more.', noBluetooth: 'Bluetooth printing is not available in this browser. Use Chrome on Android or the RawBT option.',

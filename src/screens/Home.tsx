@@ -81,7 +81,7 @@ export function Home() {
   const tone = (x: { tone: string; key: string }) => (x.tone === 'bad' ? 'alert' : x.tone === 'good' ? 'trendUp' : x.key === 'ins.salesDown' ? 'trendDown' : x.key === 'ins.runningOut' ? 'box' : 'spark');
 
   return (
-    <Page title={book.org.name} sub={`${greet}${member ? ', ' + member.name.split(' ')[0] : ''}`}
+    <Page guide="home" title={book.org.name} sub={`${greet}${member ? ', ' + member.name.split(' ')[0] : ''}`}
       right={<>
         <button className="icon-btn" onClick={search} aria-label={t('ux.searchTitle')} data-testid="search"><Icon name="search" size={22} /></button>
         <Link className="icon-btn" to="/settings" aria-label={t('settings.title')}><Icon name="sliders" size={22} /></Link>
@@ -106,6 +106,13 @@ export function Home() {
           </span>
         </div>
       </section>
+
+      {can('record') && (
+        <div className="money-actions" data-tour="money">
+          <button className="btn primary" onClick={() => nav('/money', { state: { open: 'receive' } })} data-testid="home-receive"><Icon name="down" size={20} /> {t('money.receive')}</button>
+          <button className="btn tinted" onClick={() => nav('/money', { state: { open: 'send' } })} data-testid="home-send"><Icon name="up" size={20} /> {t('money.send')}</button>
+        </div>
+      )}
 
       {can('record') && (
         <div className="actions" data-tour="quick">

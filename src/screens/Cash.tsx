@@ -41,7 +41,7 @@ export function CashBook() {
   const label = (e: Txn) => e.type === 'in' ? itemsLabel(e.items) || e.note || t('categories.sale') : e.category === 'refund' ? `${t('returns.refund')}: ${itemsLabel(e.items)}` : t(`categories.${e.category}`);
 
   return (
-    <Page title={t('cash.title')} sub={t('cash.sub')}
+    <Page guide="cash" title={t('cash.title')} sub={t('cash.sub')}
       after={can('record') && (
         <div className="sticky-actions"><div className="btn-row">
           <button className="btn get" data-testid="new-sale" onClick={() => openSheet(t('cash.newSale'), <SaleSheet />)}><Icon name="plus" size={18} /> {t('home.sale')}</button>

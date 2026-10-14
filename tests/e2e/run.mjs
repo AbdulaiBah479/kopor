@@ -77,7 +77,7 @@ await step('first-use guided tour shows and can be finished', async () => {
   await shot('02-home');
 });
 
-for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan']) {
+for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money']) {
   await step(`screen ${r} renders at phone width`, async () => { await go(r); await noOverflow(); });
 }
 
@@ -202,6 +202,72 @@ await step('close the day', async () => {
   await page.getByText('Day closed').waitFor();
 });
 
+await step('money: receive with QR code, then record a debt payment', async () => {
+  await go('/');
+  await page.getByTestId('home-receive').click();
+  const f = page.getByTestId('receive-form');
+  await f.locator('[name=from]').fill('Aminata Sesay');
+  await f.locator('[name=reason]').fill('Rice');
+  await f.getByTestId('show-qr').click();
+  await page.waitForFunction(() => document.querySelector('img.qr')?.getAttribute('src')?.startsWith('data:image/png'), null, { timeout: 10000 });
+  await shot('12-receive');
+  await tapInSheet(f.getByTestId('money-got'));
+  const r = page.getByTestId('record-in-form');
+  await r.locator('[name=amount]').fill('100');
+  if (await r.locator('[name=as]').inputValue() !== 'debt') throw new Error('debtor not preselected');
+  await tapInSheet(r.getByRole('button', { name: 'Save' }));
+  await page.getByText('Money recorded').first().waitFor();
+});
+
+await step('money: send opens the network menu and records the payment', async () => {
+  await go('/money');
+  await page.getByTestId('money-send').click();
+  const f = page.getByTestId('send-form');
+  await f.locator('[name=phone]').fill('077123456');
+  await f.locator('[name=amount]').fill('30');
+  const href = await f.getByTestId('dial').getAttribute('href');
+  if (href !== 'tel:*144%23') throw new Error(`dial link ${href}`);
+  await shot('13-send');
+  await tapInSheet(f.getByTestId('sent-record'));
+  await page.getByText('Money recorded').first().waitFor();
+});
+
+await step('money: edit mobile money numbers', async () => {
+  await go('/money');
+  await page.getByRole('button', { name: 'Edit numbers' }).click();
+  const f = page.getByTestId('wallets-form');
+  await f.locator('[name=wallet_afrimoney]').fill('077 555 111');
+  await tapInSheet(f.getByRole('button', { name: 'Save numbers' }));
+  await page.getByText('Saved').first().waitFor();
+  await page.locator('.list .item', { hasText: '077555111' }).first().waitFor();
+});
+
+await step('public pay page from a pay-me link', async () => {
+  const data = await page.evaluate(() => {
+    const json = JSON.stringify({ b: "Fatu's Provisions", a: 25000, c: 'Le', r: 'Rice', w: [['orange', '076123456']] });
+    return btoa(String.fromCharCode(...new TextEncoder().encode(json))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  });
+  await page.goto(BASE + '#/pay/' + data);
+  await page.getByRole('heading', { name: "Pay Fatu's Provisions" }).waitFor();
+  await page.getByText('076123456').waitFor();
+  await page.locator('[data-vaul-drawer]').waitFor({ state: 'detached', timeout: 2000 }).catch(() => { throw new Error('a sheet is still open over the pay page'); });
+  await noOverflow();
+  await shot('14-pay-page');
+});
+
+await step('how-it-works guide on a screen', async () => {
+  await go('/credit');
+  await page.getByTestId('guide-btn').click();
+  const n = await page.getByTestId('guide').locator('li').count();
+  if (n !== 4) throw new Error(`guide has ${n} steps`);
+});
+
+await step('assistant answers without AI from the records', async () => {
+  await go('/assistant');
+  await page.getByPlaceholder(/Who owes me the most/i).fill('Who owes me the most?');
+  await page.getByPlaceholder(/Who owes me the most/i).press('Enter');
+  await page.locator('.bubble.ai', { hasText: /owe you the most|Nobody owes you/ }).first().waitFor({ timeout: 30000 });
+});
 await step('Excel export downloads', async () => {
   await go('/settings');
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-excel').click()]);

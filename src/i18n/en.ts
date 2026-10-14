@@ -1,5 +1,6 @@
 // English source strings. Every key must also exist in kri.ts and fr.ts (enforced by a unit test).
 import extra from './extra.en';
+import v3 from './v3.en';
 
 const base = {
   app: { name: 'Kopor', tagline: 'Your business book, payments and advisor, in your pocket.' },
@@ -180,6 +181,6 @@ const base = {
   },
 };
 
-const en = { ...base, ...extra };
+const en = { ...base, ...extra, ...v3 };
 export default en;
 export type Dict = typeof en;

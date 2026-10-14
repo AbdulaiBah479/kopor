@@ -21,7 +21,7 @@ export function GroupList() {
   const { can } = useApp();
   const { openSheet } = useOverlay();
   return (
-    <Page title={t('groups.title')} sub={t('groups.sub')} back="/more"
+    <Page guide="groups" title={t('groups.title')} sub={t('groups.sub')} back="/more"
       fab={can('groups') && <button className="fab" onClick={() => openSheet(t('groups.new'), <GroupSheet />)}><Icon name="plus" /> {t('groups.new')}</button>}>
       <div className="card flat small">{t('groups.intro')}</div>
       <div className="list">

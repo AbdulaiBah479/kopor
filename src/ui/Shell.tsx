@@ -3,21 +3,46 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import { Icon } from './Icon';
-import { haptic } from './overlay';
+import { haptic, useOverlay } from './overlay';
 import { useApp } from '@/state/app';
 import { syncNow } from '@/cloud/sync';
 
 const TABS: [string, string, string][] = [['/', 'home', 'nav.home'], ['/credit', 'book', 'nav.credit'], ['/cash', 'cash', 'nav.cash'], ['/stock', 'box', 'nav.stock'], ['/more', 'grid', 'nav.more']];
-const MORE_ROUTES = ['/more', '/groups', '/invoices', '/payments', '/health', '/report', '/team', '/audit', '/settings', '/assistant', '/reminders', '/help', '/plan', '/account'];
+const MORE_ROUTES = ['/more', '/money', '/groups', '/invoices', '/payments', '/health', '/report', '/team', '/audit', '/settings', '/assistant', '/reminders', '/help', '/plan', '/account'];
 
 /**
  * iOS navigation: top-level screens show a large title that collapses into a translucent bar on scroll;
  * pushed screens (with a back link) show a compact centred title.
  */
-export function Page({ title, sub, back, right, children, fab, after }: {
-  title: string; sub?: string; back?: string; right?: ReactNode; children: ReactNode; fab?: ReactNode; after?: ReactNode;
+export type GuideKey = 'home' | 'credit' | 'cash' | 'stock' | 'groups' | 'invoices' | 'money' | 'team' | 'health' | 'assistant';
+
+/** Numbered how-it-works steps for a screen, opened from the (i) button in its top bar. */
+export function GuideSheet({ k }: { k: GuideKey }) {
+  const { t } = useTranslation();
+  return (
+    <ol className="guide" data-testid="guide">
+      {(['s1', 's2', 's3', 's4'] as const).map((s, i) => <li key={s}><span className="n">{i + 1}</span><span>{t(`guide.${k}.${s}`)}</span></li>)}
+    </ol>
+  );
+}
+
+/** Shown on every screen while the phone is offline (everything keeps working locally). */
+function NetBanner() {
+  const { t } = useTranslation();
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const on = () => setOnline(true), off = () => setOnline(false);
+    window.addEventListener('online', on); window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
+  return online ? null : <div className="net-banner" role="status"><Icon name="offline" size={16} /> {t('pwa.offline')}</div>;
+}
+
+export function Page({ title, sub, back, right, children, fab, after, guide }: {
+  title: string; sub?: string; back?: string; right?: ReactNode; children: ReactNode; fab?: ReactNode; after?: ReactNode; guide?: GuideKey;
 }) {
   const { t } = useTranslation();
+  const { openSheet } = useOverlay();
   const { sync, session } = useApp();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -35,8 +60,14 @@ export function Page({ title, sub, back, right, children, fab, after }: {
         {back && <Link className="icon-btn" to={back} aria-label={t('common.back')}><Icon name="back" size={28} strokeWidth={2.2} /></Link>}
         {back ? <h1 className="nav-title">{title}</h1> : <span className="nav-title" aria-hidden="true">{title}</span>}
         <span className="spacer-x" />
+        {guide && (
+          <button className="icon-btn" onClick={() => openSheet(t(`guide.${guide}.title`), <GuideSheet k={guide} />)} aria-label={t('guide.open')} data-testid="guide-btn">
+            <Icon name="info" size={22} />
+          </button>
+        )}
         {right}
       </header>
+      <NetBanner />
       {!back && (
         <div className="large-title">
           <h1>{title}</h1>

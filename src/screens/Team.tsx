@@ -22,7 +22,7 @@ export function Team() {
   const branchName = (id: string | null) => (id ? book.branches.find((b) => b.id === id)?.name : t('team.allBranches'));
 
   return (
-    <Page title={t('team.title')} sub={t('team.sub')} back="/more"
+    <Page guide="team" title={t('team.title')} sub={t('team.sub')} back="/more"
       right={pins.size > 0 && <button className="icon-btn" aria-label={t('team.switchUser')} onClick={lock}><Icon name="lock" /></button>}>
       <div className="row between"><h3 style={{ fontSize: 15 }}>{t('team.staff')}</h3>
         {can('team') && <button className="btn sm primary" onClick={() => openSheet(t('team.addStaff'), <MemberSheet />)}><Icon name="plus" size={16} /> {t('team.addStaff')}</button>}</div>

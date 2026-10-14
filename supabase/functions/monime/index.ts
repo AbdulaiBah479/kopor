@@ -1,9 +1,9 @@
-// Kopor ⇄ Monime payments. Each business connects its OWN Monime account; Kopor never holds funds.
+// Kopor â‡„ Monime payments. Each business connects its OWN Monime account; Kopor never holds funds.
 // Actions: connect | status | disconnect | checkout | ussd | providers | payout
 import { admin, caller, cors, json, requireLevel, seal, HttpError, env, nowMs, randomSecret } from '../_shared/util.ts';
 import { credsFor, monime, SLE, type MonimeCreds } from '../_shared/monime.ts';
 
-const LEVEL = { connect: 3, disconnect: 3, status: 0, checkout: 2, ussd: 2, providers: 3, payout: 3 } as const;
+const LEVEL = { connect: 3, disconnect: 3, status: 0, checkout: 2, link: 2, ussd: 2, providers: 3, payout: 3 } as const;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -59,13 +59,30 @@ Deno.serve(async (req) => {
         const requestId = crypto.randomUUID();
         const appUrl = Deno.env.get('PUBLIC_APP_URL');
         const session = await monime<{ id: string; redirectUrl: string }>(await credsFor(orgId), 'POST', '/checkout-sessions', {
-          name: `${org!.name} · ${inv.number}`.slice(0, 150), lineItems, reference: inv.number,
+          name: `${org!.name} Â· ${inv.number}`.slice(0, 150), lineItems, reference: inv.number,
           ...(appUrl ? { successUrl: `${appUrl}#/i/${inv.public_token}`, cancelUrl: `${appUrl}#/i/${inv.public_token}` } : {}),
-          brandingOptions: { primaryColor: '#0b7a3b' }, metadata: { orgId, invoiceId: inv.id, requestId },
+          brandingOptions: { primaryColor: '#047857' }, metadata: { orgId, invoiceId: inv.id, requestId },
         }, `checkout-${inv.id}-${Math.floor(Date.now() / 600000)}`);
         await db.from('payment_requests').insert({
           id: requestId, org_id: orgId, created_at: nowMs(), updated_at: nowMs(), kind: 'checkout', invoice_id: inv.id, amount: total,
           status: 'pending', provider_ref: session.id, url: session.redirectUrl, note: inv.number,
+        });
+        return json({ url: session.redirectUrl, requestId });
+      }
+      case 'link': {
+        const amount = Math.round(Number(body.amount));
+        if (!(amount > 0) || amount > 1_000_000_000) throw new HttpError(400, 'Invalid amount');
+        const { data: org } = await db.from('orgs').select('name').eq('id', orgId).single();
+        const name = String(body.name ?? '').trim().slice(0, 100) || org!.name;
+        const requestId = crypto.randomUUID();
+        const appUrl = Deno.env.get('PUBLIC_APP_URL');
+        const session = await monime<{ id: string; redirectUrl: string }>(await credsFor(orgId), 'POST', '/checkout-sessions', {
+          name: `${org!.name} Â· ${name}`.slice(0, 150), lineItems: [{ type: 'custom', name, price: SLE(amount), quantity: 1 }], reference: requestId.slice(0, 64),
+          ...(appUrl ? { successUrl: appUrl, cancelUrl: appUrl } : {}), brandingOptions: { primaryColor: '#047857' }, metadata: { orgId, requestId },
+        }, `link-${requestId}`);
+        await db.from('payment_requests').insert({
+          id: requestId, org_id: orgId, created_at: nowMs(), updated_at: nowMs(), kind: 'checkout', amount, status: 'pending',
+          provider_ref: session.id, url: session.redirectUrl, note: name,
         });
         return json({ url: session.redirectUrl, requestId });
       }

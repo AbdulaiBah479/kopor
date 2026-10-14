@@ -45,6 +45,10 @@ try {
     await f.locator('input[type=tel]').fill(phone);
     await f.locator('input[type=password]').fill(pin);
     await f.locator('button.btn.primary').click();
+    // New accounts get a one-time PIN recovery code first.
+    await a.getByTestId('recovery-code').waitFor({ timeout: 60000 });
+    if (!/^[A-Z2-9]{5}-[A-Z2-9]{5}$/.test((await a.locator('.recovery-code').innerText()).trim())) throw new Error('bad recovery code');
+    await a.getByRole('button', { name: 'I have saved it' }).click();
     await a.getByTestId('upload-business').click({ timeout: 60000 });
     await a.goto(BASE + '#/account');
     await lastSyncShown(a);

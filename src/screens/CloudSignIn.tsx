@@ -10,6 +10,8 @@ import { getCloudConfig, setCloudConfig } from '@/cloud/supabase';
 import { signIn, signUp } from '@/cloud/auth';
 import { remoteOrgs } from '@/cloud/sync';
 import { openCloudOrg, connectOrg } from '@/cloud/account';
+import { createRecoveryCode } from '@/cloud/recovery';
+import { RecoveryCodeCard, ResetPinForm } from './Recovery';
 
 export default function CloudSignIn({ onDone }: { onDone?: () => void }) {
   const { t } = useTranslation();
@@ -18,7 +20,8 @@ export default function CloudSignIn({ onDone }: { onDone?: () => void }) {
   const [cfg, setCfg] = useState({ url: '', anonKey: '' });
   const [hasCfg, setHasCfg] = useState<boolean | null>(null);
   const [f, setF] = useState({ phone: '', pin: '', name: '' });
-  const [mode, setMode] = useState<'in' | 'up'>('in');
+  const [mode, setMode] = useState<'in' | 'up' | 'reset'>('in');
+  const [code, setCode] = useState('');
   const [orgs, setOrgs] = useState<{ id: string; name: string; role: string }[] | null>(null);
   useEffect(() => { getCloudConfig().then((c) => setHasCfg(!!c)); }, []);
 
@@ -29,6 +32,15 @@ export default function CloudSignIn({ onDone }: { onDone?: () => void }) {
       <Field label={t('settings.cloudKey')}><input required value={cfg.anonKey} onChange={(e) => setCfg({ ...cfg, anonKey: e.target.value })} /></Field>
       <button className="btn primary block">{t('settings.cloudSave')}</button>
     </form>
+  );
+  const showOrgs = async () => setOrgs(await remoteOrgs());
+  // New account: show the one-time recovery code before anything else.
+  if (code) return <RecoveryCodeCard code={code} onDone={() => { setCode(''); showOrgs().catch(fail); }} />;
+  if (mode === 'reset') return (
+    <div className="stack">
+      <ResetPinForm onSignedIn={() => { setMode('in'); showOrgs().catch(fail); }} />
+      <button type="button" className="btn ghost block" onClick={() => setMode('in')}>{t('common.back')}</button>
+    </div>
   );
   if (orgs) {
     // A business open on this phone that is not in the account yet can be uploaded in one tap.
@@ -54,9 +66,14 @@ export default function CloudSignIn({ onDone }: { onDone?: () => void }) {
     <form className="form" onSubmit={async (e) => {
       e.preventDefault();
       try {
-        if (mode === 'up') await signUp(f.phone, f.pin, f.name); else await signIn(f.phone, f.pin);
-        toast(t('common.done'));
-        setOrgs(await remoteOrgs());
+        if (mode === 'up') {
+          await signUp(f.phone, f.pin, f.name);
+          toast(t('common.done'));
+          // If the recovery service is unavailable, sign-up still succeeds; a code can be made later in Account.
+          const c = await createRecoveryCode().catch(() => '');
+          if (c) { setCode(c); return; }
+        } else { await signIn(f.phone, f.pin); toast(t('common.done')); }
+        await showOrgs();
       } catch (err) { fail(err); }
     }}>
       <div className="seg">
@@ -67,6 +84,7 @@ export default function CloudSignIn({ onDone }: { onDone?: () => void }) {
       <Field label={t('common.phone')}><input type="tel" required autoComplete="tel" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
       <Field label={t('settings.cloudPin')}><input type="password" inputMode="numeric" pattern="\d{6}" maxLength={6} required autoComplete={mode === 'up' ? 'new-password' : 'current-password'} value={f.pin} onChange={(e) => setF({ ...f, pin: e.target.value.replace(/\D/g, '') })} /></Field>
       <button className="btn primary block">{mode === 'up' ? t('settings.signUp') : t('settings.signIn')}</button>
+      {mode === 'in' && <button type="button" className="btn ghost block" onClick={() => setMode('reset')} data-testid="forgot-pin">{t('recover.forgot')}</button>}
     </form>
   );
 }

@@ -1,10 +1,11 @@
-// AI proxy so users don't need their own key. The server key (GROQ_API_KEY or any OpenAI-compatible
-// AI_API_KEY/AI_BASE_URL) never reaches the phone. Rate-limited per business per day.
+// AI proxy so users don't need their own key. Server keys never reach the phone. Requests go through a chain of
+// free providers/models (see _shared/llm.ts) so one provider's limit never stops the app. Rate-limited per business per day.
 import { admin, cors, json, HttpError, env } from '../_shared/util.ts';
+import { complete } from '../_shared/llm.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1';
 
-const FREE_LIMIT = Number(Deno.env.get('AI_DAILY_LIMIT') ?? 30);
-const PRO_LIMIT = Number(Deno.env.get('AI_DAILY_LIMIT_PRO') ?? 300);
+const FREE_LIMIT = Number(Deno.env.get('AI_DAILY_LIMIT') ?? 50);
+const PRO_LIMIT = Number(Deno.env.get('AI_DAILY_LIMIT_PRO') ?? 500);
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -16,27 +17,20 @@ Deno.serve(async (req) => {
     const { data: m } = await user.from('members').select('org_id').eq('user_id', u.user.id).eq('active', 1).limit(1).maybeSingle();
     if (!m) throw new HttpError(403, 'Not a member of any business');
 
+    const { messages, vision } = await req.json();
+    if (!Array.isArray(messages) || messages.length > 24 || JSON.stringify(messages).length > 2_500_000) throw new HttpError(400, 'Request too large');
+
     const db = admin();
     const day = new Date().toISOString().slice(0, 10);
     const { data: usage } = await db.from('ai_usage').select('count').eq('org_id', m.org_id).eq('day', day).maybeSingle();
     const { data: pro } = await db.rpc('kopor_is_pro', { o: m.org_id });
-    if ((usage?.count ?? 0) >= (pro ? PRO_LIMIT : FREE_LIMIT)) throw new HttpError(429, 'Daily AI limit reached. Try again tomorrow or upgrade to Kopor Pro.');
-    await db.from('ai_usage').upsert({ org_id: m.org_id, day, count: (usage?.count ?? 0) + 1 });
+    if ((usage?.count ?? 0) >= (pro ? PRO_LIMIT : FREE_LIMIT)) throw new HttpError(429, 'Daily AI limit reached. Kopor will use offline mode until tomorrow, or upgrade to Kopor Pro.');
 
-    const { messages, vision } = await req.json();
-    if (!Array.isArray(messages) || messages.length > 24 || JSON.stringify(messages).length > 2_500_000) throw new HttpError(400, 'Request too large');
-    const base = Deno.env.get('AI_BASE_URL') ?? 'https://api.groq.com/openai/v1';
-    const key = Deno.env.get('AI_API_KEY') ?? env('GROQ_API_KEY');
-    const model = vision ? (Deno.env.get('AI_VISION_MODEL') ?? 'qwen/qwen3.8-27b') : (Deno.env.get('AI_MODEL') ?? 'openai/gpt-oss-120b');
-    const res = await fetch(`${base}/chat/completions`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-      // Reasoning models (gpt-oss) think briefly: faster, cheaper, and enough for bookkeeping.
-      body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 1200, ...(/gpt-oss/.test(model) ? { reasoning_effort: 'low' } : {}) }),
-    });
-    if (!res.ok) throw new HttpError(502, `AI provider error ${res.status}`);
-    const j = await res.json();
-    return json({ content: j.choices?.[0]?.message?.content ?? '' });
+    const out = await complete(messages, { vision: !!vision });
+    // Count only answered requests, so provider outages never use up a business's daily allowance.
+    await db.from('ai_usage').upsert({ org_id: m.org_id, day, count: (usage?.count ?? 0) + 1 });
+    return json({ content: out.content, provider: out.provider });
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : 'Server error' }, e instanceof HttpError ? e.status : 500);
+    return json({ error: e instanceof Error ? e.message : 'Server error' }, e instanceof HttpError ? e.status : 503);
   }
 });

@@ -5,6 +5,8 @@ import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
 import { health } from '@/domain/health';
 import { isPro } from '@/domain/plan';
+import { useInstall, APP_URL } from '@/features/pwa';
+import { shareText } from '@/lib/share';
 
 export const ORG_TYPES = ['shop', 'trader', 'wholesale', 'pharmacy', 'restaurant', 'salon', 'tailor', 'transport', 'farm', 'services', 'school', 'church', 'association', 'personal', 'other'];
 
@@ -25,9 +27,11 @@ export function More() {
   const { can } = useApp();
   const h = health(book);
   const { sync } = useApp();
+  const { canInstall, install } = useInstall();
   return (
     <Page title={t('nav.more')}>
       <div className="list">
+        <MenuItem to="/money" icon="swap" tile="green" title={t('money.title')} sub={t('money.sub')} />
         <MenuItem to="/account" icon="cloud" tile="blue" title={t('settings.cloud')}
           sub={sync.status === 'off' ? t('settings.syncOff') : sync.status === 'error' ? t('settings.syncError', { error: sync.error ?? '' }).slice(0, 60)
             : sync.status === 'syncing' ? t('settings.syncing') : sync.lastSync ? t('settings.lastSync', { time: new Date(sync.lastSync).toLocaleTimeString() }) : t('settings.syncing')} />
@@ -47,6 +51,18 @@ export function More() {
         <MenuItem to="/plan" icon="crown" tile="yellow" title={t('plan.title')} sub={isPro(book.org) ? t('plan.proActive') : t('plan.freeSub')} />
         <MenuItem to="/settings" icon="sliders" tile="gray" title={t('settings.title')} sub={t('more.settingsSub')} />
         <MenuItem to="/help" icon="help" tile="blue" title={t('help.title')} sub={t('help.sub')} />
+      </div>
+      <div className="list">
+        {canInstall && (
+          <button className="item" onClick={install} data-testid="install">
+            <span className="tile" style={{ background: 'var(--tile-indigo)' }}><Icon name="install" size={18} strokeWidth={2.2} /></span>
+            <div className="main"><div className="t">{t('pwa.install')}</div><div className="s">{t('pwa.installHelp')}</div></div>
+          </button>
+        )}
+        <button className="item" onClick={() => shareText(t('pwa.shareMsg', { link: APP_URL }))} data-testid="share-app">
+          <span className="tile" style={{ background: 'var(--tile-orange)' }}><Icon name="share" size={18} strokeWidth={2.2} /></span>
+          <div className="main"><div className="t">{t('pwa.share')}</div><div className="s">{APP_URL.replace(/^https:\/\//, '')}</div></div>
+        </button>
       </div>
       <p className="px-4 text-[13px] text-muted-foreground">{t('more.offlineNote')}</p>
     </Page>

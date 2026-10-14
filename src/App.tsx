@@ -29,6 +29,8 @@ const Account = lazyRetry(() => import('./screens/Settings').then((m) => ({ defa
 const PublicInvoice = lazyRetry(() => import('./screens/PublicInvoice').then((m) => ({ default: m.PublicInvoice })));
 const Help = lazyRetry(() => import('./screens/Help').then((m) => ({ default: m.Help })));
 const Legal = lazyRetry(() => import('./screens/Legal').then((m) => ({ default: m.Legal })));
+const Money = lazyRetry(() => import('./screens/Money').then((m) => ({ default: m.Money })));
+const PayPage = lazyRetry(() => import('./screens/Money').then((m) => ({ default: m.PayRoute })));
 const Plan = lazyRetry(() => import('./screens/Plan').then((m) => ({ default: m.Plan })));
 
 const Boot = () => <div className="boot"><div className="boot-logo">K</div></div>;
@@ -37,10 +39,11 @@ function Gate() {
   const { ready, session, book, locked } = useApp();
   const { pathname } = useLocation();
   // Public pages work without a business or sign-in (customer invoice links, legal pages for app stores).
-  if (pathname.startsWith('/i/') || pathname.startsWith('/legal/')) return (
+  if (pathname.startsWith('/i/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/')) return (
     <Suspense fallback={<Boot />}><Routes>
       <Route path="/i/:token" element={<PublicInvoice />} />
       <Route path="/legal/:doc" element={<Legal />} />
+      <Route path="/pay/:data" element={<PayPage />} />
     </Routes></Suspense>
   );
   if (!ready || (session && book === undefined)) return <Boot />;
@@ -60,6 +63,7 @@ function Gate() {
         <Route path="/groups/:id" element={<GroupDetail />} />
         <Route path="/invoices" element={<Invoices />} />
         <Route path="/invoices/:id" element={<InvoiceDetail />} />
+        <Route path="/money" element={<Money />} />
         <Route path="/payments" element={<Payments />} />
         <Route path="/reminders" element={<Reminders />} />
         <Route path="/assistant" element={<Assistant />} />

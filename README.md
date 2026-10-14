@@ -17,6 +17,7 @@ takes mobile money payments, and answers questions about the business in English
 | **Stock** | Products, margins, low-stock alerts, a **"runs out in N days" forecast**, restocks that record the expense automatically |
 | **Osusu & Groups** | Rotating savings (whose turn it is, payouts) and dues; member reliability score; WhatsApp reminders and group updates; send the pot by mobile money |
 | **Invoices & Receipts** | Professional invoices with a verification code; **payment links** and **USSD pay codes** (Monime); a public link for customers; print or PDF |
+| **Money: receive & send** | Big **Receive** and **Send** buttons on Home. Works from day one with no partner account: save your Orange Money, Afrimoney and QMoney numbers; send a pay-me message or show a **QR code** that opens a public pay page; Send opens the network's own menu (Orange *144#, Afrimoney *161#) with the number ready, then records the payment as an expense, supplier payment or loan. With Monime: payment links for any amount, USSD pay codes and payouts that confirm themselves and land in the cash book automatically |
 | **Payments** | Each business connects its **own** Monime account (licensed by the Bank of Sierra Leone). Kopor never holds funds. Payouts are owner-only |
 | **AI** | Speak or type entries ("Aminata tek 2 tin oil 400 on credit"); scan receipts or notebook pages; chat with an advisor about your own numbers. Works offline with rule-based parsing and insights; uses free models (Groq, Gemini, OpenRouter) when online |
 | **Staff & branches** | Owner, Manager, Cashier and Viewer roles; multiple branches; staff invited by phone number; switch user on a shared phone; full activity log |
@@ -31,6 +32,9 @@ takes mobile money payments, and answers questions about the business in English
 | **Receipt printers** | 58mm and 80mm Bluetooth thermal printers (ESC/POS); classic Bluetooth printers via the free RawBT app |
 | **Barcode scanning** | Scan products into a sale or invoice, scan to find stock, scan to set a product code |
 | **Kopor Pro** | Free: 1 branch, 3 staff. Pro (paid via Monime): unlimited branches and staff, more AI. Limits are enforced by the server |
+| **How it works** | An (i) button on every main screen explains that screen in 4 steps, in all three languages |
+| **PIN recovery** | One-time recovery code at sign-up (saved to WhatsApp); reset a forgotten PIN without SMS. Only a salted hash is stored; 5 wrong tries lock it for an hour |
+| **Install & share** | Install button (Android/Chrome), offline banner, WhatsApp link preview card, share-the-app message |
 | **Help & onboarding** | Guided first-use tour, help and FAQ in 3 languages, privacy policy, terms, account deletion |
 | **Reliability** | Crash reporting (Sentry, privacy-scrubbed), friendly error screen, Workbox offline caching (685 KB precached; heavy tools cached on first use) |
 
@@ -52,8 +56,41 @@ takes mobile money payments, and answers questions about the business in English
 | Guided tour | driver.js |
 | Crash reporting | Sentry |
 | Payments | Monime API |
-| AI | Groq / Gemini / OpenRouter (any OpenAI-compatible API) |
+| AI | Free-tier chain: Groq (3 models) → Google Gemini → Cerebras → Mistral → GitHub Models → OpenRouter, from [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) |
+| QR codes | node-qrcode |
+| Security scanning | CodeQL, Gitleaks, OSV-Scanner, OpenSSF Scorecard, Dependabot |
+| Linting | ESLint + typescript-eslint, react-hooks, jsx-a11y (accessibility) |
 | Testing | Vitest, PGlite (real Postgres in-process), Playwright |
+
+## AI that never runs out
+
+The `ai` Edge Function tries free providers in order and moves on when one is rate-limited, down or has retired a
+model ([supabase/functions/_shared/llm.ts](supabase/functions/_shared/llm.ts)). Each Groq model has its own free quota,
+so Groq alone gives three. Add more free keys as Supabase secrets to multiply the capacity. Nothing else changes:
+
+| Secret | Free key from |
+|---|---|
+| `GROQ_API_KEY` (set) | console.groq.com |
+| `GEMINI_API_KEY` | aistudio.google.com/apikey |
+| `CEREBRAS_API_KEY` | cloud.cerebras.ai |
+| `MISTRAL_API_KEY` | console.mistral.ai |
+| `GITHUB_MODELS_TOKEN` | github.com/settings/tokens (fine-grained, "Models: read" only) |
+| `OPENROUTER_API_KEY` | openrouter.ai/keys |
+
+When no AI is reachable at all (offline, daily limit), the assistant still answers the common questions (who owes me,
+what to restock, profit, biggest costs, best sellers) from the records, in English and Krio, and voice entry uses the
+offline parser.
+
+## Krio language data
+
+Krio wording and the offline parser's vocabulary were checked against open Krio corpora: every Krio word in the app is
+compared with the corpus spelling, and 92 misspellings were corrected (for example *bizines* to **biznɛs**).
+
+- English–Krio sentence pairs (42,349 pairs, derived from OPUS MT560): [michsethowusu/english-krio_sentence-pairs_mt560](https://huggingface.co/datasets/michsethowusu/english-krio_sentence-pairs_mt560), **CC BY 4.0**
+- Krio stories with English translations: [Jaward/Krio-Corpus](https://huggingface.co/datasets/Jaward/Krio-Corpus), **Apache 2.0**
+
+Open Krio speech-recognition models exist (e.g. `ghananlpcommunity/w2v-bert-2.0_krio_v3_farmerline`, MIT) and could
+power true Krio voice input later; they need a hosted GPU or a 250 MB+ download, so they are not used yet.
 
 ## Run it
 
@@ -70,7 +107,7 @@ npm run check        # typecheck + unit tests + database security tests + build 
 
 - **Netlify:** drag the `dist` folder onto https://app.netlify.com/drop
 - **Cloudflare Pages:** `npx wrangler pages deploy dist --project-name kopor`
-- **GitHub Pages:** push this repo; the `CI` workflow uploads `dist` as an artifact
+- **GitHub Pages (live now):** every push to `main` is tested and published to <https://abdulaibah479.github.io/kopor/> by the `Deploy web app` workflow
 
 Phones need **HTTPS** for offline mode and installation; all three services provide it.
 

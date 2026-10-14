@@ -29,7 +29,7 @@ export function StockList() {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <Page title={t('stock.title')} sub={t('stock.sub', { count: book.products.length, value: formatMoney(stockValue(book)) })}
+    <Page guide="stock" title={t('stock.title')} sub={t('stock.sub', { count: book.products.length, value: formatMoney(stockValue(book)) })}
       fab={can('stock') && <button className="fab" onClick={() => openSheet(t('stock.newProduct'), <ProductSheet />)}><Icon name="plus" /> {t('stock.product')}</button>}>
       <div className="grid2">
         <div className="stat"><div className="k">{t('stock.value')}</div><div className="v"><Money v={stockValue(book)} /></div></div>

@@ -6,6 +6,7 @@ import './styles.css';
 import { App } from './App';
 import { initMonitoring, reportError } from './features/monitoring';
 import { applyTheme } from './state/app';
+import { initInstallPrompt } from './features/pwa';
 
 applyTheme('auto'); // before the first paint, so there is no light/dark flash
 
@@ -18,6 +19,7 @@ createRoot(document.getElementById('root')!).render(
 );
 
 initMonitoring();
+initInstallPrompt();
 window.addEventListener('unhandledrejection', (e) => reportError(e.reason));
 
 // Offline support (Workbox service worker via vite-plugin-pwa). New versions activate automatically.

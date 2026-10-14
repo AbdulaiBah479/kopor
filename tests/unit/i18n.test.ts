@@ -23,6 +23,10 @@ describe('translations', () => {
       expect(ph(D[k]), k).toEqual(ph(E[k]));
     }
   });
+  it('source files have no broken characters (UTF-8 read as Windows-1252)', () => {
+    const bad = files(join(__dirname, '../../src')).filter((f) => /Ã[\u0080-¿×—]|â€|âœ|Â[·©®°]|�/.test(readFileSync(f, 'utf8')));
+    expect(bad).toEqual([]);
+  });
   it('all literal keys used in the code exist', () => {
     const missing: string[] = [];
     for (const f of files(join(__dirname, '../../src'))) {

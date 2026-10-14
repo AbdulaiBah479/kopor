@@ -2,8 +2,10 @@
 import type { Dict } from './en';
 import type { ExtraDict } from './extra.en';
 import extra from './extra.fr';
+import type { V3Dict } from './v3.en';
+import v3 from './v3.fr';
 
-const base: Omit<Dict, keyof ExtraDict> = {
+const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   app: { name: 'Kopor', tagline: 'Votre cahier de commerce, vos paiements et votre conseiller, dans la poche.' },
   common: {
     undo: 'Annuler', undone: 'Annulé',
@@ -178,5 +180,5 @@ const base: Omit<Dict, keyof ExtraDict> = {
   },
 };
 
-const fr: Dict = { ...base, ...extra };
+const fr: Dict = { ...base, ...extra, ...v3 };
 export default fr;

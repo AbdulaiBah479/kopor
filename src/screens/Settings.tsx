@@ -259,6 +259,15 @@ export function CloudCard() {
             <button className="btn" onClick={() => syncNow(ctx.orgId)}><Icon name="cloud" size={18} /> {t('settings.syncNow')}</button>
             <button className="btn ghost" onClick={() => signOut().then(refresh)}>{t('settings.signOut')}</button>
           </div>
+          <button className="btn tinted block" data-testid="new-recovery" onClick={async () => {
+            try {
+              const { createRecoveryCode } = await import('@/cloud/recovery');
+              const { RecoveryCodeCard } = await import('./Recovery');
+              const code = await createRecoveryCode();
+              toast(t('recover.made'));
+              openSheet(t('recover.codeTitle'), <RecoveryCodeCard code={code} />);
+            } catch (e) { fail(e); }
+          }}><Icon name="key" size={18} /> {t('recover.make')}</button>
           {can('business') && <button className="btn block" onClick={() => connectOrg(ctx.orgId, ctx.memberId!).then(() => toast(t('common.done'))).catch(fail)}><Icon name="upload" size={18} /> {t('settings.upload')}</button>}
           <button className="btn danger block" onClick={async () => {
             if (!confirm(t('account.confirm'))) return;

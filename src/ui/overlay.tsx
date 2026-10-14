@@ -65,7 +65,9 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ openSheet, closeSheet, toast, fail }}>
       {children}
-      <Drawer.Root open={open} onOpenChange={setOpen} repositionInputs>
+      {/* repositionInputs is off: vaul shrinks the sheet when the keyboard opens but never restores it, which hid the
+          Save button. The page itself resizes around the keyboard instead (interactive-widget in index.html). */}
+      <Drawer.Root open={open} onOpenChange={setOpen} repositionInputs={false}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-40 bg-black/45" />
           <Drawer.Content
@@ -87,7 +89,7 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
                 <Icon name="x" size={16} strokeWidth={2.6} />
               </button>
             </div>
-            <div className="sheet-body overflow-y-auto px-4 pb-[calc(20px+env(safe-area-inset-bottom))]" data-vaul-no-drag>{sheet?.body}</div>
+            <div className="sheet-body min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(20px+env(safe-area-inset-bottom))]" data-vaul-no-drag>{sheet?.body}</div>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>

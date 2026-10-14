@@ -30,7 +30,7 @@ export function InvoiceList() {
   const list = [...book.invoices].sort((a, b) => b.number.localeCompare(a.number)).filter((i) => !q || `${i.number} ${i.customer}`.toLowerCase().includes(q.toLowerCase()));
   const unpaid = book.invoices.filter((i) => i.status === 'unpaid');
   return (
-    <Page title={t('inv.title')} sub={t('inv.sub', { count: unpaid.length, amount: formatMoney(unpaid.reduce((s, i) => s + invoiceTotal(i), 0)) })} back="/more"
+    <Page guide="invoices" title={t('inv.title')} sub={t('inv.sub', { count: unpaid.length, amount: formatMoney(unpaid.reduce((s, i) => s + invoiceTotal(i), 0)) })} back="/more"
       fab={can('record') && <button className="fab" onClick={() => openSheet(t('inv.new'), <NewInvoiceSheet />)}><Icon name="plus" /> {t('inv.new')}</button>}>
       {book.invoices.length > 4 && <Search value={q} onChange={setQ} placeholder={t('common.search')} />}
       <div className="list">
@@ -39,7 +39,7 @@ export function InvoiceList() {
             <div className="avatar"><Icon name="file" size={18} /></div>
             <div className="main">
               <div className="t">{inv.customer} <span className={`badge ${inv.status === 'paid' ? 'good' : isOverdue(inv) ? 'bad' : inv.status === 'void' ? '' : 'warn'}`}>{t(inv.status === 'paid' ? 'inv.paid' : inv.status === 'void' ? 'inv.void' : isOverdue(inv) ? 'inv.overdue' : 'inv.unpaid')}</span></div>
-              <div className="s">{inv.number} Â· {fmt(inv.date)}</div>
+              <div className="s">{inv.number} · {fmt(inv.date)}</div>
             </div>
             <div className="amt num">{formatMoney(invoiceTotal(inv))}</div>
           </Link>
@@ -65,8 +65,8 @@ export function InvoiceDetail() {
   const publicUrl = `${location.origin}${location.pathname}#/i/${inv.public_token}`;
   const share = t('inv.shareMsg', {
     kind: t(paid ? 'inv.receipt' : 'inv.invoice'), number: inv.number, business: org.name, date: fmt(inv.date),
-    lines: inv.items.map((i) => `â€¢ ${i.qty} Ã— ${i.name}: ${formatMoney(i.qty * i.price)}`).join('\n'), total: formatMoney(total),
-    extra: paid ? '\nâœ… ' + t('inv.paid') : `${inv.due_date ? `\n${t('inv.due')}: ${fmt(inv.due_date)}` : ''}${org.momo_number ? `\n${t('inv.payMomo')}: ${org.momo_number}` : ''}`, code,
+    lines: inv.items.map((i) => `• ${i.qty} × ${i.name}: ${formatMoney(i.qty * i.price)}`).join('\n'), total: formatMoney(total),
+    extra: paid ? '\n✅ ' + t('inv.paid') : `${inv.due_date ? `\n${t('inv.due')}: ${fmt(inv.due_date)}` : ''}${org.momo_number ? `\n${t('inv.payMomo')}: ${org.momo_number}` : ''}`, code,
   });
 
   const payLink = async () => {
@@ -114,7 +114,7 @@ export function InvoiceDetail() {
         </table>
         {inv.notes && <div className="small">{inv.notes}</div>}
         {!paid && org.momo_number && <div className="small" style={{ marginTop: 8 }}><b>{t('inv.payMomo')}:</b> {org.momo_number}</div>}
-        <div className="foot">{t('inv.verify')}: <b>{code}</b> Â· {t('inv.generated')}</div>
+        <div className="foot">{t('inv.verify')}: <b>{code}</b> · {t('inv.generated')}</div>
       </div>
       <div className="btn-row no-print">
         <a className="btn get" href={waLink(inv.phone, share, org.country_code)} target="_blank" rel="noopener noreferrer"><Icon name="chat" size={18} /> {t('common.whatsapp')}</a>

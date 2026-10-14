@@ -55,6 +55,13 @@ describe('offline parser (English + Krio)', () => {
     ['Spent 120 on transport', 'expense', 12000, 'cash'],
     ['A sel 2 bag rice 1,700', 'sale', 170000, 'cash'],
     ['Paid 5k for shop rent', 'expense', 500000, 'cash'],
+    // Krio, standard spelling and everyday phone spelling
+    ['Mohamed dɔn pe tri ɔndrɛd', 'payment_received', 30000, 'cash'],
+    ['A sɛl tu bag rɛs fayv tawzin wit ɔrenj', 'sale', 500000, 'orange'],
+    ['Aminata tek wan bag pan trɔs 2 tawzin', 'credit_given', 200000, 'cash'],
+    ['A spɛn 200 fɔ transpɔt tide', 'expense', 20000, 'cash'],
+    ['a bay stok fo tawzin', 'expense', 400000, 'cash'],
+    ['Mohamed pe bak Le 1,500', 'payment_received', 150000, 'cash'],
   ])('%s', (text, action, amount, method) => {
     const r = parseLocal(text, known);
     expect(r.action).toBe(action);
