@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kopor self-test</title>
+<style>
+  :root { --bg: #fff; --ink: #111; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111; --ink: #eee; } }
+  :root[data-theme="dark"] { --bg: #111; --ink: #eee; }
+  body { font: 14px/1.4 system-ui, sans-serif; margin: 16px; background: var(--bg); color: var(--ink); display: flex; gap: 16px; flex-wrap: wrap; }
+  iframe { width: 400px; height: 860px; border: 1px solid #888; border-radius: 12px; }
+  pre { flex: 1; min-width: 280px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<!-- Runs a scripted walk through every feature in a phone-sized frame.
+     WARNING: it loads demo data into this browser's Kopor storage. Use a fresh/private profile.
+     Open tests/selftest.html?run to start. -->
+<iframe id="f" title="Kopor under test"></iframe>
+<pre id="out">Add ?run to the address to start. This loads demo data into this browser's Kopor storage.</pre>
+<script type="module">
+const out = document.getElementById('out');
+const log = (s) => { out.textContent += s + '\n'; };
+const results = [];
+const errors = [];
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+let W, D;
+
+async function until(fn, ms = 10000, what = '') {
+  const t = Date.now();
+  while (Date.now() - t < ms) {
+    try { const v = fn(); if (v) return v; } catch {}
+    await wait(40);
+  }
+  throw new Error('timed out waiting for ' + (what || fn.toString().slice(6, 90)));
+}
+const $ = (s) => D.querySelector(s);
+const $$ = (s) => [...D.querySelectorAll(s)];
+const byText = (sel, re) => $$(sel).find((e) => re.test(e.textContent));
+const fill = (el, v) => { el.value = v; el.dispatchEvent(new W.Event('input', { bubbles: true })); };
+const go = async (hash) => { W.location.hash = hash; await wait(120); };
+const sheetClosed = () => !$('#sheet-root.open');
+const overflow = () => D.documentElement.scrollWidth > W.innerWidth + 1;
+const stockOf = (name) => parseFloat($$('#products .item').find((i) => i.textContent.includes(name)).querySelector('.amt').textContent);
+
+async function step(name, fn) {
+  try { await fn(); results.push(['PASS', name]); log('✓ ' + name); }
+  catch (e) { results.push(['FAIL', name]); log('✗ ' + name + ': ' + e.message); }
+}
+
+async function run() {
+  out.textContent = '';
+  const f = document.getElementById('f');
+  await new Promise((r) => { f.onload = r; f.src = '../index.html?test=' + Date.now(); });
+  W = f.contentWindow; D = W.document;
+  W.confirm = () => true;
+  W.addEventListener('error', (e) => errors.push('error: ' + e.message));
+  W.addEventListener('unhandledrejection', (e) => errors.push('rejection: ' + (e.reason?.message || e.reason)));
+  const ce = W.console.error.bind(W.console);
+  W.console.error = (...a) => { errors.push('console: ' + a.map(String).join(' ')); ce(...a); };
+
+  await step('onboarding screen', () => until(() => byText('h1', /Welcome to Kopor/), 10000));
+  await step('demo data loads', async () => {
+    byText('button', /demo business/).click();
+    await until(() => byText('.hero .label', /Today's profit/), 90000, 'home after demo');
+  });
+
+  for (const h of ['#/home', '#/credit', '#/credit/overdue', '#/cash/today', '#/cash/month', '#/cash/all', '#/stock', '#/stock/low', '#/more', '#/groups', '#/invoices', '#/health', '#/report', '#/settings']) {
+    await step('renders without overflow ' + h, async () => {
+      await go(h);
+      await until(() => $('.topbar h1'), 3000);
+      if (overflow()) throw new Error(`page is ${D.documentElement.scrollWidth}px wide in a ${W.innerWidth}px screen`);
+    });
+  }
+
+  await step('credit: record payment from a customer', async () => {
+    await go('#/credit');
+    $('#contacts .item').click();
+    (await until(() => $('[data-act=entry][data-type=got]'))).click();
+    fill(await until(() => $('[data-form=entry] [name=amount]')), '50');
+    $('[data-form=entry]').requestSubmit();
+    await until(sheetClosed);
+  });
+
+  await step('credit: new customer entry via home', async () => {
+    await go('#/home');
+    $('[data-act=newCredit]').click();
+    fill(await until(() => $('[data-form=newCredit] [name=name]')), 'Test Customer');
+    fill($('[data-form=newCredit] [name=amount]'), '120');
+    $('[data-form=newCredit]').requestSubmit();
+    await until(() => W.location.hash.startsWith('#/contact/'));
+    await until(() => byText('.balance .big', /120/), 3000, 'balance 120');
+  });
+
+  await step('sale reduces stock', async () => {
+    await go('#/stock');
+    const before = stockOf('Soap bar');
+    await go('#/cash');
+    $('[data-act=newSale]').click();
+    fill(await until(() => $('[name=item_name]')), 'Soap bar');
+    if ($('[name=item_price]').value !== '12') throw new Error('price did not auto-fill');
+    fill($('[name=item_qty]'), '3');
+    if (!/36/.test($('[data-total]').textContent)) throw new Error('total not 36: ' + $('[data-total]').textContent);
+    $('[data-form=newSale]').requestSubmit();
+    await until(sheetClosed);
+    await go('#/stock');
+    const after = stockOf('Soap bar');
+    if (before - after !== 3) throw new Error(`stock ${before} -> ${after}`);
+  });
+
+  await step('sale on credit creates a debt', async () => {
+    await go('#/cash');
+    $('[data-act=newSale]').click();
+    fill(await until(() => $('[data-form=newSale] [name=amount]')), '99');
+    $('[data-form=newSale] [name=method]').value = 'credit';
+    fill($('[data-form=newSale] [name=customer]'), 'Credit Buyer');
+    $('[data-form=newSale]').requestSubmit();
+    await until(sheetClosed);
+    await go('#/credit');
+    await until(() => $$('#contacts .item').some((i) => i.textContent.includes('Credit Buyer') && i.textContent.includes('99')), 3000);
+  });
+
+  await step('expense', async () => {
+    await go('#/cash');
+    $('[data-act=newExpense]').click();
+    fill(await until(() => $('[data-form=newExpense] [name=amount]')), '75');
+    $('[data-form=newExpense]').requestSubmit();
+    await until(sheetClosed);
+  });
+
+  await step('restock adds quantity', async () => {
+    await go('#/stock');
+    const before = stockOf('Bread');
+    $$('#products .item').find((i) => i.textContent.includes('Bread')).click();
+    fill(await until(() => $('[data-form=adjustStock] [name=change]')), '10');
+    $('[data-form=adjustStock]').requestSubmit();
+    await until(sheetClosed);
+    if (stockOf('Bread') - before !== 10) throw new Error('restock failed');
+  });
+
+  await step('new product', async () => {
+    $('[data-act=editProduct]').click();
+    fill(await until(() => $('[data-form=saveProduct] [name=name]')), 'Test Juice');
+    fill($('[data-form=saveProduct] [name=price]'), '10');
+    fill($('[data-form=saveProduct] [name=qty]'), '2');
+    $('[data-form=saveProduct]').requestSubmit();
+    await until(sheetClosed);
+    await until(() => byText('#products .t', /Test Juice/));
+  });
+
+  for (const [text, want] of [
+    ['Isatu took 2 tins palm oil 360 on credit', /Credit given/],
+    ['Sold 3 bags rice 2550 orange money', /Sale/],
+    ['Mohamed paid me 250', /Payment received/],
+    ['Spent 120 on transport', /Expense/],
+  ]) {
+    await step(`voice parser: "${text}"`, async () => {
+      await go('#/home');
+      $('[data-act=voice]').click();
+      fill(await until(() => $('[data-form=voice] textarea')), text);
+      $('[data-form=voice]').requestSubmit();
+      const prev = await until(() => $('#ai-preview .card'), 5000, 'preview');
+      if (!want.test(prev.textContent)) throw new Error('got: ' + prev.textContent.replace(/\s+/g, ' '));
+      $('[data-act=aiConfirm]').click();
+      await until(sheetClosed);
+    });
+  }
+
+  await step('osusu: tick a payment', async () => {
+    await go('#/groups');
+    $('.list a.item').click();
+    await until(() => $('.tick'));
+    const before = $$('.tick.on').length;
+    const t = $('.tick:not(.on)');
+    if (t) { t.click(); await until(() => $$('.tick.on').length === before + 1, 3000); }
+    if (!byText('.alert', /collects/)) throw new Error('collector not shown');
+  });
+
+  await step('osusu: create group with members', async () => {
+    await go('#/groups');
+    $('[data-act=editGroup]').click();
+    fill(await until(() => $('[data-form=saveGroup] [name=name]')), 'Teachers Dues');
+    $('[data-form=saveGroup] [name=kind]').value = 'dues';
+    fill($('[data-form=saveGroup] [name=amount]'), '50');
+    $('[data-form=saveGroup] [name=members]').value = 'Ann Cole, 076111222\nBen Koroma';
+    $('[data-form=saveGroup]').requestSubmit();
+    await until(() => W.location.hash.startsWith('#/group/') && $$('.tick').length === 2, 5000);
+  });
+
+  await step('invoice create and mark paid', async () => {
+    await go('#/invoices');
+    $('[data-act=newInvoice]').click();
+    fill(await until(() => $('[data-form=newInvoice] [name=customer]')), 'Sierra Hotel Ltd');
+    fill($('[name=item_name]'), 'Rice 50kg bag');
+    fill($('[name=item_qty]'), '5');
+    $('[data-form=newInvoice]').requestSubmit();
+    await until(() => byText('.foot', /Verification code/), 5000);
+    if (!byText('.doc td', /4,250/)) throw new Error('total 4,250 missing');
+    $('[data-act=markPaid]').click();
+    await until(() => byText('.doc b', /RECEIPT/), 3000);
+  });
+
+  await step('health score and report', async () => {
+    await go('#/health');
+    await until(() => byText('b', /Record keeping/));
+    await go('#/report');
+    await until(() => byText('b', /BUSINESS PERFORMANCE REPORT/));
+  });
+
+  await step('settings save', async () => {
+    await go('#/settings');
+    fill($('[data-form=settings] [name=momo]'), 'Orange 076 000 000');
+    $('[data-form=settings]').requestSubmit();
+    await until(() => D.getElementById('toast').textContent.includes('Settings saved'), 3000);
+  });
+
+  await step('PIN lock and unlock', async () => {
+    $('[data-act=setPin]').click();
+    fill(await until(() => $('[data-form=setPin] [name=pin]')), '1234');
+    $('[data-form=setPin]').requestSubmit();
+    await until(sheetClosed);
+    W.location.reload();
+    await wait(300);
+    await until(() => (D = W.document, W.document.querySelector('[data-form=unlock]')), 10000);
+    W.confirm = () => true;
+    fill($('[data-form=unlock] [name=pin]'), '1234');
+    $('[data-form=unlock]').requestSubmit();
+    await until(() => $('.topbar'), 3000);
+    W.location.hash = '#/settings';
+    await wait(150);
+    $('[data-act=setPin]').click();
+    fill(await until(() => $('[data-form=setPin] [name=pin]')), '');
+    $('[data-form=setPin]').requestSubmit();
+    await until(sheetClosed);
+  });
+
+  await go('#/home');
+  const failed = results.filter((r) => r[0] === 'FAIL').length;
+  log(`\n${results.length - failed}/${results.length} passed`);
+  if (errors.length) log('JS errors:\n' + errors.join('\n'));
+  document.title = failed || errors.length ? 'FAIL' : 'PASS';
+  document.body.dataset.done = '1';
+}
+
+if (location.search.includes('run')) run().catch((e) => log('Runner crashed: ' + e.message));
+</script>
+</body>
+</html>

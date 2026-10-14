@@ -1,0 +1,80 @@
+// v2.1 strings (tax, returns, day close, Pro, help, printing, export, scanning, tour). Mirrored in extra.kri.ts / extra.fr.ts.
+const extra = {
+  tax: {
+    title: 'Tax & receipts', help: 'Sierra Leone GST is 15%. Set 0 if you are not GST-registered.', rate: 'Tax rate (%)', tin: 'Tax ID (TIN)',
+    pricesAre: 'My prices…', inclusive: 'already include tax', exclusive: 'do not include tax (add it on top)', footer: 'Receipt message',
+    subtotal: 'Subtotal', discount: 'Discount', discounts: 'Discounts given', tax: 'Tax', included: 'included', collected: 'Tax collected',
+  },
+  returns: {
+    title: 'Return items', refund: 'Refund', refunds: 'Refunds', help: 'Enter how many of each item came back. Stock is added back automatically.',
+    left: '{{n}} can be returned', refundWith: 'Refund the customer by', creditNote: 'This was a credit sale: the customer’s debt is reduced instead of paying money back.',
+    confirm: 'Confirm return', saved: 'Return recorded',
+  },
+  closing: {
+    title: 'Close the day', help: 'Count the cash in your drawer at the end of the day. Kopor compares it with your records.',
+    last: 'Last closed {{date}} · difference {{diff}}', float: 'Cash in drawer this morning (float)', cashSales: 'Cash sales today', cashOut: 'Cash paid out today',
+    expected: 'Cash expected in drawer', counted: 'Cash counted now', difference: 'Difference',
+    repaidNote: 'Debt payments received today: {{amount}}. If they were paid in cash, they will also be in the drawer.',
+    balanced: 'Perfect: the drawer matches your records.', over: 'There is {{amount}} MORE than expected. Check for unrecorded sales.',
+    short: 'There is {{amount}} LESS than expected. Check for unrecorded expenses or missing cash.', save: 'Save day close', saved: 'Day closed',
+  },
+  plan: {
+    title: 'Kopor Pro', freeSub: 'Free plan', proActive: 'Pro is active', proUntil: 'Pro until {{date}}', current: 'Your plan',
+    pitch: 'Grow with more branches, more staff and more AI help.', unlimited: 'Unlimited',
+    f: { records: 'Credit, cash, stock, osusu, invoices', offline: 'Works offline', branches: 'Branches', staff: 'Staff accounts', ai: 'AI requests (cloud)', support: 'Priority support' },
+    buyMonth: 'Get Pro · {{price}} / month', buyYear: 'Get Pro for a year · {{price}} (2 months free)',
+    payNote: 'Pay securely with Orange Money, Afrimoney or card through Monime.', ownerOnly: 'Only the business owner can change the plan.',
+  },
+  help: {
+    title: 'Help', sub: 'Answers, tutorial and support', tour: 'Show the tutorial again', contact: 'Chat with Kopor support on WhatsApp',
+    q: {
+      start: 'How do I start?', credit: 'How do I track who owes me?', offline: 'Does Kopor work without internet?', backup: 'How do I avoid losing my records?',
+      staff: 'Can my workers use Kopor?', payments: 'How do customers pay me with mobile money?', ai: 'How does "Speak" work?',
+      printer: 'Can I print receipts?', tax: 'How do I add GST/tax?', pro: 'What does Kopor Pro add?',
+    },
+    a: {
+      start: 'Add your products in Stock, then record every sale and expense from the Home screen. Kopor calculates your profit for you.',
+      credit: 'When someone buys on credit, choose "On credit" as the payment method, or use Credit → Add entry. Tap a customer to send a WhatsApp reminder.',
+      offline: 'Yes. Everything works offline and is saved on your phone. If you connect a cloud account, it syncs when you are back online.',
+      backup: 'Settings → Backup downloads a file (you can add a password). Or create a cloud account to back up automatically.',
+      staff: 'Yes. In Team, add staff with a role (manager, cashier or viewer). Each person can have their own PIN on a shared phone.',
+      payments: 'Connect your Monime account in Payments. Then each invoice can get a payment link or a USSD code the customer dials from any phone.',
+      ai: 'Tap Speak and say what happened, like "Sold 2 bags rice 1700". Kopor fills in the record for you to check and save.',
+      printer: 'Yes, on Bluetooth thermal printers (58mm or 80mm). Set it up in Settings → Receipt printer. Classic Bluetooth printers work through the free RawBT app.',
+      tax: 'Settings → Tax & receipts. Enter your rate (15% for GST) and whether your prices already include it.',
+      pro: 'More branches, unlimited staff, more AI help and priority support. The free plan stays free for one shop.',
+    },
+  },
+  legal: { privacy: 'Privacy policy', terms: 'Terms of use' },
+  printer: {
+    title: 'Receipt printer', help: 'Print receipts on a Bluetooth thermal printer.', width: 'Paper width', connection: 'Connection',
+    ble: 'Bluetooth (direct)', rawbt: 'RawBT app (classic Bluetooth printers)', rawbtHelp: 'Install the free "RawBT" app from Google Play and pair your printer in it. Kopor sends receipts to RawBT.',
+    pair: 'Choose printer', paired: 'Printer', pairedOk: 'Printer connected', test: 'Print a test receipt', print: 'Print receipt', sent: 'Sent to printer', thanks: 'Thank you for your business!',
+  },
+  export: { title: 'Export', help: 'Download all your records as an Excel file (opens in Excel and Google Sheets).', excel: 'Download Excel file', pdf: 'Share PDF', roundCol: 'Round' },
+  scan: {
+    scan: 'Scan barcode', find: 'Scan to find', help: 'Point the camera at the barcode.', denied: 'Allow camera access to scan.',
+    noCamera: 'No camera available on this device.', notFound: 'No product with code {{code}}. Add it in Stock first.',
+  },
+  tour: {
+    next: 'Next', prev: 'Back', done: 'Start using Kopor',
+    welcomeTitle: 'Welcome to Kopor 👋', welcome: 'A 30-second tour of the most important things.',
+    profitTitle: 'Your profit today', profit: 'Sales minus expenses, updated every time you record something.',
+    quickTitle: 'Record in one tap', quick: 'Add a sale, an expense or credit here. Everything is saved instantly, even offline.',
+    speakTitle: 'Just speak', speak: 'Say what happened in English or Krio and Kopor writes it down for you.',
+    insightsTitle: 'Smart advice', insights: 'Kopor tells you who to collect from, what is running out and how sales are going.',
+    navTitle: 'Everything else', nav: 'Credit book, cash book, stock and more are always one tap away.',
+  },
+  crash: { title: 'Sorry, something went wrong', text: 'Your records are safe. Reload to continue.', reload: 'Reload' },
+  account: {
+    delete: 'Delete my account', confirm: 'Delete your Kopor account? You will be removed from all businesses, and businesses where you are the only owner will be closed. This cannot be undone.',
+    deleted: 'Account deleted',
+  },
+  errx: {
+    returnTooMany: 'You cannot return more {{name}} than was sold.', voidPaid: 'Only unpaid invoices can be voided. Record a return instead.',
+    proLimit: 'The free plan allows {{limit}}. Upgrade to Kopor Pro for more.', noBluetooth: 'Bluetooth printing is not available in this browser. Use Chrome on Android or the RawBT option.',
+    printerService: 'This printer type is not supported over Bluetooth LE. Try the RawBT option.', noPrinter: 'Choose a printer in Settings first.',
+  },
+};
+export default extra;
+export type ExtraDict = typeof extra;

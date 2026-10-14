@@ -1,0 +1,81 @@
+// Krio v2.1 strings. Draft translation: have a native speaker review before launch.
+import type { ExtraDict } from './extra.en';
+
+const extra: ExtraDict = {
+  tax: {
+    title: 'Taks ɛn risit', help: 'GST na Salone na 15%. Put 0 if yu nɔ rɛjista fɔ GST.', rate: 'Taks (%)', tin: 'Taks nɔmba (TIN)',
+    pricesAre: 'Mi prays dɛn…', inclusive: 'dɔn ink taks', exclusive: 'nɔ ink taks (ad am pan tɔp)', footer: 'Mɛsej pan risit',
+    subtotal: 'Sɔbtɔtal', discount: 'Diskawnt', discounts: 'Diskawnt we yu gi', tax: 'Taks', included: 'dɔn de insay', collected: 'Taks we yu kɔlɛkt',
+  },
+  returns: {
+    title: 'Tek tin bak', refund: 'Gi mɔni bak', refunds: 'Mɔni we yu gi bak', help: 'Put omɔs fɔ ɛni tin we kam bak. Stɔk go ad bak insɛf.',
+    left: '{{n}} kin kam bak', refundWith: 'Gi di kɔstɔma in mɔni bak wit', creditNote: 'Dis na trɔst sel: di kɔstɔma in dɛt go smɔl pas fɔ gi mɔni bak.',
+    confirm: 'Kɔnfɔm', saved: 'Dɔn rayt di tin we kam bak',
+  },
+  closing: {
+    title: 'Klos di de', help: 'Kɔnt di kesh na yu drɔ we di de dɔn. Kopor go chɛk am wit yu rɛkɔd.',
+    last: 'Las klos {{date}} · difrɛns {{diff}}', float: 'Kesh na drɔ dis mɔnin', cashSales: 'Kesh sel tide', cashOut: 'Kesh we kɔmɔt tide',
+    expected: 'Kesh we fɔ de na drɔ', counted: 'Kesh we yu kɔnt naw', difference: 'Difrɛns',
+    repaidNote: 'Dɛt pement tide: {{amount}}. If dɛn pe wit kesh, i go de na di drɔ bak.',
+    balanced: 'Fayn: di drɔ ɛn yu rɛkɔd gri.', over: 'I de {{amount}} PAS wetin fɔ de. Chɛk if yu fɔgɛt rayt sel.',
+    short: 'I de {{amount}} NƆ RICH wetin fɔ de. Chɛk if yu fɔgɛt rayt ɛkspens ɔ mɔni lɔs.', save: 'Sev di klos', saved: 'Di de dɔn klos',
+  },
+  plan: {
+    title: 'Kopor Pro', freeSub: 'Fri plan', proActive: 'Pro de ɔn', proUntil: 'Pro te {{date}}', current: 'Yu plan',
+    pitch: 'Gro wit mɔ branch, mɔ staf ɛn mɔ AI ɛp.', unlimited: 'Nɔ lim',
+    f: { records: 'Kredit, kesh, stɔk, osusu, invɔys', offline: 'I de wok widawt nɛt', branches: 'Branch', staff: 'Staf akawnt', ai: 'AI kwɛshɔn (klawd)', support: 'Fɔs ɛp' },
+    buyMonth: 'Get Pro · {{price}} / mɔnt', buyYear: 'Get Pro fɔ wan ia · {{price}} (2 mɔnt fri)',
+    payNote: 'Pe sef wit Orange Money, Afrimoney ɔ kad tru Monime.', ownerOnly: 'Na di ɔna nɔmɔ kin chenj di plan.',
+  },
+  help: {
+    title: 'Ɛp', sub: 'Ansa, lɛsin ɛn sɔpɔt', tour: 'Sho mi di lɛsin bak', contact: 'Tɔk to Kopor sɔpɔt na WhatsApp',
+    q: {
+      start: 'Aw a go stat?', credit: 'Aw a go no udat ɔw mi?', offline: 'Kopor de wok widawt nɛt?', backup: 'Aw a go mek a nɔ lɔs mi rɛkɔd?',
+      staff: 'Mi wokman dɛn kin yuz Kopor?', payments: 'Aw kɔstɔma go pe mi wit mobayl mɔni?', ai: 'Aw "Tɔk" de wok?',
+      printer: 'A kin print risit?', tax: 'Aw a go ad GST/taks?', pro: 'Wetin Kopor Pro de ad?',
+    },
+    a: {
+      start: 'Ad yu prɔdak na Stɔk, dɔn rayt ɛni sel ɛn ɛkspens frɔm Om. Kopor go kɔnt yu prɔfit fɔ yu.',
+      credit: 'We pɔsin bay pan trɔst, pik "Trɔst" fɔ aw dɛn pe, ɔ yuz Kredit → Ad entri. Tap kɔstɔma fɔ sɛn WhatsApp rimayn.',
+      offline: 'Yɛs. Ɔltin de wok widawt nɛt ɛn i de sev na yu fon. If yu kɔnɛkt klawd akawnt, i go sink we nɛt kam bak.',
+      backup: 'Sɛtin → Bakɔp go daunlod fayl (yu kin ad paswɔd). Ɔ mek klawd akawnt fɔ bakɔp ɔltɛm.',
+      staff: 'Yɛs. Na Tim, ad staf wit dɛn wok (manija, keshia ɔ luk nɔmɔ). Ɛnibɔdi kin get in yon PIN pan wan fon.',
+      payments: 'Kɔnɛkt yu Monime akawnt na Pement. Dɔn ɛni invɔys kin get link fɔ pe ɔ USSD kod we kɔstɔma kin dayal frɔm ɛni fon.',
+      ai: 'Tap Tɔk ɛn se wetin apin, lɛk "A sel 2 bag rɛs 1700". Kopor go rayt am fɔ yu chɛk ɛn sev.',
+      printer: 'Yɛs, pan Bluetooth tamal printa (58mm ɔ 80mm). Sɛt am na Sɛtin → Risit printa. Ol Bluetooth printa de wok tru di fri RawBT ap.',
+      tax: 'Sɛtin → Taks ɛn risit. Put yu taks (15% fɔ GST) ɛn if yu prays dɔn ink am.',
+      pro: 'Mɔ branch, staf we nɔ get lim, mɔ AI ɛp ɛn fɔs sɔpɔt. Di fri plan go de fri fɔ wan shɔp.',
+    },
+  },
+  legal: { privacy: 'Prayvɛsi pɔlisi', terms: 'Rul fɔ yuz' },
+  printer: {
+    title: 'Risit printa', help: 'Print risit pan Bluetooth tamal printa.', width: 'Pepa wayd', connection: 'Kɔnɛkshɔn',
+    ble: 'Bluetooth (stret)', rawbt: 'RawBT ap (ol Bluetooth printa)', rawbtHelp: 'Instɔl di fri "RawBT" ap frɔm Google Play ɛn kɔnɛkt yu printa insay am. Kopor go sɛn risit to RawBT.',
+    pair: 'Pik printa', paired: 'Printa', pairedOk: 'Printa dɔn kɔnɛkt', test: 'Print tɛst risit', print: 'Print risit', sent: 'I dɔn go na printa', thanks: 'Tɛnki fɔ yu bizines!',
+  },
+  export: { title: 'Ɛkspɔt', help: 'Daunlod ɔl yu rɛkɔd as Excel fayl (i de opin na Excel ɛn Google Sheets).', excel: 'Daunlod Excel fayl', pdf: 'Sheb PDF', roundCol: 'Rawnd' },
+  scan: {
+    scan: 'Skan bakɔd', find: 'Skan fɔ fɛn', help: 'Pɔynt di kamɛra pan di bakɔd.', denied: 'Gri fɔ yuz kamɛra fɔ skan.',
+    noCamera: 'No kamɛra pan dis fon.', notFound: 'No prɔdak wit kod {{code}}. Ad am na Stɔk fɔs.',
+  },
+  tour: {
+    next: 'Nɛks', prev: 'Bak', done: 'Stat fɔ yuz Kopor',
+    welcomeTitle: 'Wɛlkɔm na Kopor 👋', welcome: 'Wan smɔl lɛsin bɔt di tin dɛn we impɔtant pas.',
+    profitTitle: 'Yu prɔfit tide', profit: 'Sel mayns ɛkspens. I de chenj ɛnitɛm we yu rayt sɔntin.',
+    quickTitle: 'Rayt wit wan tap', quick: 'Ad sel, ɛkspens ɔ kredit ya. Ɔltin de sev wantɛm, ivin widawt nɛt.',
+    speakTitle: 'Jɔs tɔk', speak: 'Se wetin apin na Inglish ɔ Krio ɛn Kopor go rayt am fɔ yu.',
+    insightsTitle: 'Smat advays', insights: 'Kopor go tɛl yu udat fɔ kɔlɛkt frɔm, wetin de dɔn ɛn aw sel de go.',
+    navTitle: 'Ɔda tin dɛn', nav: 'Kredit buk, kesh buk, stɔk ɛn mɔ de jɔs wan tap we.',
+  },
+  crash: { title: 'Sɔri, sɔntin rɔng', text: 'Yu rɛkɔd dɛn sef. Lod bak fɔ kɔntinyu.', reload: 'Lod bak' },
+  account: {
+    delete: 'Dilit mi akawnt', confirm: 'Dilit yu Kopor akawnt? Dɛn go rimov yu frɔm ɔl bizines, ɛn di bizines dɛn we na yu nɔmɔ na ɔna go klos. Yu nɔ go ebul tek am bak.',
+    deleted: 'Akawnt dɔn dilit',
+  },
+  errx: {
+    returnTooMany: 'Yu nɔ kin tek mɔ {{name}} bak pas wetin yu sel.', voidPaid: 'Na invɔys we nɔ pe nɔmɔ yu kin kansul. Rayt "tek tin bak" instead.',
+    proLimit: 'Di fri plan gri fɔ {{limit}}. Go ɔp to Kopor Pro fɔ mɔ.', noBluetooth: 'Bluetooth print nɔ de pan dis brawza. Yuz Chrome pan Android ɔ di RawBT opshɔn.',
+    printerService: 'Dis kayn printa nɔ de wok pan Bluetooth LE. Tray di RawBT opshɔn.', noPrinter: 'Pik printa na Sɛtin fɔs.',
+  },
+};
+export default extra;
