@@ -9,11 +9,9 @@ import { Icon } from '@/ui/Icon';
 import { Field } from '@/ui/widgets';
 import { LANGUAGES } from '@/i18n';
 import { db, SYNC_TABLES } from '@/db/schema';
-import { setMeta } from '@/db/repo';
 import { updateOrg, setPin, hasPin, getSession, createOrg } from '@/domain/org';
 import { exportOrg, importOrg, isEncrypted } from '@/domain/backup';
 import { createDemo } from '@/domain/demo';
-import { AI_DEFAULTS, getAiSettings, type AiSettings } from '@/ai/assistant';
 import { getCloudConfig, setCloudConfig } from '@/cloud/supabase';
 import { signOut, currentUser } from '@/cloud/auth';
 import { syncNow } from '@/cloud/sync';
@@ -132,7 +130,6 @@ export function Settings() {
       <PreferencesCard />
       <PrinterCard />
       <SecurityCard />
-      <AiCard />
       {can('business') && <ExportCard />}
       {can('business') && <BackupCard />}
       <BusinessesCard />
@@ -210,29 +207,6 @@ function SecurityCard() {
         <select value={device.autoLockMin} onChange={(e) => setDevice({ autoLockMin: Number(e.target.value) })}>{[1, 2, 5, 10, 30, 0].map((m) => <option key={m} value={m}>{m || '∞'}</option>)}</select>
       </Field>
     </form>
-  );
-}
-
-function AiCard() {
-  const { t } = useTranslation();
-  const { toast } = useOverlay();
-  const [f, setF] = useState<AiSettings>(AI_DEFAULTS);
-  useEffect(() => { getAiSettings().then((s) => setF({ ...AI_DEFAULTS, ...s })); }, []);
-  // Collapsed by default: AI already works for everyone through the Kopor cloud; this is for heavy users only.
-  return (
-    <details className="card advanced" open={!!f.key}>
-      <summary><Icon name="spark" size={18} /> {t('settings.ai')}</summary>
-      <form className="form" onSubmit={(e) => { e.preventDefault(); setMeta('ai', f).then(() => toast(t('common.saved'))); }}>
-        <div className="small muted">{t('settings.aiHelp')}</div>
-        <Field label={t('settings.aiKey')}><input type="password" value={f.key} onChange={(e) => setF({ ...f, key: e.target.value.trim() })} autoComplete="off" placeholder="gsk_…" /></Field>
-        <Field label={t('settings.aiBase')}><input value={f.base} onChange={(e) => setF({ ...f, base: e.target.value })} /></Field>
-        <div className="grid2">
-          <Field label={t('settings.aiModel')}><input value={f.model} onChange={(e) => setF({ ...f, model: e.target.value })} /></Field>
-          <Field label={t('settings.aiVision')}><input value={f.visionModel} onChange={(e) => setF({ ...f, visionModel: e.target.value })} /></Field>
-        </div>
-        <button className="btn primary block">{t('common.save')}</button>
-      </form>
-    </details>
   );
 }
 

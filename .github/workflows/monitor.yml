@@ -1,0 +1,75 @@
+name: Monitor
+# Checks the live service every 30 minutes, day and night, without anyone's computer being on.
+# - Website up, database answering (this also keeps the free Supabase project from pausing), AI answering (every 6 h).
+# - On a failure it opens one "Outage" issue (GitHub emails the owner); when everything works again it closes it.
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SITE: ${{ vars.VITE_PUBLIC_APP_URL }}
+      SB_URL: ${{ vars.VITE_SUPABASE_URL }}
+      SB_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check website, database and AI
+        id: check
+        run: |
+          set -u
+          problems=""
+          try() { for i in 1 2 3; do if "$@"; then return 0; fi; sleep 20; done; return 1; }
+
+          site() { curl -fsS --max-time 30 "$SITE" | grep -q 'id="root"'; }
+          try site || problems="$problems- Website $SITE is not loading\n"
+
+          db() { curl -fsS --max-time 30 -X POST "$SB_URL/rest/v1/rpc/public_invoice" -H "apikey: $SB_KEY" -H "Authorization: Bearer $SB_KEY" \
+                  -H 'Content-Type: application/json' -d '{"token":"monitor-check-0000000"}' >/dev/null; }
+          try db || problems="$problems- Database (Supabase) is not answering\n"
+
+          # AI once every 6 hours (uses a little of the free allowance).
+          h=$(date -u +%-H); m=$(date -u +%-M)
+          if { [ $((h % 6)) -eq 0 ] && [ "$m" -lt 30 ]; } || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ai() { curl -fsS --max-time 60 -X POST "$SB_URL/functions/v1/ai" -H "apikey: $SB_KEY" -H "Authorization: Bearer $SB_KEY" \
+                    -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"Reply with the single word OK."}]}' | grep -q '"content"'; }
+            try ai || problems="$problems- AI is not answering (check the Groq and Gemini keys in Supabase secrets)\n"
+          fi
+
+          if [ -n "$problems" ]; then
+            printf "%b" "$problems" | tee problems.txt
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "All checks passed"
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open an outage issue
+        if: steps.check.outputs.ok == 'false'
+        run: |
+          open=$(gh issue list -R "$GITHUB_REPOSITORY" --label outage --state open --json number --jq '.[0].number')
+          body="$(cat problems.txt)
+
+          Checked $(date -u '+%Y-%m-%d %H:%M UTC'). Shops can keep recording offline meanwhile. See docs/OPERATIONS.md, *If something goes wrong*."
+          gh label create outage -R "$GITHUB_REPOSITORY" --color B60205 --description "Live service problem" 2>/dev/null || true
+          if [ -z "$open" ]; then gh issue create -R "$GITHUB_REPOSITORY" --title "Outage: Kopor service check failed" --label outage --body "$body"
+          else gh issue comment "$open" -R "$GITHUB_REPOSITORY" --body "Still failing: $body"; fi
+          exit 1
+
+      - name: Close outage issues after recovery
+        if: steps.check.outputs.ok == 'true'
+        run: |
+          for n in $(gh issue list -R "$GITHUB_REPOSITORY" --label outage --state open --json number --jq '.[].number'); do
+            gh issue close "$n" -R "$GITHUB_REPOSITORY" --comment "Recovered: all checks passed at $(date -u '+%H:%M UTC')."
+          done

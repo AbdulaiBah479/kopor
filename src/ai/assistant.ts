@@ -1,7 +1,6 @@
-// AI features using free models through any OpenAI-compatible API (Groq, Google Gemini, OpenRouter),
-// either with the device's own key or through the Kopor cloud function (key kept on the server).
+// AI features through the Kopor cloud function only: the business owner chooses the AI providers and models on the
+// server (supabase/functions/_shared/llm.ts) and keys never reach phones. Users cannot change them.
 import { z } from 'zod';
-import { getMeta } from '@/db/repo';
 import { getSupabase } from '@/cloud/supabase';
 import { formatMoney } from '@/lib/money';
 import { today, addDays } from '@/lib/dates';
@@ -13,43 +12,16 @@ import { health } from '@/domain/health';
 import { currentRound, roundStatus } from '@/domain/groups';
 import type { Parsed } from './parser';
 
-export interface AiSettings { key: string; base: string; model: string; visionModel: string }
-export const AI_DEFAULTS: AiSettings = { key: '', base: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b', visionModel: 'qwen/qwen3.8-27b' };
-export const getAiSettings = () => getMeta<AiSettings>('ai', AI_DEFAULTS);
-
 type Msg = { role: 'system' | 'user' | 'assistant'; content: string | { type: string; text?: string; image_url?: { url: string } }[] };
 
 async function complete(messages: Msg[], opts: { vision?: boolean; json?: boolean } = {}): Promise<string> {
-  const s = { ...AI_DEFAULTS, ...(await getAiSettings()) };
   const sb = await getSupabase();
-  if (s.key) {
-    try {
-      const res = await fetch(s.base.replace(/\/$/, '') + '/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.key}` },
-        body: JSON.stringify({
-          model: opts.vision ? s.visionModel : s.model, temperature: opts.json ? 0 : 0.3, messages,
-          ...(!opts.vision && /gpt-oss/.test(s.model) ? { reasoning_effort: 'low' } : {}),
-        }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (!res.ok) throw new Error(`AI ${res.status}`);
-      const j = await res.json();
-      const content = j.choices?.[0]?.message?.content;
-      if (content) return content;
-      throw new Error('AI gave no answer');
-    } catch (e) {
-      // Own key rate-limited or failing: use the cloud's chain of free providers when signed in.
-      if (!sb) throw e;
-    }
-  }
   if (!sb) throw new Error('err.noAi');
   const { data, error } = await sb.functions.invoke('ai', { body: { messages, vision: !!opts.vision } });
   if (error || data?.error) throw new Error(data?.error ?? error?.message);
   return data.content as string;
 }
-export async function aiAvailable() { return !!(await getAiSettings()).key || !!(await getSupabase()); }
-
+export async function aiAvailable() { return !!(await getSupabase()); }
 const extractJson = (s: string) => { const m = s.match(/\{[\s\S]*\}/); if (!m) throw new Error('AI gave no JSON'); return JSON.parse(m[0]); };
 
 const ParsedSchema = z.object({

@@ -1,0 +1,46 @@
+name: Deploy server functions
+# When server code (supabase/functions) changes on main, deploy it to Supabase automatically.
+# Needs a repository secret SUPABASE_ACCESS_TOKEN (Settings → Secrets and variables → Actions). Without it this
+# workflow does nothing. Database migrations stay manual on purpose: run new files in supabase/migrations once in the
+# Supabase SQL editor.
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/functions/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT: hpmpbzcloklaeghekjfz
+    steps:
+      - if: env.SUPABASE_ACCESS_TOKEN == ''
+        run: echo "::notice::SUPABASE_ACCESS_TOKEN is not set, so server functions were not deployed automatically."
+      - if: env.SUPABASE_ACCESS_TOKEN != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - if: env.SUPABASE_ACCESS_TOKEN != ''
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+      - if: env.SUPABASE_ACCESS_TOKEN != ''
+        run: npm ci
+      - name: Deploy every function
+        if: env.SUPABASE_ACCESS_TOKEN != ''
+        run: |
+          for dir in supabase/functions/*/; do
+            fn=$(basename "$dir")
+            [ "$fn" = "_shared" ] && continue
+            flags=""
+            [ "$fn" = "monime-webhook" ] && flags="--no-verify-jwt"   # Monime calls it without a Supabase login
+            npx supabase functions deploy "$fn" --project-ref "$PROJECT" --use-api $flags
+          done

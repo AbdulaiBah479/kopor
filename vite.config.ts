@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 // Strict Content-Security-Policy for production builds (dev server needs inline scripts).
 const CSP = [
   "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:", "media-src 'self' blob:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.groq.com https://generativelanguage.googleapis.com https://openrouter.ai https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
   "worker-src 'self' blob:", "base-uri 'self'", "form-action 'self'", "object-src 'none'",
 ].join('; ');
 function securityHeaders(): Plugin {

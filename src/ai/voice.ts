@@ -1,8 +1,7 @@
 // Voice input that works in every modern browser and the Android app: record with MediaRecorder, then transcribe with
-// Whisper (own key, or the Kopor cloud's free chain). The browser's built-in speech recognition is only a fallback,
+// Whisper through the Kopor cloud. The browser's built-in speech recognition is only a fallback,
 // because many browsers (Firefox, Samsung Internet, in-app browsers, Android WebView) do not have it.
 import { getSupabase } from '@/cloud/supabase';
-import { getAiSettings } from './assistant';
 
 export const canRecord = () => typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
@@ -67,19 +66,9 @@ export async function startRecording(onLevel?: (v: number) => void, maxSeconds =
   };
 }
 
-/** Turn a recording into text. Prefers the device's own AI key (Groq), otherwise the Kopor cloud. */
+/** Turn a recording into text with the Kopor cloud (Whisper on the providers the owner chose). */
 export async function transcribe(blob: Blob, lang: string): Promise<string> {
   const file = new File([blob], `speech.${extFor(blob.type)}`, { type: blob.type || 'audio/webm' });
-  const s = await getAiSettings();
-  if (s.key && /groq\.com|openai\.com/.test(s.base)) {
-    const form = new FormData();
-    form.append('file', file); form.append('model', /groq/.test(s.base) ? 'whisper-large-v3-turbo' : 'whisper-1');
-    form.append('language', lang === 'fr' ? 'fr' : 'en'); form.append('temperature', '0');
-    try {
-      const res = await fetch(s.base.replace(/\/$/, '') + '/audio/transcriptions', { method: 'POST', headers: { Authorization: `Bearer ${s.key}` }, body: form, signal: AbortSignal.timeout(30_000) });
-      if (res.ok) return String((await res.json()).text ?? '').trim();
-    } catch { /* fall through to the cloud */ }
-  }
   const sb = await getSupabase();
   if (!sb) throw new Error('voice.needCloud');
   const form = new FormData();

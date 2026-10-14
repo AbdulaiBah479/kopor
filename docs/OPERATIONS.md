@@ -25,6 +25,28 @@ and start recording. Their records stay on their phone unless they create a clou
 The dashboard shows accounts, businesses, weekly activity, Pro subscribers, AI use today, locked accounts,
 online payments, and new sign-ups per day. It only ever shows totals, never anyone's records or phone numbers.
 
+## What runs by itself (no computer needed)
+
+Kopor runs entirely on online services, so it keeps working 24/7 when your computer is off.
+
+| Automatic job | How often | What it does |
+|---|---|---|
+| **Monitor** | Every 30 minutes | Checks the website, the database and (every 6 h) the AI. On a problem it opens an **Outage** issue on GitHub, which GitHub emails to you, and closes it when things recover. It also keeps the free Supabase project from pausing |
+| **Auto-merge** | When Dependabot proposes an update | Small (patch/minor) updates merge themselves only after every test passes. Big updates wait for a person |
+| **CI + Deploy** | Every change | Tests everything; if it passes, the website updates itself and phones get the new version |
+| **Security** | Every change + weekly | CodeQL, leaked-key scan, vulnerable-package scan, supply-chain score |
+| **Server deploy** | When server code changes | Only if you add the `SUPABASE_ACCESS_TOKEN` repository secret (see below) |
+| **AI fallback** | Every request | Groq → Gemini → offline answers, so AI never simply stops |
+
+What cannot safely run on its own: writing new features and fixing new kinds of bugs. Those need a developer (or an
+AI coding assistant you supervise), because unsupervised changes to an app that handles people's money records are
+riskier than the bug. GitHub disables scheduled jobs after 60 days with no commits; auto-merged updates normally keep it
+active, and if it ever stops, GitHub → Actions → Monitor → **Enable workflow**.
+
+**Optional: let server code deploy itself.** Create a Supabase access token (Account → Access Tokens), then in GitHub
+open the repository → **Settings → Secrets and variables → Actions → New repository secret**, name it
+`SUPABASE_ACCESS_TOKEN` and paste the token. Never paste it anywhere else.
+
 ## Your routine
 
 **Daily (2 minutes):** look at the Owner dashboard. Answer support messages: customers reach you on WhatsApp +232 72 082 348 (Help → Chat with Kopor support) and by email at babdulai225.2@gmail.com (shown in Help and on the privacy and terms pages).
