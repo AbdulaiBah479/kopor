@@ -8,12 +8,13 @@ import { isPro } from '@/domain/plan';
 
 export const ORG_TYPES = ['shop', 'trader', 'wholesale', 'pharmacy', 'restaurant', 'salon', 'tailor', 'transport', 'farm', 'services', 'school', 'church', 'association', 'personal', 'other'];
 
-function MenuItem({ to, icon, title, sub }: { to: string; icon: string; title: string; sub: string }) {
+/** iOS Settings-style row: coloured icon tile, title, detail, chevron. */
+function MenuItem({ to, icon, tile, title, sub }: { to: string; icon: string; tile: string; title: string; sub: string }) {
   return (
     <Link className="item" to={to}>
-      <div className="avatar" style={{ background: 'var(--brand-soft)', color: 'var(--brand)' }}><Icon name={icon} size={18} /></div>
+      <span className="tile" style={{ background: `var(--tile-${tile})` }}><Icon name={icon} size={18} strokeWidth={2.2} /></span>
       <div className="main"><div className="t">{title}</div><div className="s">{sub}</div></div>
-      <Icon name="chev" />
+      <Icon name="chev" size={18} className="text-subtle" />
     </Link>
   );
 }
@@ -26,18 +27,22 @@ export function More() {
   return (
     <Page title={t('nav.more')}>
       <div className="list">
-        <MenuItem to="/assistant" icon="spark" title={t('more.assistant')} sub={t('more.assistantSub')} />
-        <MenuItem to="/reminders" icon="bell" title={t('settings.reminders')} sub={t('more.remindersSub')} />
-        <MenuItem to="/groups" icon="users" title={t('groups.title')} sub={t('more.groupsSub', { count: book.groups.length })} />
-        <MenuItem to="/invoices" icon="file" title={t('inv.title')} sub={t('more.invoicesSub', { count: book.invoices.length })} />
-        {can('payments') && <MenuItem to="/payments" icon="phone" title={t('more.payments')} sub={t('more.paymentsSub')} />}
-        {can('reports') && <MenuItem to="/health" icon="pulse" title={t('health.title')} sub={t('more.healthSub', { score: h.score })} />}
-        <MenuItem to="/team" icon="store" title={t('team.title')} sub={t('more.teamSub', { count: book.members.filter((m) => m.active).length })} />
-        <MenuItem to="/settings" icon="sliders" title={t('settings.title')} sub={t('more.settingsSub')} />
-        <MenuItem to="/plan" icon="crown" title={t('plan.title')} sub={isPro(book.org) ? t('plan.proActive') : t('plan.freeSub')} />
-        <MenuItem to="/help" icon="help" title={t('help.title')} sub={t('help.sub')} />
+        <MenuItem to="/assistant" icon="spark" tile="indigo" title={t('more.assistant')} sub={t('more.assistantSub')} />
+        <MenuItem to="/reminders" icon="bell" tile="red" title={t('settings.reminders')} sub={t('more.remindersSub')} />
       </div>
-      <div className="card flat small">{t('more.offlineNote')}</div>
+      <div className="list">
+        <MenuItem to="/groups" icon="users" tile="orange" title={t('groups.title')} sub={t('more.groupsSub', { count: book.groups.length })} />
+        <MenuItem to="/invoices" icon="file" tile="blue" title={t('inv.title')} sub={t('more.invoicesSub', { count: book.invoices.length })} />
+        {can('payments') && <MenuItem to="/payments" icon="wallet" tile="green" title={t('more.payments')} sub={t('more.paymentsSub')} />}
+        {can('reports') && <MenuItem to="/health" icon="pulse" tile="pink" title={t('health.title')} sub={t('more.healthSub', { score: h.score })} />}
+      </div>
+      <div className="list">
+        <MenuItem to="/team" icon="store" tile="teal" title={t('team.title')} sub={t('more.teamSub', { count: book.members.filter((m) => m.active).length })} />
+        <MenuItem to="/plan" icon="crown" tile="yellow" title={t('plan.title')} sub={isPro(book.org) ? t('plan.proActive') : t('plan.freeSub')} />
+        <MenuItem to="/settings" icon="sliders" tile="gray" title={t('settings.title')} sub={t('more.settingsSub')} />
+        <MenuItem to="/help" icon="help" tile="blue" title={t('help.title')} sub={t('help.sub')} />
+      </div>
+      <p className="px-4 text-[13px] text-muted-foreground">{t('more.offlineNote')}</p>
     </Page>
   );
 }

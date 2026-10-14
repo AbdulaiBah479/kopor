@@ -3,7 +3,9 @@ import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { setMeta } from '@/db/repo';
 
-export function startTour(t: (k: string) => string) {
+/** Shows the tour once per device: it is marked as seen as soon as it starts, so it never nags twice. Returns a cleanup. */
+export function startTour(t: (k: string) => string): () => void {
+  setMeta('tourDone', true);
   const step = (sel: string, key: string) => ({ element: sel, popover: { title: t(`tour.${key}Title`), description: t(`tour.${key}`) } });
   const d = driver({
     showProgress: true,
@@ -16,7 +18,7 @@ export function startTour(t: (k: string) => string) {
       step('[data-tour="insights"]', 'insights'),
       step('.nav', 'nav'),
     ].filter((s) => !('element' in s) || document.querySelector(s.element as string)),
-    onDestroyed: () => { setMeta('tourDone', true); },
   });
   d.drive();
+  return () => { if (d.isActive()) d.destroy(); };
 }

@@ -67,25 +67,29 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
           <Drawer.Overlay className="fixed inset-0 z-40 bg-black/45" />
           <Drawer.Content
             key={sheet?.key}
-            className="sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] max-w-[560px] flex-col rounded-t-[26px] bg-background outline-none"
+            className="sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[94dvh] max-w-[600px] flex-col rounded-t-[14px] bg-background outline-none"
             onOpenAutoFocus={(e) => {
               // Focus the first field (e.g. the amount) instead of the close button.
               e.preventDefault();
               const el = (e.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>('[autofocus], input:not([type=hidden]):not([type=file]), select, textarea');
               el?.focus();
             }}>
-            <div className="mx-auto mt-2.5 h-1.5 w-11 shrink-0 rounded-full bg-border" aria-hidden="true" />
-            <div className="flex items-center gap-2 px-4 pb-2 pt-3">
-              <Drawer.Title className="m-0 flex-1 text-lg font-bold tracking-tight">{sheet?.title}</Drawer.Title>
+            <div className="mx-auto mt-2 h-[5px] w-9 shrink-0 rounded-full bg-[var(--fill-strong)]" aria-hidden="true" />
+            {/* iOS sheet header: centred title, round grey close button */}
+            <div className="relative flex min-h-12 items-center justify-center px-14 pb-1 pt-2">
+              <Drawer.Title className="m-0 truncate text-[17px] font-semibold">{sheet?.title}</Drawer.Title>
               <Drawer.Description className="sr-only">{sheet?.title}</Drawer.Description>
-              <button type="button" className="icon-btn" onClick={closeSheet} aria-label={t('common.close')}><Icon name="x" /></button>
+              <button type="button" onClick={closeSheet} aria-label={t('common.close')}
+                className="absolute right-4 top-2 grid size-[30px] place-items-center rounded-full bg-[var(--fill)] text-muted-foreground active:scale-90">
+                <Icon name="x" size={16} strokeWidth={2.6} />
+              </button>
             </div>
             <div className="sheet-body overflow-y-auto px-4 pb-[calc(20px+env(safe-area-inset-bottom))]" data-vaul-no-drag>{sheet?.body}</div>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
       <Toaster position="top-center" richColors closeButton theme={document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'}
-        toastOptions={{ style: { fontFamily: 'inherit', borderRadius: 16 } }} offset={{ top: 'calc(12px + env(safe-area-inset-top))' }} />
+        toastOptions={{ style: { fontFamily: 'inherit', borderRadius: 18, fontSize: 15, backdropFilter: 'blur(20px)' } }} offset={{ top: 'calc(12px + env(safe-area-inset-top))' }} />
     </Ctx.Provider>
   );
 }

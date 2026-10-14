@@ -29,7 +29,7 @@ const step = async (name, fn) => {
   catch (e) { failed++; console.log('✗', name, '\n   ', e.message.split('\n').slice(0, 8).join('\n    ')); await page.screenshot({ path: `screenshots/FAIL-${name.replace(/\W+/g, '-')}.png` }); }
 };
 const shot = (n) => page.screenshot({ path: `screenshots/${n}.png`, fullPage: true });
-const go = async (hash) => { await page.goto(BASE + '#' + hash); await page.locator('.topbar h1').first().waitFor(); };
+const go = async (hash) => { await page.goto(BASE + '#' + hash); await page.locator('main.content').first().waitFor(); };
 const noOverflow = async () => {
   const [sw, w] = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
   if (sw > w + 1) throw new Error(`horizontal overflow: ${sw}px > ${w}px`);

@@ -82,7 +82,7 @@ export function MoneyInput({ name, value, onChange, big, autoFocus, required }: 
       <div className="grid grid-cols-4 gap-2" role="group" aria-label={t('ux.keypad')}>
         {keys.map((k) => (
           <button key={k} type="button" onClick={() => press(k)} aria-label={k === 'back' ? t('common.back') : k}
-            className={`h-12 rounded-2xl text-xl font-semibold transition active:scale-95 ${/^[-+×]$/.test(k) ? 'bg-primary-soft text-primary' : k === 'back' ? 'bg-muted' : 'bg-card shadow-sm border border-border'}`}>
+            className={`h-[52px] rounded-xl text-[26px] font-normal transition active:scale-95 active:brightness-90 ${/^[-+×]$/.test(k) ? 'bg-primary-soft text-primary font-medium' : k === 'back' ? 'bg-fill text-foreground' : 'bg-card text-foreground'}`}>
             {k === 'back' ? <Icon name="backspace" className="mx-auto" /> : k === '-' ? '−' : k}
           </button>
         ))}
@@ -91,16 +91,14 @@ export function MoneyInput({ name, value, onChange, big, autoFocus, required }: 
   );
 }
 
-const AVATAR_TONES = [
-  ['#dff2e6', '#0a7d3e'], ['#e2edf9', '#0b63b6'], ['#fcefd9', '#a86200'], ['#f3e5f5', '#7b3fa0'],
-  ['#fbe6e3', '#c0392b'], ['#e0f4f4', '#0f7c7c'], ['#eceff1', '#455a64'],
-];
+// iOS system colours; the circle is a translucent tint of the same colour, so it suits light and dark mode.
+const AVATAR_TONES = ['--tile-green', '--tile-blue', '--tile-orange', '--tile-purple', '--tile-red', '--tile-teal', '--tile-indigo', '--tile-pink'];
 /** Initials on a colour chosen from the name, so each customer is recognisable at a glance. */
 export function Avatar({ name, size = 42 }: { name: string; size?: number }) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  const [bg, fg] = AVATAR_TONES[h % AVATAR_TONES.length];
-  return <div className="avatar" style={{ width: size, height: size, background: `color-mix(in srgb, ${bg} 100%, transparent)`, color: fg }} aria-hidden="true">{initials(name)}</div>;
+  const tone = `var(${AVATAR_TONES[h % AVATAR_TONES.length]})`;
+  return <div className="avatar" style={{ width: size, height: size, background: `color-mix(in srgb, ${tone} 18%, transparent)`, color: tone }} aria-hidden="true">{initials(name)}</div>;
 }
 
 type ContactsApi = { select: (props: string[], opts: { multiple: boolean }) => Promise<{ name?: string[]; tel?: string[] }[]> };

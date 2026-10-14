@@ -13,7 +13,7 @@ const browser = await chromium.launch({ channel: process.platform === 'win32' ? 
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: 'light' });
 const page = await ctx.newPage();
 const shot = (n) => page.screenshot({ path: `${OUT}/${n}.png` });
-const go = async (h) => { await page.goto(BASE + '#' + h); await page.locator('.topbar h1').first().waitFor(); await page.waitForTimeout(400); };
+const go = async (h) => { await page.goto(BASE + '#' + h); await page.locator('main.content').first().waitFor(); await page.waitForTimeout(400); };
 
 await page.goto(BASE);
 await page.getByTestId('demo').click();
