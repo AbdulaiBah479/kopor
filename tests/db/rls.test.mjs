@@ -17,7 +17,7 @@ const rejects = async (p, re) => { try { await p; } catch (e) { if (re && !re.te
 // --- Supabase-compatible auth stub ---
 await db.exec(`
   create schema auth;
-  create table auth.users (id uuid primary key, email text);
+  create table auth.users (id uuid primary key, email text, created_at timestamptz not null default now());
   create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   create function auth.role() returns text language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claim.role', true), ''), 'anon') $$;
   create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
@@ -31,7 +31,7 @@ await db.exec(`
 `);
 
 const U = { owner: '11111111-1111-4111-8111-111111111111', cashier: '33333333-3333-4333-8333-333333333333', stranger: '22222222-2222-4222-8222-222222222222' };
-await q(`insert into auth.users values ($1, 'p23276000000@phone.kopor.app'), ($2, 'p23278555777@phone.kopor.app'), ($3, 'p23299999999@phone.kopor.app')`, [U.owner, U.cashier, U.stranger]);
+await q(`insert into auth.users (id, email) values ($1, 'p23276000000@phone.kopor.app'), ($2, 'p23278555777@phone.kopor.app'), ($3, 'p23299999999@phone.kopor.app')`, [U.owner, U.cashier, U.stranger]);
 const as = async (who) => {
   await q('reset role');
   await q(`select set_config('request.jwt.claim.sub', $1, false), set_config('request.jwt.claim.role', $2, false)`, [who ? U[who] : '', who ? 'authenticated' : 'anon']);
@@ -188,6 +188,14 @@ await test('free plan limits are enforced by the server and lifted by Pro', asyn
   await q(`update orgs set plan = 'pro', plan_until = $2, updated_at = $3 where id = $1`, [ORG, now() + 9e9, now() + 500]);
   await as('owner');
   await q(`insert into branches (id, org_id, created_at, updated_at, created_by, name) values (gen_random_uuid(), $1, $2, $2, $3, 'Second')`, [ORG, now(), OWNER_M]);
+});
+
+await test('owner dashboard numbers are for the server only, and contain no personal data', async () => {
+  for (const who of [null, 'owner', 'stranger']) { await as(who); await rejects(q('select kopor_admin_stats()'), /permission denied/); }
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  const s = (await q('select kopor_admin_stats() as s')).rows[0].s;
+  assert.equal(s.accounts, 3); assert.equal(s.businesses, 1); assert.equal(s.signups_14d.length, 14);
+  assert.ok(!JSON.stringify(s).match(/Fatu|Sorie|0760|0785/), 'no names or phone numbers');
 });
 
 await test('account deletion removes the user from businesses', async () => {

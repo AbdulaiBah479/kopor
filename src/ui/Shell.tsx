@@ -8,7 +8,7 @@ import { useApp } from '@/state/app';
 import { syncNow } from '@/cloud/sync';
 
 const TABS: [string, string, string][] = [['/', 'home', 'nav.home'], ['/credit', 'book', 'nav.credit'], ['/cash', 'cash', 'nav.cash'], ['/stock', 'box', 'nav.stock'], ['/more', 'grid', 'nav.more']];
-const MORE_ROUTES = ['/more', '/money', '/groups', '/invoices', '/payments', '/health', '/report', '/team', '/audit', '/settings', '/assistant', '/reminders', '/help', '/plan', '/account'];
+const MORE_ROUTES = ['/more', '/money', '/admin', '/groups', '/invoices', '/payments', '/health', '/report', '/team', '/audit', '/settings', '/assistant', '/reminders', '/help', '/plan', '/account'];
 
 /**
  * iOS navigation: top-level screens show a large title that collapses into a translucent bar on scroll;

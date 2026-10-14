@@ -72,6 +72,12 @@ const v3 = {
     create: 'Create invite code', send: 'Send code on WhatsApp', expires: 'The code works once and expires in 7 days.',
     msg: 'Hello {{name}}, join {{business}} on Kopor. 1) Open {{link}} 2) Create an account with your phone {{phone}} 3) Enter this invite code: {{code}}',
     joinTitle: 'Invited by a business?', joinHelp: 'Enter the code the owner sent you.', code: 'Invite code', join: 'Join business', joined: 'You have joined the business',
+  },  owner: {
+    title: 'Owner dashboard', sub: 'How Kopor is doing in the market', accounts: 'Accounts', thisWeek: '+{{n}} this week', businesses: 'Businesses',
+    activeWeek: '{{n}} active this week', pro: 'Pro subscribers', staff: '{{n}} staff accounts', aiToday: 'AI requests today', locked: '{{n}} accounts locked (wrong PINs)',
+    records: 'Records this week', payments: 'Online payments completed', signups: 'New accounts, last 14 days', tools: 'Run the service',
+    linkUsers: 'Accounts (Supabase)', linkData: 'Database tables (Supabase)', linkLogs: 'Server functions and logs (Supabase)', linkDeploys: 'Updates and deploys (GitHub)',
+    linkAi: 'AI usage (Groq)', updated: 'Updated {{time}}',
   },  pwa: {
     install: 'Install Kopor', installHelp: 'Put Kopor on your home screen. It opens like an app and works without internet.',
     offline: 'You are offline. Everything still works and will sync when you are back.', online: 'Back online',

@@ -9,6 +9,8 @@ import { useInstall, APP_URL } from '@/features/pwa';
 import { shareText } from '@/lib/share';
 import { useOverlay } from '@/ui/overlay';
 import { AppearancePanel } from '@/ui/Appearance';
+import { useEffect, useState } from 'react';
+import { isAppAdmin } from '@/cloud/admin';
 
 export const ORG_TYPES = ['shop', 'trader', 'wholesale', 'pharmacy', 'restaurant', 'salon', 'tailor', 'transport', 'farm', 'services', 'school', 'church', 'association', 'personal', 'other'];
 
@@ -31,8 +33,15 @@ export function More() {
   const { sync } = useApp();
   const { canInstall, install } = useInstall();
   const { openSheet } = useOverlay();
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => { isAppAdmin().then(setAdmin); }, [sync.status]);
   return (
     <Page title={t('nav.more')}>
+      {admin && (
+        <div className="list">
+          <MenuItem to="/admin" icon="crown" tile="indigo" title={t('owner.title')} sub={t('owner.sub')} />
+        </div>
+      )}
       <div className="list">
         <MenuItem to="/money" icon="swap" tile="green" title={t('money.title')} sub={t('money.sub')} />
         <MenuItem to="/account" icon="cloud" tile="blue" title={t('settings.cloud')}

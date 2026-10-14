@@ -5,6 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-047857.svg)](LICENSE)
 [![CodeQL](https://github.com/AbdulaiBah479/kopor/actions/workflows/codeql.yml/badge.svg)](https://github.com/AbdulaiBah479/kopor/actions/workflows/codeql.yml)
 
+**Running the service after launch:** see [docs/OPERATIONS.md](docs/OPERATIONS.md) (owner dashboard, support, updates, costs).
+
 **Try it:** <https://abdulaibah479.github.io/kopor/> (open on a phone and choose "Add to Home screen" to install)
 
 Kopor ("money" in Krio) is an **offline-first** app for shops, market traders, osusu groups, associations, churches,

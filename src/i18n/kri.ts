@@ -153,7 +153,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     title: 'Sɛtin', business: 'Biznɛs', momo: 'Mobayl mɔni nɔmba (fɔ invɔys)', address: 'Adrɛs', currency: 'Kɔrɛnsi', cc: 'Kɔntri kod',
     language: 'Langwej', theme: 'Kɔlɔ', auto: 'Ɔto', light: 'Layt', dark: 'Dak', security: 'Sekyuriti', pin: 'Mi PIN na dis fon', pinOn: 'PIN lɔk de ɔn.',
     pinOff: 'Protɛkt yu rɛkɔd wit PIN.', changePin: 'Chenj PIN', removePin: 'Rimov PIN', autoLock: 'Lɔk afta dis minit we nɔbɔdi nɔ yuz am', newPin: 'Nyu PIN (4–8 nɔmba)',
-    ai: 'AI (nɔ fɔs, fri)', aiHelp: 'Get fri ki na console.groq.com (ɔ Google AI Studio / OpenRouter). Na jɔs di tin we yu aks ɛn smɔl sɔmari de go.',
+    ai: 'Yu yon AI ki (fɔ ɛkspat)', aiHelp: 'Yu nɔ nid dis: AI ɛn vɔys dɔn de wok fɔ ɔlman. Ad yu yon fri ki (console.groq.com ɔ Google AI Studio) if yu de yuz AI bɔku bɔku. Na jɔs yu kwɛstyɔn ɛn smɔl sɔmari de go.',
     aiKey: 'AI ki', aiBase: 'API bes URL', aiModel: 'Mɔdel', aiVision: 'Vishɔn mɔdel (fɔ skan risit)',
     cloud: 'Klawd ɛn akawnt', cloudHelp: 'Bakɔp ɛn sink pan ɔda fon, ad staf, get pement. I nid fri Supabase prɔjɛkt (luk README).',
     cloudUrl: 'Supabase prɔjɛkt URL', cloudKey: 'Supabase anon ki', cloudSave: 'Sev klawd sɛtin', signUp: 'Mek akawnt', signIn: 'Sayn in', signOut: 'Sayn awt',

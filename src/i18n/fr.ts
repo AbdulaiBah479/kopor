@@ -153,7 +153,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     title: 'Réglages', business: 'Commerce', momo: 'Numéro mobile money (sur les factures)', address: 'Adresse', currency: 'Devise', cc: 'Indicatif pays',
     language: 'Langue', theme: 'Thème', auto: 'Auto', light: 'Clair', dark: 'Sombre', security: 'Sécurité', pin: 'Mon PIN sur ce téléphone', pinOn: 'Le verrouillage par PIN est activé.',
     pinOff: 'Protégez vos données avec un PIN.', changePin: 'Changer le PIN', removePin: 'Supprimer le PIN', autoLock: 'Verrouiller après (minutes d’inactivité)', newPin: 'Nouveau PIN (4 à 8 chiffres)',
-    ai: 'IA (facultatif, gratuit)', aiHelp: 'Obtenez une clé gratuite sur console.groq.com (ou Google AI Studio / OpenRouter). Seuls votre question et un résumé de vos comptes sont envoyés.',
+    ai: 'Votre propre clé IA (avancé)', aiHelp: 'Inutile en général : l’IA et la voix fonctionnent déjà pour tout le monde. Ajoutez votre propre clé gratuite (console.groq.com ou Google AI Studio) seulement si vous utilisez beaucoup l’IA. Seuls votre question et un résumé de vos comptes sont envoyés.',
     aiKey: 'Clé IA', aiBase: 'URL de base de l’API', aiModel: 'Modèle', aiVision: 'Modèle vision (scan des reçus)',
     cloud: 'Cloud et compte', cloudHelp: 'Sauvegarde et synchronisation entre téléphones, personnel sur d’autres téléphones, paiements. Nécessite un projet Supabase gratuit (voir README).',
     cloudUrl: 'URL du projet Supabase', cloudKey: 'Clé anon Supabase', cloudSave: 'Enregistrer le cloud', signUp: 'Créer un compte', signIn: 'Se connecter', signOut: 'Se déconnecter',

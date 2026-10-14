@@ -74,6 +74,12 @@ const v3: V3Dict = {
     create: 'Créer un code d’invitation', send: 'Envoyer le code sur WhatsApp', expires: 'Le code ne sert qu’une fois et expire dans 7 jours.',
     msg: 'Bonjour {{name}}, rejoignez {{business}} sur Kopor. 1) Ouvrez {{link}} 2) Créez un compte avec votre numéro {{phone}} 3) Saisissez ce code : {{code}}',
     joinTitle: 'Invité par un commerce ?', joinHelp: 'Saisissez le code envoyé par le propriétaire.', code: 'Code d’invitation', join: 'Rejoindre le commerce', joined: 'Vous avez rejoint le commerce',
+  },  owner: {
+    title: 'Tableau de bord', sub: 'Comment Kopor se porte sur le marché', accounts: 'Comptes', thisWeek: '+{{n}} cette semaine', businesses: 'Commerces',
+    activeWeek: '{{n}} actifs cette semaine', pro: 'Abonnés Pro', staff: '{{n}} comptes employés', aiToday: 'Requêtes IA aujourd’hui', locked: '{{n}} comptes bloqués (PIN erronés)',
+    records: 'Écritures cette semaine', payments: 'Paiements en ligne réussis', signups: 'Nouveaux comptes, 14 derniers jours', tools: 'Gérer le service',
+    linkUsers: 'Comptes (Supabase)', linkData: 'Tables de la base (Supabase)', linkLogs: 'Fonctions serveur et journaux (Supabase)', linkDeploys: 'Mises à jour (GitHub)',
+    linkAi: 'Usage IA (Groq)', updated: 'Mis à jour {{time}}',
   },  pwa: {
     install: 'Installer Kopor', installHelp: 'Ajoutez Kopor à votre écran d’accueil. Il s’ouvre comme une application et marche sans internet.',
     offline: 'Vous êtes hors ligne. Tout fonctionne et se synchronisera plus tard.', online: 'De nouveau en ligne',

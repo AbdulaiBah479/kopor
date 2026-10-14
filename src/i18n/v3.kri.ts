@@ -74,6 +74,12 @@ const v3: V3Dict = {
     create: 'Mek invayt kod', send: 'Sɛn kod na WhatsApp', expires: 'Di kod de wok wan tɛm ɛn i go ɛkspay afta 7 de.',
     msg: 'Kushɛ {{name}}, jɔyn {{business}} na Kopor. 1) Opin {{link}} 2) Mek akawnt wit yu fon {{phone}} 3) Put dis invayt kod: {{code}}',
     joinTitle: 'Biznɛs invayt yu?', joinHelp: 'Put di kod we di ɔna sɛn yu.', code: 'Invayt kod', join: 'Jɔyn biznɛs', joined: 'Yu dɔn jɔyn di biznɛs',
+  },  owner: {
+    title: 'Ɔna dashbɔd', sub: 'Aw Kopor de du na makit', accounts: 'Akawnt dɛn', thisWeek: '+{{n}} dis wik', businesses: 'Biznɛs dɛn',
+    activeWeek: '{{n}} de wok dis wik', pro: 'Pro kɔstɔma dɛn', staff: '{{n}} staf akawnt', aiToday: 'AI kwɛstyɔn tide', locked: '{{n}} akawnt lɔk (rɔng PIN)',
+    records: 'Rɛkɔd dis wik', payments: 'Ɔnlayn pement we dɔn', signups: 'Nyu akawnt, las 14 de', tools: 'Rɔn di savis',
+    linkUsers: 'Akawnt dɛn (Supabase)', linkData: 'Databes (Supabase)', linkLogs: 'Sava fɔnkshɔn ɛn lɔg (Supabase)', linkDeploys: 'Ɔpdet (GitHub)',
+    linkAi: 'AI yuz (Groq)', updated: 'Ɔpdet na {{time}}',
   },  pwa: {
     install: 'Put Kopor na yu fon', installHelp: 'Put Kopor na yu om skrin. I go opin lɛk ap ɛn i de wok widawt nɛt.',
     offline: 'Nɛt nɔ de. Ɔltin stil de wok ɛn i go sink we nɛt kam bak.', online: 'Nɛt dɔn kam bak',

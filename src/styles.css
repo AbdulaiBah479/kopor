@@ -415,6 +415,16 @@
   .pay-amount { font-size: 40px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 
   .nowrap { white-space: nowrap; }
+  .owner-bars { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; height: 120px; align-items: end; margin-top: 8px; }
+  .owner-bar { display: grid; grid-template-rows: 1fr auto; height: 100%; text-align: center; }
+  .owner-bar span { align-self: end; background: var(--primary); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .owner-bar small { font-size: 10px; color: var(--muted-foreground); }
+  /* Collapsible "advanced" card (e.g. own AI key). */
+  details.advanced > summary { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 17px; cursor: pointer; list-style: none; min-height: 28px; }
+  details.advanced > summary::-webkit-details-marker { display: none; }
+  details.advanced > summary::after { content: "›"; margin-left: auto; font-size: 22px; color: var(--muted-foreground); transition: transform .15s; }
+  details.advanced[open] > summary::after { transform: rotate(90deg); }
+  details.advanced[open] > summary { margin-bottom: 12px; }
   /* Row title with badges: the name shortens, badges always stay visible. */
   .item .t.with-badge { display: flex; align-items: center; gap: 6px; }
   .item .t.with-badge > .trunc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

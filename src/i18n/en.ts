@@ -154,7 +154,7 @@ const base = {
     title: 'Settings', business: 'Business', momo: 'Mobile money number (shown on invoices)', address: 'Address', currency: 'Currency', cc: 'Country code',
     language: 'Language', theme: 'Theme', auto: 'Auto', light: 'Light', dark: 'Dark', security: 'Security', pin: 'My PIN on this phone', pinOn: 'PIN lock is on.',
     pinOff: 'Protect your records with a PIN.', changePin: 'Change PIN', removePin: 'Remove PIN', autoLock: 'Lock after minutes of no use', newPin: 'New PIN (4–8 digits)',
-    ai: 'AI (optional, free)', aiHelp: 'Get a free key at console.groq.com (or Google AI Studio / OpenRouter). Only the text you ask about and a summary of your books is sent.',
+    ai: 'Own AI key (advanced)', aiHelp: 'You do not need this: AI and voice already work for everyone. Only add your own free key (console.groq.com or Google AI Studio) if you use AI very often. Only your question and a summary of your books are sent.',
     aiKey: 'AI key', aiBase: 'API base URL', aiModel: 'Model', aiVision: 'Vision model (receipt scanning)',
     cloud: 'Cloud & account', cloudHelp: 'Back up and sync across phones, add staff on other phones, receive payments. Needs a free Supabase project (see README).',
     cloudUrl: 'Supabase project URL', cloudKey: 'Supabase anon key', cloudSave: 'Save cloud settings', signUp: 'Create account', signIn: 'Sign in', signOut: 'Sign out',

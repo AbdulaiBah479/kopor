@@ -31,6 +31,7 @@ const Help = lazyRetry(() => import('./screens/Help').then((m) => ({ default: m.
 const Legal = lazyRetry(() => import('./screens/Legal').then((m) => ({ default: m.Legal })));
 const Money = lazyRetry(() => import('./screens/Money').then((m) => ({ default: m.Money })));
 const PayPage = lazyRetry(() => import('./screens/Money').then((m) => ({ default: m.PayRoute })));
+const Owner = lazyRetry(() => import('./screens/Owner').then((m) => ({ default: m.Owner })));
 const Plan = lazyRetry(() => import('./screens/Plan').then((m) => ({ default: m.Plan })));
 
 const Boot = () => <div className="boot"><div className="boot-logo">K</div></div>;
@@ -75,6 +76,7 @@ function Gate() {
         <Route path="/account" element={<Account />} />
         <Route path="/help" element={<Help />} />
         <Route path="/plan" element={<Plan />} />
+        <Route path="/admin" element={<Owner />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
