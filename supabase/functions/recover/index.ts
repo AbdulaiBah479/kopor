@@ -12,7 +12,8 @@ const hash = async (salt: string, code: string) => hex(await crypto.subtle.diges
 const normalize = (code: string) => code.toUpperCase().replace(/[^A-Z0-9]/g, '');
 function newCode() {
   const r = crypto.getRandomValues(new Uint8Array(10));
-  const s = [...r].map((x) => ALPHABET[x % ALPHABET.length]).join('');
+  // 32 symbols = exactly 5 bits, so masking a random byte picks each symbol with equal probability (no modulo bias).
+  const s = [...r].map((x) => ALPHABET[x & 31]).join('');
   return `${s.slice(0, 5)}-${s.slice(5)}`;
 }
 const equal = (a: string, b: string) => a.length === b.length && [...a].reduce((x, c, i) => x | (c.charCodeAt(0) ^ b.charCodeAt(i)), 0) === 0;

@@ -1,0 +1,14 @@
+# OSV-Scanner exceptions. Each one needs a reason and an expiry date for re-checking.
+
+# SheetJS (xlsx) is installed from the official SheetJS CDN at 0.20.3 (see package.json), not from the abandoned
+# npm package. Both advisories are fixed in that version: prototype pollution fixed in 0.19.3, ReDoS fixed in 0.20.2
+# (the advisory itself says to use https://cdn.sheetjs.com/). The scanner cannot see CDN versions, so it flags them.
+[[IgnoredVulns]]
+id = "GHSA-4r6h-8v6p-xvw6"
+ignoreUntil = 2027-04-14
+reason = "Fixed in xlsx 0.19.3; Kopor uses 0.20.3 from cdn.sheetjs.com"
+
+[[IgnoredVulns]]
+id = "GHSA-5pgg-2g8v-p4x9"
+ignoreUntil = 2027-04-14
+reason = "Fixed in xlsx 0.20.2; Kopor uses 0.20.3 from cdn.sheetjs.com"

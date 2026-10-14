@@ -17,11 +17,11 @@
     "android:sync": "npm run build && npx cap sync android"
   },
   "dependencies": {
-    "@capacitor-community/bluetooth-le": "^6.1.0",
-    "@capacitor/android": "^6.2.0",
-    "@capacitor/core": "^6.2.0",
-    "@capacitor/filesystem": "^6.0.4",
-    "@capacitor/share": "^6.0.4",
+    "@capacitor-community/bluetooth-le": "^7.3.2",
+    "@capacitor/android": "^7.6.9",
+    "@capacitor/core": "^7.6.9",
+    "@capacitor/filesystem": "^7.1.8",
+    "@capacitor/share": "^7.0.4",
     "@fontsource-variable/inter": "^5.3.0",
     "@point-of-sale/receipt-printer-encoder": "^4.0.1",
     "@sentry/browser": "^11.7.0",
@@ -52,7 +52,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.2.0",
+    "@capacitor/cli": "^7.6.9",
     "@electric-sql/pglite": "^0.2.14",
     "@eslint/js": "^9.39.5",
     "@tailwindcss/vite": "^4.3.3",
@@ -74,8 +74,5 @@
     "vite": "^7.3.6",
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^4.1.11"
-  },
-  "overrides": {
-    "tar": "^7.5.18"
   }
 }

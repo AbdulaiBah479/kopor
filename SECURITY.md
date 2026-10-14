@@ -5,7 +5,8 @@ Kopor holds business records and connects to mobile money, so security reports a
 ## Reporting a vulnerability
 
 Please **do not open a public issue**. Use GitHub's private reporting instead:
-**Security → Report a vulnerability** on this repository.
+**Security → Report a vulnerability** on this repository, or go straight to
+<https://github.com/AbdulaiBah479/kopor/security/advisories/new>.
 
 Include what you found, how to reproduce it, and what an attacker could do with it. You will get a reply within
 7 days, and a fix or a plan within 30 days for confirmed issues. Thank you for helping keep small businesses safe.
