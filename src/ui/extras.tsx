@@ -1,12 +1,13 @@
 // Shared pieces for the v2.1 features: inline barcode scanner, totals block, print/share helpers.
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
+import { lazyRetry } from '@/ui/lazy';
 import { useTranslation } from 'react-i18next';
 import { Icon } from './Icon';
 import { formatMoney } from '@/lib/money';
 import type { Totals } from '@/domain/tax';
 import type { Book } from '@/domain/book';
 
-const Scanner = lazy(() => import('@/features/Scanner'));
+const Scanner = lazyRetry(() => import('@/features/Scanner'));
 
 /** Toggles an inline camera scanner (stays inside the current form so nothing typed is lost). */
 export function ScanToggle({ onCode, label }: { onCode: (code: string) => void; label?: string }) {

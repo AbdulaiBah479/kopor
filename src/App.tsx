@@ -1,4 +1,5 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
+import { lazyRetry } from '@/ui/lazy';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './state/app';
 import { OverlayProvider } from './ui/overlay';
@@ -12,23 +13,23 @@ import { StockList } from './screens/Stock';
 import { More } from './screens/More';
 
 // Less-used screens load on demand to keep the first load small on slow networks.
-const Groups = lazy(() => import('./screens/Groups').then((m) => ({ default: m.GroupList })));
-const GroupDetail = lazy(() => import('./screens/Groups').then((m) => ({ default: m.GroupDetail })));
-const Invoices = lazy(() => import('./screens/Invoices').then((m) => ({ default: m.InvoiceList })));
-const InvoiceDetail = lazy(() => import('./screens/Invoices').then((m) => ({ default: m.InvoiceDetail })));
-const Payments = lazy(() => import('./screens/Payments').then((m) => ({ default: m.Payments })));
-const Reminders = lazy(() => import('./screens/Reminders').then((m) => ({ default: m.Reminders })));
-const Assistant = lazy(() => import('./screens/Assistant').then((m) => ({ default: m.Assistant })));
-const Health = lazy(() => import('./screens/Health').then((m) => ({ default: m.Health })));
-const Report = lazy(() => import('./screens/Health').then((m) => ({ default: m.Report })));
-const Team = lazy(() => import('./screens/Team').then((m) => ({ default: m.Team })));
-const Audit = lazy(() => import('./screens/Team').then((m) => ({ default: m.Audit })));
-const Settings = lazy(() => import('./screens/Settings').then((m) => ({ default: m.Settings })));
-const Account = lazy(() => import('./screens/Settings').then((m) => ({ default: m.Account })));
-const PublicInvoice = lazy(() => import('./screens/PublicInvoice').then((m) => ({ default: m.PublicInvoice })));
-const Help = lazy(() => import('./screens/Help').then((m) => ({ default: m.Help })));
-const Legal = lazy(() => import('./screens/Legal').then((m) => ({ default: m.Legal })));
-const Plan = lazy(() => import('./screens/Plan').then((m) => ({ default: m.Plan })));
+const Groups = lazyRetry(() => import('./screens/Groups').then((m) => ({ default: m.GroupList })));
+const GroupDetail = lazyRetry(() => import('./screens/Groups').then((m) => ({ default: m.GroupDetail })));
+const Invoices = lazyRetry(() => import('./screens/Invoices').then((m) => ({ default: m.InvoiceList })));
+const InvoiceDetail = lazyRetry(() => import('./screens/Invoices').then((m) => ({ default: m.InvoiceDetail })));
+const Payments = lazyRetry(() => import('./screens/Payments').then((m) => ({ default: m.Payments })));
+const Reminders = lazyRetry(() => import('./screens/Reminders').then((m) => ({ default: m.Reminders })));
+const Assistant = lazyRetry(() => import('./screens/Assistant').then((m) => ({ default: m.Assistant })));
+const Health = lazyRetry(() => import('./screens/Health').then((m) => ({ default: m.Health })));
+const Report = lazyRetry(() => import('./screens/Health').then((m) => ({ default: m.Report })));
+const Team = lazyRetry(() => import('./screens/Team').then((m) => ({ default: m.Team })));
+const Audit = lazyRetry(() => import('./screens/Team').then((m) => ({ default: m.Audit })));
+const Settings = lazyRetry(() => import('./screens/Settings').then((m) => ({ default: m.Settings })));
+const Account = lazyRetry(() => import('./screens/Settings').then((m) => ({ default: m.Account })));
+const PublicInvoice = lazyRetry(() => import('./screens/PublicInvoice').then((m) => ({ default: m.PublicInvoice })));
+const Help = lazyRetry(() => import('./screens/Help').then((m) => ({ default: m.Help })));
+const Legal = lazyRetry(() => import('./screens/Legal').then((m) => ({ default: m.Legal })));
+const Plan = lazyRetry(() => import('./screens/Plan').then((m) => ({ default: m.Plan })));
 
 const Boot = () => <div className="boot"><div className="boot-logo">K</div></div>;
 
@@ -46,6 +47,7 @@ function Gate() {
   if (!session || !book) return <Welcome />;
   if (locked) return <Lock />;
   return (
+    <ErrorBoundary resetKey={pathname}>
     <Suspense fallback={<Boot />}>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -72,6 +74,7 @@ function Gate() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
+    </ErrorBoundary>
   );
 }
 

@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { lazyRetry } from '@/ui/lazy';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook, useLocalOrgs } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
@@ -23,7 +24,7 @@ import { shareFile } from '@/lib/share';
 import { isPro } from '@/domain/plan';
 import { deleteCloudAccount } from '@/cloud/account-extra';
 
-const CloudSignIn = lazy(() => import('./CloudSignIn'));
+const CloudSignIn = lazyRetry(() => import('./CloudSignIn'));
 
 function TaxCard() {
   const { t } = useTranslation();

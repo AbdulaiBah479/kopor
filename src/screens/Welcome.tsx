@@ -1,4 +1,5 @@
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
+import { lazyRetry } from '@/ui/lazy';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
@@ -9,7 +10,7 @@ import { createOrg, setPin, getSession } from '@/domain/org';
 import { createDemo } from '@/domain/demo';
 import { ORG_TYPES } from './More';
 
-const CloudSignIn = lazy(() => import('./CloudSignIn'));
+const CloudSignIn = lazyRetry(() => import('./CloudSignIn'));
 
 export function Welcome() {
   const { t } = useTranslation();

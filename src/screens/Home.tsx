@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { lazyRetry } from '@/ui/lazy';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
@@ -19,8 +20,8 @@ import { SaleSheet, ExpenseSheet } from './Cash';
 import { NewCreditSheet, useReminderText } from './Credit';
 
 // AI tools (and their validation library) download only when first used.
-const VoiceSheet = lazy(() => import('./AiSheets').then((m) => ({ default: m.VoiceSheet })));
-const ScanSheet = lazy(() => import('./AiSheets').then((m) => ({ default: m.ScanSheet })));
+const VoiceSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.VoiceSheet })));
+const ScanSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.ScanSheet })));
 
 type Period = 'today' | 'week' | 'month';
 
