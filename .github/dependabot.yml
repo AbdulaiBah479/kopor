@@ -13,6 +13,9 @@ updates:
     ignore:
       - dependency-name: '*'
         update-types: [version-update:semver-major]
+      # 0.x minor releases of PGlite are breaking; the database tests need migrating first.
+      - dependency-name: '@electric-sql/pglite'
+        versions: ['>=0.3.0']
   - package-ecosystem: github-actions
     directory: /
     schedule:

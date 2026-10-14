@@ -36,7 +36,7 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-async function aesKey(passphrase: string, salt: Uint8Array) {
+async function aesKey(passphrase: string, salt: Uint8Array<ArrayBuffer>) {
   const base = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PIN_ITERATIONS }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
 }
