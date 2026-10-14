@@ -69,11 +69,16 @@ await test('owner invites a cashier by phone; the cashier claims the invite on s
 });
 
 let cashierTxn;
-await test('cashier records sales but cannot delete them, manage stock or change roles', async () => {
+await test('cashier records sales, can undo only fresh own entries, cannot manage stock or change roles', async () => {
   await as('cashier');
   cashierTxn = (await q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date) values (gen_random_uuid(), $1, $2, $2, $3, 'in', 'sale', 5000, 'cash', current_date) returning id`, [ORG, now(), CASHIER_M])).rows[0].id;
   await q(`update transactions set note = 'retry', updated_at = $2 where id = $1`, [cashierTxn, now() + 1]); // re-saving own row is allowed
-  await rejects(q(`update transactions set deleted = 1, updated_at = $2 where id = $1`, [cashierTxn, now() + 2]), /Only managers/);
+  // Undo within 10 minutes of creating it: allowed.
+  const fresh = (await q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date) values (gen_random_uuid(), $1, $2, $2, $3, 'in', 'sale', 700, 'cash', current_date) returning id`, [ORG, now(), CASHIER_M])).rows[0].id;
+  await q(`update transactions set deleted = 1, updated_at = $2 where id = $1`, [fresh, now() + 2]);
+  // An entry older than 10 minutes: blocked.
+  const old = (await q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date) values (gen_random_uuid(), $1, $2, $2, $3, 'in', 'sale', 900, 'cash', current_date) returning id`, [ORG, now() - 11 * 60000, CASHIER_M])).rows[0].id;
+  await rejects(q(`update transactions set deleted = 1, updated_at = $2 where id = $1`, [old, now() + 3]), /Only managers/);
   await rejects(q(`insert into products (id, org_id, created_at, updated_at, created_by, name) values (gen_random_uuid(), $1, 1, 1, $2, 'Rice')`, [ORG, CASHIER_M]), /row-level security/);
   const esc = await q(`update members set role = 'owner', updated_at = $2 where id = $1`, [CASHIER_M, now() + 5]);
   assert.equal(esc.affectedRows ?? 0, 0); // row is invisible for update: no escalation
