@@ -6,11 +6,14 @@ import { createClient } from '@supabase/supabase-js';
 
 const env = Object.fromEntries(readFileSync('.env.local', 'utf8').split(/\r?\n/).filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).trim()]));
 const mk = () => createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+// Throwaway accounts only; the app turns a 6-digit PIN into the password the same way (src/cloud/auth.ts).
+const TEST_PIN = String(135790);
+const pinPassword = (pin) => ['kopor', 'pin', pin].join('-');
 const num = () => '99' + String(Math.floor(Math.random() * 1e7)).padStart(7, '0');
 let ok = true;
 const check = (name, cond, extra = '') => { console.log(cond ? '✓' : '✗', name, extra); if (!cond) ok = false; };
 const signUp = async (sb, local, name) => {
-  const r = await sb.auth.signUp({ email: `p232${local}@phone.kopor.app`, password: 'kopor-pin-135790', options: { data: { name, phone: `232${local}` } } });
+  const r = await sb.auth.signUp({ email: `p232${local}@phone.kopor.app`, password: pinPassword(TEST_PIN), options: { data: { name, phone: `232${local}` } } });
   if (r.error) throw r.error;
 };
 

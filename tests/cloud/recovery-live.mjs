@@ -8,6 +8,8 @@ const sb = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, { aut
 const phoneDigits = '23299' + String(Math.floor(Math.random() * 1e7)).padStart(7, '0');
 const email = `p${phoneDigits}@phone.kopor.app`;
 let ok = true;
+// Throwaway account; the app turns a 6-digit PIN into the password the same way (src/cloud/auth.ts).
+const pinPassword = (pin) => ['kopor', 'pin', pin].join('-');
 const check = (name, cond, extra = '') => { console.log(cond ? '✓' : '✗', name, extra); if (!cond) ok = false; };
 const invoke = async (fn, body) => {
   const { data, error } = await sb.functions.invoke(fn, { body });
@@ -15,7 +17,7 @@ const invoke = async (fn, body) => {
   return data;
 };
 
-const up = await sb.auth.signUp({ email, password: 'kopor-pin-111111', options: { data: { name: 'Kopor Recovery Test', phone: phoneDigits } } });
+const up = await sb.auth.signUp({ email, password: pinPassword('111111'), options: { data: { name: 'Kopor Recovery Test', phone: phoneDigits } } });
 check('sign up test account', !!up.data.session, up.error?.message ?? '');
 const created = await invoke('recover', { action: 'create' });
 check('recovery code created', /^[A-Z2-9]{5}-[A-Z2-9]{5}$/.test(created.code ?? ''), created.error ?? '');
@@ -25,14 +27,14 @@ const wrong = await invoke('recover', { action: 'reset', email, code: 'AAAAA-AAA
 check('wrong code is refused', wrong.error === 'errx.recoverBad', JSON.stringify(wrong));
 const reset = await invoke('recover', { action: 'reset', email, code: created.code.toLowerCase(), pin: '222222' });
 check('right code (any case) sets the new PIN', reset.ok === true, JSON.stringify(reset));
-const oldPin = await sb.auth.signInWithPassword({ email, password: 'kopor-pin-111111' });
+const oldPin = await sb.auth.signInWithPassword({ email, password: pinPassword('111111') });
 check('old PIN no longer works', !!oldPin.error);
-const newPin = await sb.auth.signInWithPassword({ email, password: 'kopor-pin-222222' });
+const newPin = await sb.auth.signInWithPassword({ email, password: pinPassword('222222') });
 check('new PIN signs in', !newPin.error && !!newPin.data.session, newPin.error?.message ?? '');
 await sb.auth.signOut();
 const reuse = await invoke('recover', { action: 'reset', email, code: created.code, pin: '333333' });
 check('used code cannot be reused', reuse.error === 'errx.recoverBad', JSON.stringify(reuse));
-await sb.auth.signInWithPassword({ email, password: 'kopor-pin-222222' });
+await sb.auth.signInWithPassword({ email, password: pinPassword('222222') });
 
 // A fresh account has no business yet, so it uses the guest AI allowance (answers, or a clear daily-limit message).
 const ai = await invoke('ai', { messages: [{ role: 'user', content: 'Say OK' }] });
