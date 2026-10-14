@@ -114,13 +114,19 @@ export function Settings() {
   const { can } = useApp();
   return (
     <Page title={t('settings.title')} back="/more">
+      <div className="list">
+        <Link className="item" to="/account">
+          <span className="tile" style={{ background: 'var(--tile-blue)' }}><Icon name="cloud" size={18} /></span>
+          <div className="main"><div className="t">{t('settings.cloud')}</div><div className="s">{t('settings.signIn')} · {t('settings.signUp')} · {t('settings.syncNow')}</div></div>
+          <Icon name="chev" size={18} className="text-subtle" />
+        </Link>
+      </div>
       {can('business') && <BusinessCard />}
       {can('business') && <TaxCard />}
       <PreferencesCard />
       <PrinterCard />
       <SecurityCard />
       <AiCard />
-      <CloudCard />
       {can('business') && <ExportCard />}
       {can('business') && <BackupCard />}
       <BusinessesCard />
@@ -226,7 +232,13 @@ function AiCard() {
   );
 }
 
-function CloudCard() {
+/** Cloud & account screen (More → Cloud & account). */
+export function Account() {
+  const { t } = useTranslation();
+  return <Page title={t('settings.cloud')} back="/more"><CloudCard /></Page>;
+}
+
+export function CloudCard() {
   const { t } = useTranslation();
   const { ctx, sync, can } = useApp();
   const { openSheet, fail, toast } = useOverlay();

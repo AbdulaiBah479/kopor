@@ -24,8 +24,14 @@ export function More() {
   const book = useBook();
   const { can } = useApp();
   const h = health(book);
+  const { sync } = useApp();
   return (
     <Page title={t('nav.more')}>
+      <div className="list">
+        <MenuItem to="/account" icon="cloud" tile="blue" title={t('settings.cloud')}
+          sub={sync.status === 'off' ? t('settings.syncOff') : sync.status === 'error' ? t('settings.syncError', { error: sync.error ?? '' }).slice(0, 60)
+            : sync.status === 'syncing' ? t('settings.syncing') : sync.lastSync ? t('settings.lastSync', { time: new Date(sync.lastSync).toLocaleTimeString() }) : t('settings.syncing')} />
+      </div>
       <div className="list">
         <MenuItem to="/assistant" icon="spark" tile="indigo" title={t('more.assistant')} sub={t('more.assistantSub')} />
         <MenuItem to="/reminders" icon="bell" tile="red" title={t('settings.reminders')} sub={t('more.remindersSub')} />

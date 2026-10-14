@@ -24,6 +24,7 @@ const Report = lazy(() => import('./screens/Health').then((m) => ({ default: m.R
 const Team = lazy(() => import('./screens/Team').then((m) => ({ default: m.Team })));
 const Audit = lazy(() => import('./screens/Team').then((m) => ({ default: m.Audit })));
 const Settings = lazy(() => import('./screens/Settings').then((m) => ({ default: m.Settings })));
+const Account = lazy(() => import('./screens/Settings').then((m) => ({ default: m.Account })));
 const PublicInvoice = lazy(() => import('./screens/PublicInvoice').then((m) => ({ default: m.PublicInvoice })));
 const Help = lazy(() => import('./screens/Help').then((m) => ({ default: m.Help })));
 const Legal = lazy(() => import('./screens/Legal').then((m) => ({ default: m.Legal })));
@@ -65,6 +66,7 @@ function Gate() {
         <Route path="/team" element={<Team />} />
         <Route path="/audit" element={<Audit />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/account" element={<Account />} />
         <Route path="/help" element={<Help />} />
         <Route path="/plan" element={<Plan />} />
         <Route path="*" element={<Navigate to="/" replace />} />

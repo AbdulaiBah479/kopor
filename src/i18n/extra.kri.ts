@@ -80,6 +80,7 @@ const extra: ExtraDict = {
     deleted: 'Akawnt dɔn dilit',
   },
   errx: {
+    offline: 'No nɛt naw. Yu rɛkɔd dɛn sef na dis fon. Chɛk yu data ɔ Wi-Fi ɛn tray bak.',
     returnTooMany: 'Yu nɔ kin tek mɔ {{name}} bak pas wetin yu sel.', voidPaid: 'Na invɔys we nɔ pe nɔmɔ yu kin kansul. Rayt "tek tin bak" instead.',
     proLimit: 'Di fri plan gri fɔ {{limit}}. Go ɔp to Kopor Pro fɔ mɔ.', noBluetooth: 'Bluetooth print nɔ de pan dis brawza. Yuz Chrome pan Android ɔ di RawBT opshɔn.',
     printerService: 'Dis kayn printa nɔ de wok pan Bluetooth LE. Tray di RawBT opshɔn.', noPrinter: 'Pik printa na Sɛtin fɔs.',

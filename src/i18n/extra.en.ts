@@ -78,6 +78,7 @@ const extra = {
     deleted: 'Account deleted',
   },
   errx: {
+    offline: 'No internet connection. Your records are safe on this phone. Check your data or Wi-Fi and try again.',
     returnTooMany: 'You cannot return more {{name}} than was sold.', voidPaid: 'Only unpaid invoices can be voided. Record a return instead.',
     proLimit: 'The free plan allows {{limit}}. Upgrade to Kopor Pro for more.', noBluetooth: 'Bluetooth printing is not available in this browser. Use Chrome on Android or the RawBT option.',
     printerService: 'This printer type is not supported over Bluetooth LE. Try the RawBT option.', noPrinter: 'Choose a printer in Settings first.',

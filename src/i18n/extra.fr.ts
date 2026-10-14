@@ -80,6 +80,7 @@ const extra: ExtraDict = {
     deleted: 'Compte supprimé',
   },
   errx: {
+    offline: 'Pas de connexion internet. Vos données sont en sécurité sur ce téléphone. Vérifiez vos données mobiles ou le Wi-Fi et réessayez.',
     returnTooMany: 'Impossible de retourner plus de {{name}} que vendu.', voidPaid: 'Seules les factures impayées peuvent être annulées. Enregistrez plutôt un retour.',
     proLimit: 'L’offre gratuite permet {{limit}}. Passez à Kopor Pro pour plus.', noBluetooth: 'L’impression Bluetooth n’est pas disponible dans ce navigateur. Utilisez Chrome sur Android ou l’option RawBT.',
     printerService: 'Ce type d’imprimante n’est pas pris en charge en Bluetooth LE. Essayez l’option RawBT.', noPrinter: 'Choisissez d’abord une imprimante dans Réglages.',

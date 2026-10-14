@@ -27,6 +27,8 @@ export function useErrorText() {
     if (e instanceof AppError) return t(e.key, e.params);
     if (e instanceof PermissionError) return t('err.permission');
     const msg = e instanceof Error ? e.message : String(e);
+    // Dropped connections are common: say so plainly instead of showing a technical message.
+    if (/failed to fetch|networkerror|load failed|network request failed|err_name_not_resolved|timeout/i.test(msg) || !navigator.onLine) return t('errx.offline');
     return /^errx?\./.test(msg) ? t(msg) : msg || t('err.generic');
   };
 }

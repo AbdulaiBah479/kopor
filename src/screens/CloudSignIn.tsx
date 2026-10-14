@@ -9,11 +9,11 @@ import { getSession } from '@/domain/org';
 import { getCloudConfig, setCloudConfig } from '@/cloud/supabase';
 import { signIn, signUp } from '@/cloud/auth';
 import { remoteOrgs } from '@/cloud/sync';
-import { openCloudOrg } from '@/cloud/account';
+import { openCloudOrg, connectOrg } from '@/cloud/account';
 
 export default function CloudSignIn({ onDone }: { onDone?: () => void }) {
   const { t } = useTranslation();
-  const { switchSession } = useApp();
+  const { switchSession, session, can, ctx } = useApp();
   const { closeSheet, fail, toast } = useOverlay();
   const [cfg, setCfg] = useState({ url: '', anonKey: '' });
   const [hasCfg, setHasCfg] = useState<boolean | null>(null);
@@ -30,15 +30,26 @@ export default function CloudSignIn({ onDone }: { onDone?: () => void }) {
       <button className="btn primary block">{t('settings.cloudSave')}</button>
     </form>
   );
-  if (orgs) return (
-    <div className="stack">
-      {orgs.length ? orgs.map((o) => (
-        <button key={o.id} className="btn block" onClick={async () => {
-          try { await openCloudOrg(o.id); await switchSession(await getSession()); closeSheet(); onDone?.(); } catch (e) { fail(e); }
-        }}><Icon name="store" size={18} /> {o.name} · {t(`roles.${o.role}`)}</button>
-      )) : <div className="muted">{t('settings.noCloudOrgs')}</div>}
-    </div>
-  );
+  if (orgs) {
+    // A business open on this phone that is not in the account yet can be uploaded in one tap.
+    const canUpload = !!session && can('business') && !orgs.some((o) => o.id === session.orgId);
+    return (
+      <div className="stack">
+        {canUpload && (
+          <button className="btn primary block" data-testid="upload-business" onClick={async () => {
+            try { await connectOrg(ctx.orgId, ctx.memberId!); toast(t('common.done')); closeSheet(); onDone?.(); } catch (e) { fail(e); }
+          }}><Icon name="upload" size={18} /> {t('settings.upload')}</button>
+        )}
+        {orgs.length > 0 && <div className="small muted">{t('settings.openCloud')}</div>}
+        {orgs.map((o) => (
+          <button key={o.id} className="btn block" onClick={async () => {
+            try { await openCloudOrg(o.id); await switchSession(await getSession()); closeSheet(); onDone?.(); } catch (e) { fail(e); }
+          }}><Icon name="store" size={18} /> {o.name} · {t(`roles.${o.role}`)}</button>
+        ))}
+        {!orgs.length && !canUpload && <div className="muted">{t('settings.noCloudOrgs')}</div>}
+      </div>
+    );
+  }
   return (
     <form className="form" onSubmit={async (e) => {
       e.preventDefault();

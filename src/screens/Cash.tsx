@@ -148,7 +148,7 @@ export function SaleSheet({ prefill = {} }: { prefill?: { items?: Partial<LineIt
       <datalist id="dl-contacts">{book.contacts.map((c) => <option key={c.id} value={c.name} />)}</datalist>
       <div className="grid2">
         <Field label={t('common.date')}><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
-        <Field label={t('common.note')}><input value={note} placeholder={t('common.optional')} onChange={(e) => setNote(e.target.value)} /></Field>
+        <Field label={t('common.note')}><input name="note" value={note} placeholder={t('common.optional')} onChange={(e) => setNote(e.target.value)} /></Field>
       </div>
       <button className="btn get block"><Icon name="check" size={18} /> {t('cash.saveSale')}{totals.total > 0 ? ` · ${formatMoney(totals.total)}` : ''}</button>
     </form>
