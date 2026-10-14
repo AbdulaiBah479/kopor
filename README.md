@@ -1,5 +1,11 @@
 # Kopor 2: business book, payments and AI advisor
 
+[![CI](https://github.com/AbdulaiBah479/kopor/actions/workflows/ci.yml/badge.svg)](https://github.com/AbdulaiBah479/kopor/actions/workflows/ci.yml)
+[![Deploy](https://github.com/AbdulaiBah479/kopor/actions/workflows/pages.yml/badge.svg)](https://github.com/AbdulaiBah479/kopor/actions/workflows/pages.yml)
+[![CodeQL](https://github.com/AbdulaiBah479/kopor/actions/workflows/codeql.yml/badge.svg)](https://github.com/AbdulaiBah479/kopor/actions/workflows/codeql.yml)
+
+**Try it:** https://abdulaibah479.github.io/kopor/ (open on a phone and choose "Add to Home screen" to install)
+
 Kopor ("money" in Krio) is an **offline-first** app for shops, market traders, osusu groups, associations, churches,
 schools and households. It works without internet on cheap Android phones. When online it syncs to the cloud,
 takes mobile money payments, and answers questions about the business in English, Krio or French.

@@ -1,0 +1,6 @@
+name: Kopor CodeQL config
+# v1/ is the original prototype kept for reference; it is not part of the shipped app.
+paths-ignore:
+  - v1
+  - dist
+  - docs

@@ -1,4 +1,5 @@
 # Weekly dependency updates, grouped so they arrive as a few pull requests instead of dozens.
+# Major versions (breaking changes, e.g. Capacitor 6 -> 8) are upgraded deliberately, not automatically.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -9,7 +10,13 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
