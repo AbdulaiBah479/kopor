@@ -97,9 +97,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setDevice = useCallback(async (p: Partial<DeviceSettings>) => {
     const next = { ...device, ...p };
     setDeviceState(next);
-    await setMeta('device', next);
-    if (p.lang) { await i18n.changeLanguage(p.lang); document.documentElement.lang = p.lang; }
+    // Apply first so the change is instant; saving to the device database can follow.
     if (p.theme || p.accent || p.text) applyAppearance({ theme: next.theme, accent: next.accent, text: next.text });
+    if (p.lang) { document.documentElement.lang = p.lang; await i18n.changeLanguage(p.lang); }
+    await setMeta('device', next);
   }, [device]);
 
   const switchSession = useCallback(async (s: Session | null) => { await setSession(s); setSess(s); }, []);

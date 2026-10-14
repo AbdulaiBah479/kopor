@@ -154,6 +154,7 @@ await step('appearance: dark mode, accent colour and large text', async () => {
   await page.getByTestId('appearance').getByRole('radio', { name: /Dark/ }).click();
   await page.locator('[data-accent-option="royal"]').click();
   await page.getByTestId('appearance').getByRole('radio', { name: 'Large text', exact: true }).click();
+  await page.waitForFunction(() => document.documentElement.dataset.text === 'large', null, { timeout: 5000 }).catch(() => {});
   const a = await page.evaluate(() => ({ ...document.documentElement.dataset, primary: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() }));
   if (a.theme !== 'dark' || a.accent !== 'royal' || a.text !== 'large' || a.primary !== '#a78bfa') throw new Error(JSON.stringify(a));
   await shot('15-appearance');
