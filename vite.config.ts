@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
 
 // Strict Content-Security-Policy for production builds (dev server needs inline scripts).
@@ -21,6 +22,7 @@ export default defineConfig({
   base: './',
   plugins: [
     react(),
+    tailwindcss(),
     securityHeaders(),
     // Offline-first: Google Workbox precaches the whole app; new versions activate automatically.
     VitePWA({

@@ -4,6 +4,7 @@ import extra from './extra.en';
 const base = {
   app: { name: 'Kopor', tagline: 'Your business book, payments and advisor, in your pocket.' },
   common: {
+    undo: 'Undo', undone: 'Undone',
     save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', add: 'Add', close: 'Close', back: 'Back', search: 'Search',
     all: 'All', today: 'Today', yesterday: 'Yesterday', date: 'Date', dueDate: 'Due date', amount: 'Amount', note: 'Note',
     optional: 'Optional', name: 'Name', phone: 'Phone', total: 'Total', confirm: 'Are you sure?', done: 'Done', saved: 'Saved',

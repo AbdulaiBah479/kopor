@@ -1,6 +1,13 @@
 // v2.1 strings (tax, returns, day close, Pro, help, printing, export, scanning, tour). Mirrored in extra.kri.ts / extra.fr.ts.
 const extra = {
-  tax: {
+  ux: {
+    toCollect: 'To collect', seeAll: 'See all', recent: 'Recent activity', noDebts: 'Nobody owes you money right now.',
+    periodToday: 'Today', periodWeek: 'This week', periodMonth: 'This month', profitFor: 'Profit · {{period}}', salesFor: 'Sales', expensesFor: 'Expenses',
+    search: 'Search customers, products, invoices…', searchTitle: 'Search', noResults: 'No results', actions: 'Actions',
+    customers: 'Customers', products: 'Products', invoices: 'Invoices', groups: 'Groups',
+    fromContacts: 'Pick from phone contacts', pull: 'Pull to sync', release: 'Release to sync', refreshing: 'Syncing…',
+    keypad: 'Calculator keypad', equals: '= {{amount}}', remind: 'Remind', youGave: 'You gave', youGot: 'You got',
+  },  tax: {
     title: 'Tax & receipts', help: 'Sierra Leone GST is 15%. Set 0 if you are not GST-registered.', rate: 'Tax rate (%)', tin: 'Tax ID (TIN)',
     pricesAre: 'My prices…', inclusive: 'already include tax', exclusive: 'do not include tax (add it on top)', footer: 'Receipt message',
     subtotal: 'Subtotal', discount: 'Discount', discounts: 'Discounts given', tax: 'Tax', included: 'included', collected: 'Tax collected',

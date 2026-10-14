@@ -2,7 +2,14 @@
 import type { ExtraDict } from './extra.en';
 
 const extra: ExtraDict = {
-  tax: {
+  ux: {
+    toCollect: 'Fɔ kɔlɛkt', seeAll: 'Si ɔl', recent: 'Wetin jɔs apin', noDebts: 'Nɔbɔdi nɔ ɔw yu mɔni naw.',
+    periodToday: 'Tide', periodWeek: 'Dis wik', periodMonth: 'Dis mɔnt', profitFor: 'Prɔfit · {{period}}', salesFor: 'Sel', expensesFor: 'Ɛkspens',
+    search: 'Luk fɔ kɔstɔma, prɔdak, invɔys…', searchTitle: 'Luk fɔ', noResults: 'A nɔ fɛn natin', actions: 'Wetin fɔ du',
+    customers: 'Kɔstɔma dɛn', products: 'Prɔdak dɛn', invoices: 'Invɔys dɛn', groups: 'Grup dɛn',
+    fromContacts: 'Pik frɔm yu fon kɔntak', pull: 'Pul dɔŋ fɔ sink', release: 'Lɛf fɔ sink', refreshing: 'I de sink…',
+    keypad: 'Kɔnt kibɔd', equals: '= {{amount}}', remind: 'Rimayn', youGave: 'Yu gi', youGot: 'Yu get',
+  },  tax: {
     title: 'Taks ɛn risit', help: 'GST na Salone na 15%. Put 0 if yu nɔ rɛjista fɔ GST.', rate: 'Taks (%)', tin: 'Taks nɔmba (TIN)',
     pricesAre: 'Mi prays dɛn…', inclusive: 'dɔn ink taks', exclusive: 'nɔ ink taks (ad am pan tɔp)', footer: 'Mɛsej pan risit',
     subtotal: 'Sɔbtɔtal', discount: 'Diskawnt', discounts: 'Diskawnt we yu gi', tax: 'Taks', included: 'dɔn de insay', collected: 'Taks we yu kɔlɛkt',

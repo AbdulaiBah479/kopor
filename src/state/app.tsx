@@ -37,9 +37,18 @@ export const useApp = () => useContext(AppCtx)!;
 /** Book is guaranteed inside the main shell. */
 export const useBook = () => useApp().book as Book;
 
+// The resolved theme always lives in data-theme; "auto" follows the phone and updates live.
+const darkQuery = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null;
+let themeChoice: DeviceSettings['theme'] = 'auto';
+const resolveTheme = () => {
+  const dark = themeChoice === 'dark' || (themeChoice === 'auto' && !!darkQuery?.matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b100e' : '#f3f6f4');
+};
+darkQuery?.addEventListener?.('change', resolveTheme);
 export function applyTheme(theme: DeviceSettings['theme']) {
-  if (theme === 'auto') delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = theme;
+  themeChoice = theme;
+  resolveTheme();
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {

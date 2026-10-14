@@ -26,7 +26,7 @@ page.on('dialog', (d) => d.accept());
 let passed = 0, failed = 0;
 const step = async (name, fn) => {
   try { await fn(); passed++; console.log('✓', name); }
-  catch (e) { failed++; console.log('✗', name, '\n   ', e.message.split('\n')[0]); await page.screenshot({ path: `screenshots/FAIL-${name.replace(/\W+/g, '-')}.png` }); }
+  catch (e) { failed++; console.log('✗', name, '\n   ', e.message.split('\n').slice(0, 8).join('\n    ')); await page.screenshot({ path: `screenshots/FAIL-${name.replace(/\W+/g, '-')}.png` }); }
 };
 const shot = (n) => page.screenshot({ path: `screenshots/${n}.png`, fullPage: true });
 const go = async (hash) => { await page.goto(BASE + '#' + hash); await page.locator('.topbar h1').first().waitFor(); };
@@ -79,7 +79,8 @@ await step('sale with a product reduces stock', async () => {
   await form.getByRole('button', { name: /Save sale/ }).click();
   await page.getByText('Sale saved').waitFor();
   await go('/stock');
-  if (before - (await qty()) !== 3) throw new Error(`stock ${before} -> ${await qty()}`);
+  await page.waitForFunction((b) => Number(document.querySelector('[data-product="Soap bar"] [data-qty]')?.getAttribute('data-qty')) === b - 3, before, { timeout: 5000 })
+    .catch(async () => { throw new Error(`stock ${before} -> ${await qty()}`); });
 });
 
 await step('expense', async () => {
@@ -168,7 +169,9 @@ await step('sale with discount shows subtotal, tax and total', async () => {
 
 await step('return items from a sale', async () => {
   await go('/cash');
-  await page.locator('.list .item', { hasText: '10 Bread' }).first().click();
+  const row = page.locator('.list .item', { hasText: '10 Bread' }).first();
+  await row.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await row.click();
   await page.getByRole('button', { name: 'Return items' }).click();
   await page.getByTestId('return-form').locator('[name=return_qty]').first().fill('2');
   await page.getByRole('button', { name: 'Confirm return' }).click();

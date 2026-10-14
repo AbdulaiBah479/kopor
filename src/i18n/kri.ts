@@ -6,6 +6,7 @@ import extra from './extra.kri';
 const base: Omit<Dict, keyof ExtraDict> = {
   app: { name: 'Kopor', tagline: 'Yu bizines buk, pement ɛn advayza, insay yu pɔkit.' },
   common: {
+    undo: 'Pul am bak', undone: 'Dɔn pul am bak',
     save: 'Sev', cancel: 'Lɛf am', delete: 'Dilit', edit: 'Chenj', add: 'Ad', close: 'Klos', back: 'Go bak', search: 'Luk fɔ',
     all: 'Ɔl', today: 'Tide', yesterday: 'Yestade', date: 'Det', dueDate: 'Di de fɔ pe', amount: 'Kopor', note: 'Nɔt',
     optional: 'If yu want', name: 'Nem', phone: 'Fon', total: 'Tɔtal', confirm: 'Yu shɔ?', done: 'Dɔn', saved: 'Dɔn sev',

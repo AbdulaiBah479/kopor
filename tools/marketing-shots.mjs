@@ -58,6 +58,13 @@ await shot('invoice');
 await go('/health');
 await shot('health');
 
+await go('/cash');
+await page.getByTestId('new-expense').click();
+await page.getByTestId('expense-form').locator('[name=amount]').fill('250+120');
+await page.waitForTimeout(500);
+await shot('keypad');
+await page.keyboard.press('Escape');
+
 await page.emulateMedia({ colorScheme: 'dark' });
 await go('/');
 await shot('home-dark');

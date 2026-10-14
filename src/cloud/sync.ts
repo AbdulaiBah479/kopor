@@ -29,15 +29,26 @@ async function push(orgId: string) {
       const chunk = rows.slice(i, i + PAGE);
       const payload = chunk.map(({ dirty: _d, ...r }) => r);
       // The audit log is append-only: re-sending an existing entry is a no-op, never an update.
-      const { error } = await sb.from(t).upsert(payload, { onConflict: 'id', ignoreDuplicates: t === 'audit' });
-      if (error) throw new Error(`${t}: ${error.message}`);
-      const sent = new Map(chunk.map((r) => [r.id, r.updated_at]));
-      await db.t(t).where('id').anyOf([...sent.keys()]).modify((r) => { if (sent.get(r.id) === r.updated_at) r.dirty = 0; });
-      pushed += chunk.length;
+      const opts = { onConflict: 'id', ignoreDuplicates: t === 'audit' };
+      let ok = chunk;
+      const { error } = await sb.from(t).upsert(payload, opts);
+      if (error) {
+        // One rejected record (e.g. a permission rule) must never block the rest: retry one by one.
+        ok = [];
+        for (const r of chunk) {
+          const { dirty: _d, ...row } = r;
+          const res = await sb.from(t).upsert([row], opts);
+          if (res.error) rejected.push(`${t}: ${res.error.message}`); else ok.push(r);
+        }
+      }
+      const sent = new Map(ok.map((r) => [r.id, r.updated_at]));
+      if (sent.size) await db.t(t).where('id').anyOf([...sent.keys()]).modify((r) => { if (sent.get(r.id) === r.updated_at) r.dirty = 0; });
+      pushed += ok.length;
     }
   }
   return pushed;
 }
+let rejected: string[] = [];
 
 async function pull(orgId: string) {
   const sb = (await getSupabase())!;
@@ -84,9 +95,11 @@ export function syncNow(orgId: string): Promise<void> {
     if (!navigator.onLine) { emit({ status: 'offline' }); return; }
     emit({ status: 'syncing', error: undefined });
     try {
+      rejected = [];
       await push(orgId);
       await pull(orgId);
-      emit({ status: 'idle', lastSync: Date.now() });
+      if (rejected.length) emit({ status: 'error', lastSync: Date.now(), error: `${rejected.length} not synced: ${rejected[0]}` });
+      else emit({ status: 'idle', lastSync: Date.now() });
     } catch (e) {
       emit({ status: 'error', error: e instanceof Error ? e.message : String(e) });
     }

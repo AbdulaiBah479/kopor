@@ -4,6 +4,8 @@ import { Icon } from './Icon';
 import { formatMoney, formatShort, parseMoney, toMajor } from '@/lib/money';
 import { fmtDate, weekdayShort } from '@/lib/dates';
 import { dateLocale } from '@/i18n';
+import { evaluate, hasOperator } from '@/lib/calc';
+import { haptic } from './overlay';
 import type { LineItem, Product } from '@/db/schema';
 
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
@@ -48,12 +50,72 @@ export function Seg<T extends string>({ value, options, onChange }: { value: T; 
   );
 }
 
-/** Money input that keeps the user's text and reports minor units. */
+/**
+ * Money input that keeps the user's text and reports minor units.
+ * The big variant is the main amount of a form: it shows a calculator keypad (no phone keyboard popping up)
+ * and accepts sums like "300+250".
+ */
 export function MoneyInput({ name, value, onChange, big, autoFocus, required }: { name?: string; value: number; onChange: (v: number) => void; big?: boolean; autoFocus?: boolean; required?: boolean }) {
+  const { t } = useTranslation();
   const [text, setText] = useState(value ? String(toMajor(value)) : '');
+  const update = (s: string) => {
+    setText(s);
+    const v = hasOperator(s) ? evaluate(s) : null;
+    onChange(v !== null ? parseMoney(v) : parseMoney(s));
+  };
+  if (!big) return <input name={name} inputMode="decimal" placeholder="0" autoFocus={autoFocus} required={required} value={text} onChange={(e) => update(e.target.value)} />;
+  const result = hasOperator(text) ? evaluate(text) : null;
+  const press = (k: string) => {
+    haptic(8);
+    if (k === 'back') update(text.slice(0, -1));
+    else update(text + k);
+  };
+  // The sum is worked out live and saved automatically, so there is no "=" key.
+  const keys = ['7', '8', '9', 'back', '4', '5', '6', '+', '1', '2', '3', '-', '00', '0', '.', '×'];
   return (
-    <input name={name} inputMode="decimal" className={big ? 'amount-input' : ''} placeholder="0" autoFocus={autoFocus} required={required}
-      value={text} onChange={(e) => { setText(e.target.value); onChange(parseMoney(e.target.value)); }} />
+    <div className="flex flex-col gap-2">
+      <input name={name} inputMode="none" className="amount-input" placeholder="0" autoFocus={autoFocus} required={required} autoComplete="off"
+        value={text} onChange={(e) => update(e.target.value)} aria-describedby={name ? `${name}-result` : undefined} />
+      <div id={name ? `${name}-result` : undefined} className="min-h-5 text-center text-sm font-semibold text-muted-foreground num" aria-live="polite">
+        {result !== null ? t('ux.equals', { amount: formatMoney(parseMoney(result)) }) : ''}
+      </div>
+      <div className="grid grid-cols-4 gap-2" role="group" aria-label={t('ux.keypad')}>
+        {keys.map((k) => (
+          <button key={k} type="button" onClick={() => press(k)} aria-label={k === 'back' ? t('common.back') : k}
+            className={`h-12 rounded-2xl text-xl font-semibold transition active:scale-95 ${/^[-+×]$/.test(k) ? 'bg-primary-soft text-primary' : k === 'back' ? 'bg-muted' : 'bg-card shadow-sm border border-border'}`}>
+            {k === 'back' ? <Icon name="backspace" className="mx-auto" /> : k === '-' ? '−' : k}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const AVATAR_TONES = [
+  ['#dff2e6', '#0a7d3e'], ['#e2edf9', '#0b63b6'], ['#fcefd9', '#a86200'], ['#f3e5f5', '#7b3fa0'],
+  ['#fbe6e3', '#c0392b'], ['#e0f4f4', '#0f7c7c'], ['#eceff1', '#455a64'],
+];
+/** Initials on a colour chosen from the name, so each customer is recognisable at a glance. */
+export function Avatar({ name, size = 42 }: { name: string; size?: number }) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  const [bg, fg] = AVATAR_TONES[h % AVATAR_TONES.length];
+  return <div className="avatar" style={{ width: size, height: size, background: `color-mix(in srgb, ${bg} 100%, transparent)`, color: fg }} aria-hidden="true">{initials(name)}</div>;
+}
+
+type ContactsApi = { select: (props: string[], opts: { multiple: boolean }) => Promise<{ name?: string[]; tel?: string[] }[]> };
+const contactsApi = () => (navigator as unknown as { contacts?: ContactsApi }).contacts;
+/** Pick a customer from the phone's contacts (Chrome on Android). Hidden where unsupported. */
+export function ContactPick({ onPick }: { onPick: (c: { name: string; phone: string }) => void }) {
+  const { t } = useTranslation();
+  if (!contactsApi()) return null;
+  return (
+    <button type="button" className="btn sm ghost" onClick={async () => {
+      try {
+        const [c] = await contactsApi()!.select(['name', 'tel'], { multiple: false });
+        if (c) onPick({ name: c.name?.[0] ?? '', phone: c.tel?.[0] ?? '' });
+      } catch { /* user cancelled */ }
+    }}><Icon name="contact" size={16} /> {t('ux.fromContacts')}</button>
   );
 }
 

@@ -117,10 +117,13 @@ describe('osusu', () => {
 });
 
 describe('permissions', () => {
-  it('viewers cannot record and cashiers cannot delete or manage stock', async () => {
+  it('viewers cannot record; cashiers can undo only their own recent entries and cannot manage stock', async () => {
     await expect(recordExpense({ ...ctx, role: 'viewer' }, { amount: 100, category: 'food' })).rejects.toBeInstanceOf(PermissionError);
-    const t = await recordExpense({ ...ctx, role: 'cashier' }, { amount: 100, category: 'food' });
-    await expect(deleteTxn({ ...ctx, role: 'cashier' }, t.id)).rejects.toBeInstanceOf(PermissionError);
+    const cashier: Ctx = { ...ctx, role: 'cashier', memberId: 'cashier-member' };
+    const own = await recordExpense(cashier, { amount: 100, category: 'food' });
+    await deleteTxn(cashier, own.id); // own entry, just created: allowed (undo)
+    const ownersEntry = await recordExpense(ctx, { amount: 100, category: 'food' });
+    await expect(deleteTxn(cashier, ownersEntry.id)).rejects.toBeInstanceOf(PermissionError);
     await expect(saveProduct({ ...ctx, role: 'cashier' }, { name: 'X', unit: 'pcs', price: 1, cost: 0, low_at: 0 })).rejects.toBeInstanceOf(PermissionError);
   });
 

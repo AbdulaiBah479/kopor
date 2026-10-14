@@ -132,8 +132,8 @@ export function SaleSheet({ prefill = {} }: { prefill?: { items?: Partial<LineIt
     <form className="form" data-testid="sale-form" onSubmit={async (e) => {
       e.preventDefault();
       try {
-        await recordSale(ctx, { items, amount, discount, method, customer, note, date });
-        closeSheet(); toast(t(method === 'credit' ? 'cash.creditSaved' : 'cash.saleSaved'));
+        const txn = await recordSale(ctx, { items, amount, discount, method, customer, note, date });
+        closeSheet(); toast(t(method === 'credit' ? 'cash.creditSaved' : 'cash.saleSaved'), { undo: () => deleteTxn(ctx, txn.id) });
       } catch (err) { fail(err); }
     }}>
       <ScanToggle onCode={addScanned} />
@@ -163,7 +163,10 @@ export function ExpenseSheet({ prefill = {} }: { prefill?: { amount?: number; ca
   return (
     <form className="form" data-testid="expense-form" onSubmit={async (e) => {
       e.preventDefault();
-      try { await recordExpense(ctx, f); closeSheet(); toast(t('cash.expenseSaved')); } catch (err) { fail(err); }
+      try {
+        const txn = await recordExpense(ctx, f);
+        closeSheet(); toast(t('cash.expenseSaved'), { undo: () => deleteTxn(ctx, txn.id) });
+      } catch (err) { fail(err); }
     }}>
       <Field label={t('common.amount')}><MoneyInput big autoFocus required value={f.amount} onChange={(amount) => setF({ ...f, amount })} name="amount" /></Field>
       <Field label={t('cash.category')}>

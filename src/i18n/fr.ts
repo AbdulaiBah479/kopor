@@ -6,6 +6,7 @@ import extra from './extra.fr';
 const base: Omit<Dict, keyof ExtraDict> = {
   app: { name: 'Kopor', tagline: 'Votre cahier de commerce, vos paiements et votre conseiller, dans la poche.' },
   common: {
+    undo: 'Annuler', undone: 'Annulé',
     save: 'Enregistrer', cancel: 'Annuler', delete: 'Supprimer', edit: 'Modifier', add: 'Ajouter', close: 'Fermer', back: 'Retour', search: 'Rechercher',
     all: 'Tout', today: "Aujourd'hui", yesterday: 'Hier', date: 'Date', dueDate: 'Échéance', amount: 'Montant', note: 'Note',
     optional: 'Facultatif', name: 'Nom', phone: 'Téléphone', total: 'Total', confirm: 'Êtes-vous sûr ?', done: 'Terminé', saved: 'Enregistré',

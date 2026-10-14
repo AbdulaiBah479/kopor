@@ -1,17 +1,20 @@
-// Bottom sheets and toasts, available anywhere through useOverlay().
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+// Bottom sheets (vaul: draggable, swipe down to close) and toasts (sonner: stackable, with Undo).
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
+import { Drawer } from 'vaul';
+import { Toaster, toast as sonner } from 'sonner';
 import { Icon } from './Icon';
 import { AppError } from '@/domain/book';
 import { PermissionError } from '@/db/permissions';
 import { reportError } from '@/features/monitoring';
 
-interface SheetState { title: string; body: ReactNode }
+interface SheetState { title: string; body: ReactNode; key: number }
+export interface ToastOpts { undo?: () => Promise<unknown> | unknown; tone?: 'success' | 'error' | 'info' }
 interface Overlay {
   openSheet: (title: string, body: ReactNode) => void;
   closeSheet: () => void;
-  toast: (msg: string) => void;
+  toast: (msg: string, opts?: ToastOpts) => void;
   fail: (e: unknown) => void;
 }
 const Ctx = createContext<Overlay | null>(null);
@@ -28,71 +31,61 @@ export function useErrorText() {
   };
 }
 
+/** Short vibration on supported phones: confirms an action without looking. */
+export const haptic = (ms = 12) => { try { navigator.vibrate?.(ms); } catch { /* not supported */ } };
+
 export function OverlayProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const errText = useErrorText();
   const [sheet, setSheet] = useState<SheetState | null>(null);
-  const [toastMsg, setToast] = useState('');
-  const timer = useRef<number>();
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const lastFocus = useRef<Element | null>(null);
+  const [open, setOpen] = useState(false);
 
-  const closeSheet = useCallback(() => {
-    setSheet(null);
-    (lastFocus.current as HTMLElement | null)?.focus?.();
-  }, []);
-  const openSheet = useCallback((title: string, body: ReactNode) => { lastFocus.current = document.activeElement; setSheet({ title, body }); }, []);
-  const toast = useCallback((m: string) => {
-    setToast(m);
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setToast(''), 2800);
-  }, []);
+  const closeSheet = useCallback(() => setOpen(false), []);
+  const openSheet = useCallback((title: string, body: ReactNode) => { setSheet({ title, body, key: Date.now() }); setOpen(true); }, []);
+  const toast = useCallback((m: string, opts: ToastOpts = {}) => {
+    if (opts.tone !== 'error') haptic();
+    const action = opts.undo ? { label: t('common.undo'), onClick: () => { Promise.resolve(opts.undo!()).then(() => sonner(t('common.undone'))); } } : undefined;
+    if (opts.tone === 'error') sonner.error(m); else sonner.success(m, { action, duration: opts.undo ? 6000 : 2800 });
+  }, [t]);
   const fail = useCallback((e: unknown) => {
     console.error(e);
     // Expected problems (validation, permissions) are not bugs; report only unexpected errors.
     if (!(e instanceof AppError) && !(e instanceof PermissionError) && !(e instanceof Error && /^errx?\./.test(e.message))) reportError(e);
-    toast(errText(e));
+    haptic(40);
+    toast(errText(e), { tone: 'error' });
   }, [toast, errText]);
 
   // Navigating (including the phone's back button) closes any open sheet.
   const { pathname } = useLocation();
-  useEffect(() => { setSheet(null); }, [pathname]);
-
-  useEffect(() => {
-    if (!sheet) return;
-    const el = sheetRef.current;
-    const first = el?.querySelector<HTMLElement>('[autofocus], input, select, textarea, button:not([data-close])');
-    // Focus the first field, unless the user is already typing inside the sheet.
-    setTimeout(() => { if (!el?.contains(document.activeElement)) first?.focus(); }, 50);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeSheet();
-      if (e.key === 'Tab' && el) { // keep keyboard focus inside the dialog
-        const f = [...el.querySelectorAll<HTMLElement>('button, a, input, select, textarea')].filter((x) => !x.hasAttribute('disabled'));
-        if (!f.length) return;
-        if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
-        else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [sheet, closeSheet]);
+  useEffect(() => { setOpen(false); }, [pathname]);
 
   return (
     <Ctx.Provider value={{ openSheet, closeSheet, toast, fail }}>
       {children}
-      {sheet && (
-        <div id="sheet-root" className="open">
-          <div className="sheet-backdrop" onClick={closeSheet} />
-          <div className="sheet" role="dialog" aria-modal="true" aria-label={sheet.title} ref={sheetRef}>
-            <div className="sheet-head">
-              <h2>{sheet.title}</h2>
-              <button type="button" className="icon-btn" data-close onClick={closeSheet} aria-label={t('common.close')}><Icon name="x" /></button>
+      <Drawer.Root open={open} onOpenChange={setOpen} repositionInputs>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/45" />
+          <Drawer.Content
+            key={sheet?.key}
+            className="sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] max-w-[560px] flex-col rounded-t-[26px] bg-background outline-none"
+            onOpenAutoFocus={(e) => {
+              // Focus the first field (e.g. the amount) instead of the close button.
+              e.preventDefault();
+              const el = (e.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>('[autofocus], input:not([type=hidden]):not([type=file]), select, textarea');
+              el?.focus();
+            }}>
+            <div className="mx-auto mt-2.5 h-1.5 w-11 shrink-0 rounded-full bg-border" aria-hidden="true" />
+            <div className="flex items-center gap-2 px-4 pb-2 pt-3">
+              <Drawer.Title className="m-0 flex-1 text-lg font-bold tracking-tight">{sheet?.title}</Drawer.Title>
+              <Drawer.Description className="sr-only">{sheet?.title}</Drawer.Description>
+              <button type="button" className="icon-btn" onClick={closeSheet} aria-label={t('common.close')}><Icon name="x" /></button>
             </div>
-            <div className="sheet-body">{sheet.body}</div>
-          </div>
-        </div>
-      )}
-      <div id="toast" className={toastMsg ? 'show' : ''} role="status" aria-live="polite">{toastMsg}</div>
+            <div className="sheet-body overflow-y-auto px-4 pb-[calc(20px+env(safe-area-inset-bottom))]" data-vaul-no-drag>{sheet?.body}</div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+      <Toaster position="top-center" richColors closeButton theme={document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'}
+        toastOptions={{ style: { fontFamily: 'inherit', borderRadius: 16 } }} offset={{ top: 'calc(12px + env(safe-area-inset-top))' }} />
     </Ctx.Provider>
   );
 }

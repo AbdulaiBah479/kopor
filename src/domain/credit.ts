@@ -69,6 +69,15 @@ export interface EntryInput {
   contactId: string; type: 'gave' | 'got'; amount: number; note?: string; date?: string; dueDate?: string | null;
   refType?: string | null; refId?: string | null;
 }
+/** Remove a credit-book entry (own entries can be undone for 10 minutes by any role). */
+export async function removeEntry(ctx: Ctx, id: string) {
+  const e = await db.ledger.get(id);
+  if (!e) throw new AppError('err.notFound');
+  const own = !!ctx.memberId && e.created_by === ctx.memberId && Date.now() - e.created_at < 10 * 60_000;
+  if (!own) assertCan(ctx.role, 'edit');
+  await update(ctx, 'ledger', id, { deleted: 1 }, `Removed ${e.type === 'gave' ? 'credit' : 'payment'} ${e.amount / 100}`);
+}
+
 export async function addEntry(ctx: Ctx, i: EntryInput): Promise<LedgerEntry> {
   assertCan(ctx.role, 'record');
   if (!(i.amount > 0)) throw new AppError('err.amount');

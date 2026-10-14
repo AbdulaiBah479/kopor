@@ -5,6 +5,9 @@ import './i18n';
 import './styles.css';
 import { App } from './App';
 import { initMonitoring, reportError } from './features/monitoring';
+import { applyTheme } from './state/app';
+
+applyTheme('auto'); // before the first paint, so there is no light/dark flash
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

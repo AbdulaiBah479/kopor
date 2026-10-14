@@ -74,12 +74,17 @@ export async function recordExpense(ctx: Ctx, i: ExpenseInput): Promise<Txn> {
   }, `Expense ${i.amount / 100} (${i.category})`);
 }
 
+/** Anyone may undo their OWN entry for 10 minutes after creating it (mirrored by the server rule in 0004). */
+export const UNDO_WINDOW_MS = 10 * 60_000;
+export const isOwnRecent = (ctx: Ctx, row: { created_by: string | null; created_at: number }) =>
+  !!ctx.memberId && row.created_by === ctx.memberId && Date.now() - row.created_at < UNDO_WINDOW_MS;
+
 /** Undo a cash entry: stock comes back and the linked debt disappears. */
 export async function deleteTxn(ctx: Ctx, id: string) {
-  assertCan(ctx.role, 'edit');
   await atomic(async () => {
     const txn = await db.transactions.get(id);
     if (!txn) throw new AppError('err.notFound');
+    if (!isOwnRecent(ctx, txn)) assertCan(ctx.role, 'edit');
     const moves = await db.stock_moves.where('ref_id').equals(id).toArray();
     for (const m of moves) await update(ctx, 'stock_moves', m.id, { deleted: 1 });
     if (txn.ledger_id) await update(ctx, 'ledger', txn.ledger_id, { deleted: 1 });

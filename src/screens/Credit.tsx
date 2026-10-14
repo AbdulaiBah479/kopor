@@ -5,13 +5,25 @@ import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
-import { Empty, Field, Money, MoneyInput, Search, Seg, initials, useDate } from '@/ui/widgets';
+import { Avatar, ContactPick, Empty, Field, Money, MoneyInput, Search, Seg, useDate } from '@/ui/widgets';
 import { formatMoney } from '@/lib/money';
 import { today, addDays } from '@/lib/dates';
 import { waLink, smsLink, telLink } from '@/lib/phone';
 import { update, remove, atomic } from '@/db/repo';
-import type { Contact } from '@/db/schema';
-import { balances, creditTotals, overdueSince, ensureContact, addEntry } from '@/domain/credit';
+import type { Contact, LedgerEntry } from '@/db/schema';
+import { balances, creditTotals, overdueSince, ensureContact, addEntry, removeEntry } from '@/domain/credit';
+import { isOwnRecent } from '@/domain/cash';
+
+/** Oldest first (like a chat), with the running balance after each entry and a date marker on each new day. */
+function ledgerRows(newestFirst: LedgerEntry[]) {
+  let running = 0, prev = '';
+  return [...newestFirst].reverse().map((e) => {
+    running += e.type === 'gave' ? e.amount : -e.amount;
+    const newDay = e.date !== prev;
+    prev = e.date;
+    return { e, running, newDay };
+  });
+}
 import { findByName, AppError } from '@/domain/book';
 import { createUssdCode } from '@/cloud/payments';
 
@@ -64,7 +76,7 @@ export function CreditList() {
       <div className="list" id="contacts">
         {rows.length ? rows.map(({ c, b, od }) => (
           <Link key={c.id} className="item" to={`/credit/${c.id}`}>
-            <div className="avatar">{initials(c.name)}</div>
+            <Avatar name={c.name} />
             <div className="main">
               <div className="t">{c.name} {od && <span className="badge bad">{t('credit.overdue')}</span>}{c.kind === 'supplier' && <span className="badge"> {t('credit.supplier')}</span>}</div>
               <div className="s">{lastDate.get(c.id) ? fmt(lastDate.get(c.id)) : t('credit.noEntries')}{c.phone && ` · ${c.phone}`}</div>
@@ -123,19 +135,27 @@ export function ContactDetail() {
         <a href={waLink(c.phone, statement, cc)} target="_blank" rel="noopener noreferrer"><Icon name="share" />{t('credit.statement')}</a>
       </div>
       {b > 0 && can('payments') && <button className="btn block ghost" onClick={requestPay}><Icon name="phone" size={18} /> {t('credit.requestPay')} (USSD)</button>}
-      <div className="list">
-        {entries.length ? entries.map((e) => (
-          <button key={e.id} type="button" className="item" style={{ width: '100%', border: 0, textAlign: 'left', font: 'inherit' }}
-            onClick={() => can('edit') && openSheet(t('common.edit'), (
-              <div className="stack">
-                <div className="card flat"><b className="num">{formatMoney(e.amount)}</b> · {e.type === 'gave' ? t('credit.youGave') : t('credit.youGot')}<div className="muted small">{fmt(e.date)} {e.note}</div></div>
-                <DeleteButton onDelete={async () => { await remove(ctx, 'ledger', e.id, 'Deleted credit entry'); toast(t('common.deleted')); }} />
+      {/* Chat-style ledger: credit given on the right, payments received on the left, running balance under each. */}
+      <div className="flex flex-col gap-2" aria-label={t('credit.title')}>
+        {entries.length ? ledgerRows(entries).map(({ e, running, newDay }) => (
+          <div key={e.id} className="flex flex-col gap-2">
+            {newDay && <div className="self-center rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">{fmt(e.date)}</div>}
+            <button type="button" data-entry={e.type}
+              className={`max-w-[80%] rounded-2xl px-4 py-3 text-left shadow-sm transition active:scale-[.98] ${e.type === 'gave' ? 'self-end rounded-br-md bg-danger-soft' : 'self-start rounded-bl-md bg-primary-soft'}`}
+              onClick={() => openSheet(t('common.edit'), (
+                <div className="stack">
+                  <div className="card flat"><b className="num">{formatMoney(e.amount)}</b> · {e.type === 'gave' ? t('credit.youGave') : t('credit.youGot')}<div className="muted small">{fmt(e.date)} {e.note}</div></div>
+                  {(can('edit') || isOwnRecent(ctx, e)) && <DeleteButton onDelete={async () => { await removeEntry(ctx, e.id); toast(t('common.deleted')); }} />}
+                </div>
+              ))}>
+              <div className={`num text-xl font-extrabold ${e.type === 'gave' ? 'text-danger' : 'text-primary'}`}>{e.type === 'gave' ? '' : '+'}{formatMoney(e.amount)}</div>
+              <div className="text-[13px] font-semibold">{e.note || (e.type === 'gave' ? t('credit.creditGiven') : t('credit.paymentReceived'))}</div>
+              <div className="mt-1 flex gap-2 text-[11.5px] text-muted-foreground">
+                <span>{t('credit.balance')}: <b className="num">{formatMoney(running)}</b></span>
+                {e.due_date && e.type === 'gave' && <span>· {t('credit.due', { date: fmt(e.due_date) })}</span>}
               </div>
-            ))}>
-            <div className="main"><div className="t">{e.note || (e.type === 'gave' ? t('credit.creditGiven') : t('credit.paymentReceived'))}</div>
-              <div className="s">{fmt(e.date)}{e.due_date && e.type === 'gave' && ` · ${t('credit.due', { date: fmt(e.due_date) })}`}</div></div>
-            <div className={`amt num ${e.type === 'gave' ? 'bad' : 'good'}`}>{formatMoney(e.amount)}<small>{e.type === 'gave' ? t('credit.youGave') : t('credit.youGot')}</small></div>
-          </button>
+            </button>
+          </div>
         )) : <Empty icon="book" title={t('credit.noEntries')} />}
       </div>
       <div style={{ height: 64 }} />
@@ -179,8 +199,8 @@ function EntrySheet({ contact, type }: { contact: Contact; type: 'gave' | 'got' 
     <form className="form" onSubmit={async (e) => {
       e.preventDefault();
       try {
-        await addEntry(ctx, { contactId: contact.id, type, amount: f.amount, note: f.note, date: f.date, dueDate: f.due });
-        closeSheet(); toast(t('common.saved'));
+        const entry = await addEntry(ctx, { contactId: contact.id, type, amount: f.amount, note: f.note, date: f.date, dueDate: f.due });
+        closeSheet(); toast(t('common.saved'), { undo: () => removeEntry(ctx, entry.id) });
       } catch (err) { fail(err); }
     }}>
       <EntryFields type={type} f={f} setF={setF} />
@@ -202,17 +222,17 @@ export function NewCreditSheet({ name = '', type: initial = 'gave', amount = 0, 
     <form className="form" data-testid="new-credit" onSubmit={async (e) => {
       e.preventDefault();
       try {
-        const c = await atomic(async () => {
+        const [c, entry] = await atomic(async () => {
           const c = await ensureContact(ctx, who.name, who.phone);
-          await addEntry(ctx, { contactId: c.id, type, amount: f.amount, note: f.note, date: f.date, dueDate: f.due });
-          return c;
+          return [c, await addEntry(ctx, { contactId: c.id, type, amount: f.amount, note: f.note, date: f.date, dueDate: f.due })] as const;
         });
-        closeSheet(); toast(t('common.saved')); nav(`/credit/${c.id}`);
+        closeSheet(); toast(t('common.saved'), { undo: () => removeEntry(ctx, entry.id) }); nav(`/credit/${c.id}`);
       } catch (err) { fail(err); }
     }}>
       <Field label={t('credit.who')}><input name="name" list="dl-contacts" required autoComplete="off" value={who.name} placeholder="e.g. Aminata Kamara"
         onChange={(e) => setWho({ ...who, name: e.target.value })} /></Field>
       <datalist id="dl-contacts">{book.contacts.map((c) => <option key={c.id} value={c.name} />)}</datalist>
+      <ContactPick onPick={(p) => setWho({ name: p.name, phone: p.phone })} />
       {!findByName(book.contacts, who.name) && (
         <Field label={t('credit.phoneHelp')}><input type="tel" inputMode="tel" value={who.phone} placeholder="076 123 456" onChange={(e) => setWho({ ...who, phone: e.target.value })} /></Field>
       )}

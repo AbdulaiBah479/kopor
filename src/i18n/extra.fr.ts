@@ -2,7 +2,14 @@
 import type { ExtraDict } from './extra.en';
 
 const extra: ExtraDict = {
-  tax: {
+  ux: {
+    toCollect: 'À encaisser', seeAll: 'Tout voir', recent: 'Activité récente', noDebts: 'Personne ne vous doit d’argent pour le moment.',
+    periodToday: 'Aujourd’hui', periodWeek: 'Cette semaine', periodMonth: 'Ce mois', profitFor: 'Bénéfice · {{period}}', salesFor: 'Ventes', expensesFor: 'Dépenses',
+    search: 'Rechercher clients, produits, factures…', searchTitle: 'Rechercher', noResults: 'Aucun résultat', actions: 'Actions',
+    customers: 'Clients', products: 'Produits', invoices: 'Factures', groups: 'Groupes',
+    fromContacts: 'Choisir dans les contacts', pull: 'Tirer pour synchroniser', release: 'Relâcher pour synchroniser', refreshing: 'Synchronisation…',
+    keypad: 'Clavier calculatrice', equals: '= {{amount}}', remind: 'Relancer', youGave: 'Vous avez donné', youGot: 'Vous avez reçu',
+  },  tax: {
     title: 'Taxes et reçus', help: 'Indiquez votre taux de TVA (0 si vous n’êtes pas assujetti).', rate: 'Taux de taxe (%)', tin: 'Numéro fiscal (NIF)',
     pricesAre: 'Mes prix…', inclusive: 'incluent déjà la taxe', exclusive: 'n’incluent pas la taxe (ajoutée en plus)', footer: 'Message sur le reçu',
     subtotal: 'Sous-total', discount: 'Remise', discounts: 'Remises accordées', tax: 'Taxe', included: 'incluse', collected: 'Taxe collectée',
