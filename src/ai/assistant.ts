@@ -14,7 +14,7 @@ import { currentRound, roundStatus } from '@/domain/groups';
 import type { Parsed } from './parser';
 
 export interface AiSettings { key: string; base: string; model: string; visionModel: string }
-export const AI_DEFAULTS: AiSettings = { key: '', base: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile', visionModel: 'meta-llama/llama-4-scout-17b-16e-instruct' };
+export const AI_DEFAULTS: AiSettings = { key: '', base: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b', visionModel: 'qwen/qwen3.8-27b' };
 export const getAiSettings = () => getMeta<AiSettings>('ai', AI_DEFAULTS);
 
 type Msg = { role: 'system' | 'user' | 'assistant'; content: string | { type: string; text?: string; image_url?: { url: string } }[] };
@@ -25,7 +25,10 @@ async function complete(messages: Msg[], opts: { vision?: boolean; json?: boolea
     const res = await fetch(s.base.replace(/\/$/, '') + '/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.key}` },
-      body: JSON.stringify({ model: opts.vision ? s.visionModel : s.model, temperature: opts.json ? 0 : 0.3, messages }),
+      body: JSON.stringify({
+        model: opts.vision ? s.visionModel : s.model, temperature: opts.json ? 0 : 0.3, messages,
+        ...(!opts.vision && /gpt-oss/.test(s.model) ? { reasoning_effort: 'low' } : {}),
+      }),
     });
     if (!res.ok) throw new Error(`AI ${res.status}`);
     const j = await res.json();

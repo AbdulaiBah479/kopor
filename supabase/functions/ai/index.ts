@@ -27,10 +27,11 @@ Deno.serve(async (req) => {
     if (!Array.isArray(messages) || messages.length > 24 || JSON.stringify(messages).length > 2_500_000) throw new HttpError(400, 'Request too large');
     const base = Deno.env.get('AI_BASE_URL') ?? 'https://api.groq.com/openai/v1';
     const key = Deno.env.get('AI_API_KEY') ?? env('GROQ_API_KEY');
-    const model = vision ? (Deno.env.get('AI_VISION_MODEL') ?? 'meta-llama/llama-4-scout-17b-16e-instruct') : (Deno.env.get('AI_MODEL') ?? 'llama-3.3-70b-versatile');
+    const model = vision ? (Deno.env.get('AI_VISION_MODEL') ?? 'qwen/qwen3.8-27b') : (Deno.env.get('AI_MODEL') ?? 'openai/gpt-oss-120b');
     const res = await fetch(`${base}/chat/completions`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 800 }),
+      // Reasoning models (gpt-oss) think briefly: faster, cheaper, and enough for bookkeeping.
+      body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 1200, ...(/gpt-oss/.test(model) ? { reasoning_effort: 'low' } : {}) }),
     });
     if (!res.ok) throw new HttpError(502, `AI provider error ${res.status}`);
     const j = await res.json();
