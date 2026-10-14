@@ -33,7 +33,7 @@ jobs:
       - name: Build release bundle (unsigned unless signing secrets are set)
         working-directory: android
         run: ./gradlew bundleRelease
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: kopor-android
           path: |
