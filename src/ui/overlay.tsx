@@ -1,6 +1,7 @@
 // Bottom sheets and toasts, available anywhere through useOverlay().
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { Icon } from './Icon';
 import { AppError } from '@/domain/book';
 import { PermissionError } from '@/db/permissions';
@@ -52,6 +53,10 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
     if (!(e instanceof AppError) && !(e instanceof PermissionError) && !(e instanceof Error && /^errx?\./.test(e.message))) reportError(e);
     toast(errText(e));
   }, [toast, errText]);
+
+  // Navigating (including the phone's back button) closes any open sheet.
+  const { pathname } = useLocation();
+  useEffect(() => { setSheet(null); }, [pathname]);
 
   useEffect(() => {
     if (!sheet) return;

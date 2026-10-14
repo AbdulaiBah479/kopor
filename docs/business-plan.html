@@ -1,0 +1,337 @@
+<title>Kopor Business Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@600;700&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a single reading column like a bound business document, with a contents rail on wide screens and ledger-style tables for the numbers. */
+:root {
+  --paper: #f6f9f8; --card: #ffffff; --ink: #0f1a14; --muted: #55645b; --line: #dbe3dd; --rule: #e7eeea;
+  --green: #0b7a3b; --green-soft: #e1f2e7; --blue: #0a5fa8; --blue-soft: #e3eef9; --red: #b8402f; --margin: #e7a0a0;
+  --display: "Familjen Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0e1512; --card: #151f1a; --ink: #e9f0eb; --muted: #9db0a4; --line: #24332b; --rule: #1c2721;
+  --green: #3cc47c; --green-soft: #173524; --blue: #6cb3f0; --blue-soft: #14283a; --red: #f08a78; --margin: #5a2a2a; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #0e1512; --card: #151f1a; --ink: #e9f0eb; --muted: #9db0a4; --line: #24332b; --rule: #1c2721;
+  --green: #3cc47c; --green-soft: #173524; --blue: #6cb3f0; --blue-soft: #14283a; --red: #f08a78; --margin: #5a2a2a; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.65 var(--body); }
+.layout { max-width: 1080px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; gap: 20px; } nav.toc { position: static !important; } }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); align-self: start; font-size: 14px; }
+nav.toc b { font: 600 12px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 8px; }
+nav.toc ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+nav.toc a { color: var(--ink); text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--green); text-decoration: underline; }
+main { min-width: 0; display: flex; flex-direction: column; gap: 40px; }
+header.cover { border-left: 3px solid var(--margin); padding-left: 20px; display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font: 600 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--green); }
+h1, h2, h3 { font-family: var(--display); margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+h1 { font-size: clamp(34px, 5vw, 52px); line-height: 1.05; }
+h2 { font-size: clamp(24px, 3vw, 30px); line-height: 1.15; display: flex; gap: 12px; align-items: baseline; }
+h2 .n { font: 600 14px var(--mono); color: var(--muted); }
+h3 { font-size: 18px; margin-top: 8px; }
+section { display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 20px; }
+p, li { max-width: 68ch; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.callout { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+.callout.green { background: var(--green-soft); border-color: transparent; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.kpi b { display: block; font: 700 28px/1.1 var(--display); color: var(--green); font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 13px; color: var(--muted); }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 520px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: color-mix(in srgb, var(--paper) 60%, var(--card)); }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 14px; }
+tr.total td { font-weight: 700; border-top: 2px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+.neg { color: var(--red); }
+.tag { display: inline-block; font: 600 11px var(--mono); padding: 2px 8px; border-radius: 99px; background: var(--blue-soft); color: var(--blue); }
+.tag.risk { background: color-mix(in srgb, var(--red) 14%, transparent); color: var(--red); }
+a { color: var(--blue); }
+a:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.sources { font-size: 14px; }
+</style>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <b>Contents</b>
+    <ol>
+      <li><a href="#summary">Executive summary</a></li>
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#solution">Solution &amp; product</a></li>
+      <li><a href="#market">Market</a></li>
+      <li><a href="#customers">Customers</a></li>
+      <li><a href="#model">Business model</a></li>
+      <li><a href="#gtm">Go-to-market</a></li>
+      <li><a href="#competition">Competition</a></li>
+      <li><a href="#operations">Operations &amp; technology</a></li>
+      <li><a href="#regulation">Regulation &amp; trust</a></li>
+      <li><a href="#team">Team &amp; hiring</a></li>
+      <li><a href="#financials">Financial plan</a></li>
+      <li><a href="#funding">Funding &amp; use of funds</a></li>
+      <li><a href="#milestones">Milestones &amp; KPIs</a></li>
+      <li><a href="#risks">Risks</a></li>
+      <li><a href="#sources">Sources</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="cover">
+      <span class="eyebrow">Business plan · October 2026</span>
+      <h1>Kopor</h1>
+      <p class="muted">The business book, payments and advisor for small businesses, groups and institutions in Sierra Leone, built to expand across West Africa.</p>
+    </header>
+
+    <section id="summary">
+      <h2><span class="n">1</span>Executive summary</h2>
+      <p>Most businesses in Sierra Leone keep their records in a paper notebook, or in their head. Debts given on credit are forgotten or disputed, owners rarely know their real profit, and without records they cannot borrow: only 17% of SMEs have a formal loan or credit line.</p>
+      <p>Kopor is a mobile app that replaces the notebook. It records credit, sales, expenses and stock in seconds, works fully offline, understands Krio, sends WhatsApp and SMS payment reminders, runs osusu and dues groups, issues invoices that customers can pay by mobile money, and turns daily records into a loan-ready report with a business health score.</p>
+      <div class="kpis">
+        <div class="kpi"><b>5,000</b><span>active businesses, end of year 1</span></div>
+        <div class="kpi"><b>$22k</b><span>revenue, year 1 (projected)</span></div>
+        <div class="kpi"><b>Year 2</b><span>first profitable year (projected)</span></div>
+        <div class="kpi"><b>$60k</b><span>funding sought</span></div>
+      </div>
+      <p>The product is built and tested. The next step is a 90-day pilot with 50 shops and 5 osusu groups in Freetown.</p>
+    </section>
+
+    <section id="problem">
+      <h2><span class="n">2</span>Problem</h2>
+      <ul>
+        <li><b>Credit is everyday business, and it leaks.</b> Traders sell on "trust" to regular customers. A notebook cannot remind anyone, total balances, or settle a dispute about what was paid.</li>
+        <li><b>Owners cannot see profit.</b> Cash, Orange Money, Afrimoney and household money mix together. Stock runs out without warning.</li>
+        <li><b>Groups run on trust and memory.</b> Osusu, association dues and school contributions are tracked by one person, often on paper.</li>
+        <li><b>No records, no credit.</b> Banks and microfinance institutions see small businesses as high-risk because there is no reliable data on their sales and repayments.</li>
+      </ul>
+    </section>
+
+    <section id="solution">
+      <h2><span class="n">3</span>Solution &amp; product</h2>
+      <p>Kopor is an offline-first app for Android phones and browsers. Data is saved on the phone first and synced to the cloud when internet is available, so a shop never stops working when the network drops.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Module</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>Credit book</td><td>Balances, due dates, overdue alerts, WhatsApp and SMS reminders, statements</td></tr>
+          <tr><td>Cash book</td><td>Sales and expenses by payment method, GST, discounts, returns, end-of-day cash count</td></tr>
+          <tr><td>Stock</td><td>Automatic stock updates, low-stock alerts, "runs out in N days" forecast, barcode scanning</td></tr>
+          <tr><td>Osusu &amp; groups</td><td>Rotating savings and dues: whose turn, who paid, payouts, member reliability</td></tr>
+          <tr><td>Invoices &amp; payments</td><td>PDF invoices and receipts, Monime payment links and USSD codes, thermal receipt printing</td></tr>
+          <tr><td>AI</td><td>Speak or type in English or Krio, scan receipts and notebook pages, ask questions about the business</td></tr>
+          <tr><td>Staff &amp; branches</td><td>Owner, manager, cashier and viewer roles; branches; activity log; PIN lock</td></tr>
+          <tr><td>Loan readiness</td><td>Health score and a 90-day performance report with a verification code</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="market">
+      <h2><span class="n">4</span>Market</h2>
+      <p>Micro, small and medium enterprises make up about 98.5% of businesses in Sierra Leone, provide about 84% of employment and around 70% of GDP. Most are informal: in a national survey, 66% of informal firms were not registered with any formal institution, and 37 to 45% of businesses are petty traders.</p>
+      <p>There were about 8.94 million mobile connections at the end of 2025, roughly one per person, and 1.85 million internet users (20.8%). Smartphone use is concentrated in towns and among younger owners, which defines our first target segment.</p>
+      <div class="callout">
+        <b>Market size (estimate)</b>
+        <p class="small">No official count of all businesses exists, so we estimate from the bottom up: of the several hundred thousand micro-businesses, we target those in towns whose owner or a family member uses a smartphone. We estimate about <b>100,000 reachable businesses</b> in the first three years, plus groups and institutions. Liberia and Guinea add a similar market from year 3. These are planning estimates, to be refined with pilot data and the 2022 Census of Business Establishments.</p>
+      </div>
+    </section>
+
+    <section id="customers">
+      <h2><span class="n">5</span>Customers</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Segment</th><th>Main need</th><th>Pays for</th></tr></thead>
+        <tbody>
+          <tr><td>Shops and market traders</td><td>Track credit customers, know daily profit</td><td>Free; Pro when they add staff or a second shop</td></tr>
+          <tr><td>Wholesalers and pharmacies</td><td>Stock, invoices, supplier credit, staff control</td><td>Pro</td></tr>
+          <tr><td>Osusu groups and associations</td><td>Who paid, whose turn, transparent records</td><td>Groups plan</td></tr>
+          <tr><td>Schools and churches</td><td>Fee and contribution collection, receipts</td><td>Groups plan</td></tr>
+          <tr><td>Microfinance institutions and banks</td><td>Trustworthy data on small borrowers</td><td>Referral fee per loan</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="model">
+      <h2><span class="n">6</span>Business model</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Stream</th><th class="r">Price</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Kopor Pro</td><td class="r">Le 75 / month</td><td>Unlimited branches and staff, 10× AI, priority support. Yearly plan = 10 months.</td></tr>
+          <tr><td>Groups &amp; institutions</td><td class="r">Le 300 / month</td><td>Larger associations, schools and churches</td></tr>
+          <tr><td>Lending referrals</td><td class="r">~2% of loan</td><td>Only with the owner's consent, through partner lenders</td></tr>
+          <tr><td>Payments revenue share</td><td class="r">~0.3% of volume</td><td>Assumption, to be negotiated with Monime</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small muted">Kopor never holds customer money. Payments go directly into each business's own Monime account (see section 10).</p>
+    </section>
+
+    <section id="gtm">
+      <h2><span class="n">7</span>Go-to-market</h2>
+      <h3>Phase 1 · Freetown pilot (months 1–3)</h3>
+      <p>50 shops in central markets and 5 osusu groups. Weekly visits, training in Krio, feedback collected in person. Goal: prove that shops keep recording and that reminders collect real money.</p>
+      <h3>Phase 2 · Scale in Sierra Leone (months 4–18)</h3>
+      <p>Market agents in Freetown, then Bo, Kenema and Makeni, paid a commission for every shop still active after 30 days. Partnerships with market and trader associations, osusu leaders and one or more microfinance institutions. Local radio and WhatsApp campaigns in Krio.</p>
+      <h3>Phase 3 · West Africa (year 3)</h3>
+      <p>Liberia (English) and Guinea (French) using the same product. Monime's coverage and local partners decide the order.</p>
+      <h3>Built-in growth</h3>
+      <p>Every reminder, statement, invoice and group update a user sends carries the Kopor name to customers and members, many of whom run businesses themselves.</p>
+    </section>
+
+    <section id="competition">
+      <h2><span class="n">8</span>Competition</h2>
+      <ul>
+        <li><b>Paper notebooks and memory</b>: free and familiar, the real competitor. Kopor must be faster than writing.</li>
+        <li><b>Khatabook and OkCredit (India)</b>: proved the digital credit book at scale (Khatabook raised about $187M). Not available for Sierra Leone's currency, languages or payment systems. OkCredit reportedly earned no operating revenue for two years: we charge from the start.</li>
+        <li><b>Kippa (Nigeria)</b>: raised about $11.6M and reached about 500,000 merchants, then reportedly cut back in 2023. Lesson: stay lean and focus on what users pay for.</li>
+        <li><b>Mobile money operators</b>: Orange Money offers credit products (Lajor). Kopor is network-neutral and works with every wallet, which telcos cannot easily match.</li>
+      </ul>
+    </section>
+
+    <section id="operations">
+      <h2><span class="n">9</span>Operations &amp; technology</h2>
+      <ul>
+        <li>Offline-first app (React, TypeScript), installable from the web and on Google Play (Capacitor).</li>
+        <li>Cloud on Supabase (Postgres) with row-level security for every staff role; secrets are kept on the server only.</li>
+        <li>Payments through Monime; AI through free or low-cost models (Groq, Google Gemini) with daily limits per business.</li>
+        <li>Quality: 41 unit tests, 13 database security tests and 37 end-to-end browser tests run on every change.</li>
+        <li>Running costs are low: under $100 per month for the first thousands of users.</li>
+      </ul>
+    </section>
+
+    <section id="regulation">
+      <h2><span class="n">10</span>Regulation &amp; trust</h2>
+      <p>Under the National Payment Systems Act 2022, providing payment services in Sierra Leone requires a Bank of Sierra Leone licence. Kopor is designed so it does not need one at launch: it never holds or moves money itself. Businesses connect their own account with Monime, which is licensed. If Kopor later offers wallets or lending, it will apply for the required licence or partner with a licensed institution.</p>
+      <p>Privacy: records stay on the phone unless the owner turns on the cloud; access is limited by role; backups can be encrypted; and users can delete their account. The privacy policy and terms will be reviewed by a Sierra Leone lawyer before launch.</p>
+    </section>
+
+    <section id="team">
+      <h2><span class="n">11</span>Team &amp; hiring</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Role</th><th>When</th><th>Responsibility</th></tr></thead>
+        <tbody>
+          <tr><td>Founder &amp; CEO <span class="tag">add details</span></td><td>Now</td><td>Vision, partnerships, fundraising, pilot</td></tr>
+          <tr><td>Lead developer</td><td>Month 1</td><td>App, cloud, payment integrations</td></tr>
+          <tr><td>Field lead</td><td>Month 1</td><td>Pilot, agents, training, feedback</td></tr>
+          <tr><td>4 market agents</td><td>Month 2</td><td>Onboarding shops and groups</td></tr>
+          <tr><td>Partnerships manager</td><td>Year 2</td><td>Lenders, associations, expansion</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="financials">
+      <h2><span class="n">12</span>Financial plan</h2>
+      <p class="small muted">All figures in US dollars and projected. Exchange rate assumed at about Le 23 per US$1.</p>
+      <h3>Key assumptions</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>Assumption</th><th class="r">Year 1</th><th class="r">Year 2</th><th class="r">Year 3</th></tr></thead>
+        <tbody>
+          <tr><td>Active businesses (end of year)</td><td class="r">5,000</td><td class="r">25,000</td><td class="r">75,000</td></tr>
+          <tr><td>Pro conversion</td><td class="r">6%</td><td class="r">8%</td><td class="r">10%</td></tr>
+          <tr><td>Pro subscribers</td><td class="r">300</td><td class="r">2,000</td><td class="r">7,500</td></tr>
+          <tr><td>Groups &amp; institutions paying</td><td class="r">50</td><td class="r">300</td><td class="r">1,000</td></tr>
+          <tr><td>Loans referred (avg. $400)</td><td class="r">200</td><td class="r">2,000</td><td class="r">8,000</td></tr>
+          <tr><td>Payment volume via Kopor</td><td class="r">$0.2M</td><td class="r">$2M</td><td class="r">$8M</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Revenue</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>Stream</th><th class="r">Year 1</th><th class="r">Year 2</th><th class="r">Year 3</th></tr></thead>
+        <tbody>
+          <tr><td>Kopor Pro ($39 / year)</td><td class="r">11,700</td><td class="r">78,000</td><td class="r">292,500</td></tr>
+          <tr><td>Groups &amp; institutions ($156 / year)</td><td class="r">7,800</td><td class="r">46,800</td><td class="r">156,000</td></tr>
+          <tr><td>Lending referrals (2%)</td><td class="r">1,600</td><td class="r">16,000</td><td class="r">64,000</td></tr>
+          <tr><td>Payments share (0.3%)</td><td class="r">600</td><td class="r">6,000</td><td class="r">24,000</td></tr>
+          <tr class="total"><td>Total revenue</td><td class="r">21,700</td><td class="r">146,800</td><td class="r">536,500</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Costs</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>Cost</th><th class="r">Year 1</th><th class="r">Year 2</th><th class="r">Year 3</th></tr></thead>
+        <tbody>
+          <tr><td>Product &amp; engineering (people, cloud, AI)</td><td class="r">10,800</td><td class="r">40,000</td><td class="r">100,000</td></tr>
+          <tr><td>Field team &amp; agent commissions</td><td class="r">15,150</td><td class="r">40,000</td><td class="r">90,000</td></tr>
+          <tr><td>Marketing</td><td class="r">6,000</td><td class="r">20,000</td><td class="r">50,000</td></tr>
+          <tr><td>Legal, registration, devices</td><td class="r">4,000</td><td class="r">5,000</td><td class="r">15,000</td></tr>
+          <tr><td>Management &amp; operations</td><td class="r">4,050</td><td class="r">15,000</td><td class="r">45,000</td></tr>
+          <tr class="total"><td>Total costs</td><td class="r">40,000</td><td class="r">120,000</td><td class="r">300,000</td></tr>
+          <tr class="total"><td>Result</td><td class="r neg">−18,300</td><td class="r">26,800</td><td class="r">236,500</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout">
+        <b>Unit economics (estimates)</b>
+        <p class="small">Cost to acquire an active business in year 1 is about $3.50 (agents, commissions and marketing ÷ 5,000). A Pro subscriber pays about $39 a year; with 6–10% of businesses converting plus group and referral revenue, each active business is worth about $8–10 over its lifetime. The target is a lifetime value at least three times the acquisition cost, to be confirmed in the pilot.</p>
+      </div>
+    </section>
+
+    <section id="funding">
+      <h2><span class="n">13</span>Funding &amp; use of funds</h2>
+      <p>Kopor seeks <b>$60,000</b> in pre-seed investment or grant funding: 12 months of operations ($40,000) plus a $20,000 reserve to keep growing into year 2.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Use</th><th class="r">US$</th></tr></thead>
+        <tbody>
+          <tr><td>Product &amp; engineering</td><td class="r">11,000</td></tr>
+          <tr><td>Field team &amp; agent commissions</td><td class="r">15,000</td></tr>
+          <tr><td>Marketing</td><td class="r">6,000</td></tr>
+          <tr><td>Registration, legal, devices, Play Store</td><td class="r">4,000</td></tr>
+          <tr><td>Founder stipend &amp; operations</td><td class="r">4,000</td></tr>
+          <tr><td>Runway reserve into year 2</td><td class="r">20,000</td></tr>
+          <tr class="total"><td>Total</td><td class="r">60,000</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small muted">Suitable sources include impact investors, grant programmes for financial inclusion and women's enterprise, microfinance partners and accelerators in Freetown. The financial-inclusion focus (credit access, women-led businesses, savings groups) matches the goals of many of these programmes.</p>
+    </section>
+
+    <section id="milestones">
+      <h2><span class="n">14</span>Milestones &amp; KPIs</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>When</th><th>Milestone</th></tr></thead>
+        <tbody>
+          <tr><td>Month 1</td><td>Company registered; cloud, Monime and Google Play accounts live; Krio reviewed</td></tr>
+          <tr><td>Month 3</td><td>Pilot: 50 shops, 5 groups; 60% still active after 30 days</td></tr>
+          <tr><td>Month 6</td><td>1,500 active businesses; first lender partnership; 100 Pro subscribers</td></tr>
+          <tr><td>Month 12</td><td>5,000 active businesses in 4 towns; 300 Pro subscribers</td></tr>
+          <tr><td>Month 24</td><td>25,000 active businesses; profitable; preparing Liberia and Guinea</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Weekly KPIs:</b> active businesses (recorded at least 3 days a week), 30-day retention, value of debts collected after reminders, Pro conversion, groups onboarded, loans referred and repaid.</p>
+    </section>
+
+    <section id="risks">
+      <h2><span class="n">15</span>Risks</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag risk">Adoption</span> Owners keep using paper</td><td>Speak-to-record in Krio, one-tap entries, agents who train in person, visible money collected through reminders</td></tr>
+          <tr><td><span class="tag risk">Access</span> Only about 21% use the internet</td><td>Fully offline app; customers can pay by USSD from any phone; SMS reminders; start with smartphone-using urban traders</td></tr>
+          <tr><td><span class="tag risk">Willingness to pay</span></td><td>Generous free plan, low Pro price paid by mobile money, revenue from groups and lenders</td></tr>
+          <tr><td><span class="tag risk">Regulation</span></td><td>No custody of funds; licensed payment partner; legal review before launch</td></tr>
+          <tr><td><span class="tag risk">Data security</span></td><td>Role-based access in the database, encrypted backups and secrets, account deletion, independent security review before scale</td></tr>
+          <tr><td><span class="tag risk">Telco competition</span></td><td>Network-neutral product that works with every wallet; focus on records and groups, not lending alone</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="sources" class="sources">
+      <h2><span class="n">16</span>Sources</h2>
+      <ul>
+        <li><a href="https://mof.gov.sl/wp-content/uploads/2025/04/Pathways-to-formalisation-of-informal-sector-businesses-in-Sierra-Leone.pdf" target="_blank" rel="noopener">Ministry of Finance: Pathways to formalisation of informal sector businesses in Sierra Leone</a></li>
+        <li><a href="https://www.ifc.org/en/pressroom/2025/ifc-provides-local-currency-support-to-access-bank-to-expand-sme-lending-in-sierra" target="_blank" rel="noopener">IFC: local currency support to Access Bank for SME lending (2025)</a></li>
+        <li><a href="https://datareportal.com/reports/digital-2026-sierra-leone" target="_blank" rel="noopener">DataReportal: Digital 2026 Sierra Leone</a></li>
+        <li><a href="https://www.uncdf.org/article/8994/national-digital-financial-literacy-baseline-survey-sierra-leone" target="_blank" rel="noopener">UNCDF: National digital and financial literacy baseline survey</a></li>
+        <li><a href="https://www.undp.org/sites/g/files/zskgke326/files/2025-02/baseline_study-sierra_leone_20.03.23.pdf" target="_blank" rel="noopener">UNDP: Baseline study of the informal economy</a></li>
+        <li><a href="https://www.statistics.sl/images/StatisticsSL/Documents/2022-Census_of_Business_Establishment_Report_for_publication.pdf" target="_blank" rel="noopener">Statistics Sierra Leone: 2022 Census of Business Establishments</a></li>
+        <li><a href="https://sierralii.gov.sl/akn/sl/act/2022/8/eng@2022-06-23" target="_blank" rel="noopener">National Payment Systems Act, 2022</a></li>
+        <li><a href="https://monime.io/" target="_blank" rel="noopener">Monime</a></li>
+        <li><a href="https://tracxn.com/d/companies/khatabook/__eDRrLjOmNlhOqRHeaRojQ-Iogt3Ta9yfYViSlx6CPWI" target="_blank" rel="noopener">Tracxn: Khatabook</a> · <a href="https://tracxn.com/d/companies/kippa/__kyxsW_oGH19kBdupdngp6nIXDuFNKGcyY_DFnrsbLtg" target="_blank" rel="noopener">Tracxn: Kippa</a> · <a href="https://www.nextbigbrand.in/sustainbility-without-revenue-case-of-khatabook-okcredit/" target="_blank" rel="noopener">Next Big Brand: OkCredit revenue</a></li>
+        <li><a href="https://thetimes-sierraleone.com/orange-mobile-finance-sierra-leone-redefining-sierra-leones-financial-future/" target="_blank" rel="noopener">The Times Sierra Leone: Orange Money</a></li>
+      </ul>
+    </section>
+  </main>
+</div>

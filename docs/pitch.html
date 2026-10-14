@@ -1,0 +1,401 @@
+<title>Kopor Pitch Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: each slide is a page from a trader's ruled credit notebook (blue rules, red margin) — the thing Kopor replaces. */
+:root {
+  --paper: #f6f9f8; --rule: #d6e3ee; --margin: #e7a0a0; --card: #ffffff;
+  --ink: #0f1a14; --muted: #55645b; --line: #dbe3dd;
+  --green: #0b7a3b; --on-green: #ffffff; --green-soft: #e1f2e7; --blue: #0a5fa8; --blue-soft: #e3eef9; --red: #b8402f;
+  --display: "Familjen Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0e1512; --rule: #1b2830; --margin: #5a2a2a; --card: #151f1a; --ink: #e9f0eb; --muted: #9db0a4; --line: #24332b;
+  --green: #3cc47c; --on-green: #0e1512; --green-soft: #173524; --blue: #6cb3f0; --blue-soft: #14283a; --red: #f08a78; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #0e1512; --rule: #1b2830; --margin: #5a2a2a; --card: #151f1a; --ink: #e9f0eb; --muted: #9db0a4; --line: #24332b;
+  --green: #3cc47c; --on-green: #0e1512; --green-soft: #173524; --blue: #6cb3f0; --blue-soft: #14283a; --red: #f08a78; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 48px; display: flex; flex-direction: column; gap: 20px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  background: color-mix(in srgb, var(--paper) 90%, transparent); backdrop-filter: blur(8px); }
+.bar b { font: 700 18px var(--display); letter-spacing: -.01em; }
+.bar .sp { flex: 1; }
+button { font: inherit; cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 10px; padding: 8px 14px; font-weight: 600; }
+.btn.primary { background: var(--green); border-color: var(--green); color: var(--on-green); }
+.btn:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+.slide {
+  position: relative; background-color: var(--card); border: 1px solid var(--line); border-radius: 6px;
+  padding: clamp(24px, 4vw, 48px) clamp(20px, 4vw, 56px) clamp(24px, 4vw, 48px) clamp(36px, 6vw, 88px);
+  background-image: linear-gradient(to right, transparent calc(clamp(20px, 4vw, 60px)), var(--margin) calc(clamp(20px, 4vw, 60px)), var(--margin) calc(clamp(20px, 4vw, 60px) + 2px), transparent calc(clamp(20px, 4vw, 60px) + 2px)),
+    repeating-linear-gradient(to bottom, transparent 0 31px, var(--rule) 31px 32px);
+  min-height: min(620px, 80vh); display: flex; flex-direction: column; gap: 18px; overflow: hidden;
+}
+.slide > * { min-width: 0; }
+.no { position: absolute; top: 14px; right: 18px; font: 600 12px var(--mono); color: var(--muted); }
+.eyebrow { font: 600 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--green); }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; letter-spacing: -.02em; }
+h1 { font-size: clamp(40px, 7vw, 76px); line-height: 1; font-weight: 700; }
+h2 { font-size: clamp(28px, 4.2vw, 46px); line-height: 1.08; font-weight: 700; max-width: 22ch; }
+h3 { font-size: 19px; line-height: 1.25; font-weight: 600; }
+p { margin: 0; max-width: 62ch; }
+.lead { font-size: clamp(17px, 2vw, 21px); color: var(--muted); max-width: 52ch; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.g2 { display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; align-items: center; }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+@media (max-width: 760px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } .slide { min-height: 0; } }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.big { font: 700 clamp(30px, 4vw, 44px)/1 var(--display); color: var(--green); font-variant-numeric: tabular-nums; }
+.big.blue { color: var(--blue); }
+.big.red { color: var(--red); }
+ul.clean { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+ul.clean li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; }
+ul.clean li::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--green); margin-top: 8px; }
+
+/* The notebook entry: the "before" picture */
+.ledger { font: 500 15px var(--mono); border-collapse: collapse; width: 100%; }
+.ledger td { padding: 6px 4px; border-bottom: 1px dashed var(--line); }
+.ledger td:last-child { text-align: right; }
+.ledger .x { text-decoration: line-through; color: var(--muted); }
+.ledger .q { color: var(--red); }
+
+.phones { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.phone { width: min(200px, 44vw); aspect-ratio: 390 / 844; border-radius: 26px; border: 6px solid var(--ink); overflow: hidden; background: var(--paper); box-shadow: 0 12px 30px rgba(0,0,0,.14); max-width: 100%; }
+.phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.cap { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+figure { margin: 0; }
+
+.modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.mod { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--card); }
+.mod b { font-family: var(--display); font-size: 16px; display: block; }
+.mod span { font-size: 13.5px; color: var(--muted); }
+
+table.t { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+table.t th, table.t td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.t th { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+table.t td.r, table.t th.r { text-align: right; font-variant-numeric: tabular-nums; }
+table.t td.yes { color: var(--green); font-weight: 700; }
+table.t td.no { color: var(--muted); }
+.scroll { overflow-x: auto; }
+
+.chart text { font: 600 12px var(--mono); fill: var(--muted); }
+.chart .val { fill: var(--ink); font-size: 13px; }
+.chart .grid { stroke: var(--line); }
+.chart .bar { fill: var(--green); }
+.chip { display: inline-block; font: 600 11px var(--mono); padding: 3px 8px; border-radius: 99px; background: var(--blue-soft); color: var(--blue); letter-spacing: .04em; }
+.chip.warn { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
+.stamp { display: inline-block; border: 2px solid var(--green); color: var(--green); padding: 4px 12px; border-radius: 8px; font: 700 14px var(--mono); letter-spacing: .1em; transform: rotate(-3deg); }
+a { color: var(--blue); }
+.sources { font-size: 13px; columns: 2; column-gap: 28px; }
+.sources li { break-inside: avoid; margin-bottom: 6px; }
+@media (max-width: 760px) { .sources { columns: 1; } }
+
+/* Presentation mode: one slide at a time, filling the screen */
+body.present .slide { display: none; min-height: calc(100vh - 90px); }
+body.present .slide.on { display: flex; }
+@media (prefers-reduced-motion: no-preference) { body.present .slide.on { animation: in .25s ease; } }
+@keyframes in { from { opacity: .4; transform: translateY(8px); } }
+</style>
+
+<div class="wrap">
+  <div class="bar">
+    <b>Kopor</b><span class="muted small">Pitch deck · October 2026</span><span class="sp"></span>
+    <span id="count" class="mono small muted" hidden></span>
+    <button class="btn" id="prev" hidden aria-label="Previous slide">←</button>
+    <button class="btn" id="next" hidden aria-label="Next slide">→</button>
+    <button class="btn primary" id="mode">Present</button>
+  </div>
+
+  <section class="slide" aria-label="Title">
+    <span class="no">01</span>
+    <div class="g2">
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <span class="eyebrow">Freetown, Sierra Leone</span>
+        <h1>Kopor</h1>
+        <p class="lead">The business book, payments and advisor for every small business. Works offline, speaks Krio, and turns daily records into access to credit.</p>
+        <p class="small muted">"Kopor" means <em>money</em> in Krio.</p>
+      </div>
+      <div class="phones"><figure><div class="phone"><img src="img/home.png" alt="Kopor home screen showing today's profit, quick actions and smart insights"></div></figure></div>
+    </div>
+  </section>
+
+  <section class="slide" aria-label="Problem">
+    <span class="no">02</span>
+    <span class="eyebrow">The problem</span>
+    <h2>Small businesses run on a paper notebook. It forgets, it gets lost, and it cannot get them a loan.</h2>
+    <div class="g2">
+      <table class="ledger" aria-label="Example page from a paper credit notebook">
+        <tr><td>Aminata · 2 bag rice</td><td>1,700</td></tr>
+        <tr><td class="x">Mohamed · oil</td><td class="x">360</td></tr>
+        <tr><td>Isatu · ??? (paid half?)</td><td class="q">?</td></tr>
+        <tr><td>Abu · sugar, maggi</td><td>96</td></tr>
+        <tr><td>Profit this week</td><td class="q">unknown</td></tr>
+      </table>
+      <ul class="clean">
+        <li><span><b>Debts are forgotten or disputed.</b> Credit ("trust") is everyday business, and the notebook is the only record.</span></li>
+        <li><span><b>Owners don't know their profit.</b> Cash, Orange Money and Afrimoney mix with household money.</span></li>
+        <li><span><b>No records means no credit.</b> Only <b class="mono">17%</b> of Sierra Leone's SMEs have a formal loan or credit line.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" aria-label="Market">
+    <span class="no">03</span>
+    <span class="eyebrow">Who we serve</span>
+    <h2>Small businesses are Sierra Leone's economy.</h2>
+    <div class="g4">
+      <div class="box"><span class="big">98.5%</span><span class="small muted">of businesses are micro, small or medium</span></div>
+      <div class="box"><span class="big">84%</span><span class="small muted">of employment comes from MSMEs</span></div>
+      <div class="box"><span class="big blue">~70%</span><span class="small muted">of GDP is produced by MSMEs</span></div>
+      <div class="box"><span class="big red">17%</span><span class="small muted">of SMEs can get formal credit</span></div>
+    </div>
+    <p class="muted">Shop owners, market traders, wholesalers, pharmacies, salons and tailors, plus the osusu groups, associations, churches and schools that collect money every week. Most are informal, many are women-led, and nearly all already use a phone and mobile money.</p>
+  </section>
+
+  <section class="slide" aria-label="Solution">
+    <span class="no">04</span>
+    <span class="eyebrow">The solution</span>
+    <h2>One app replaces the notebook, the calculator and the bank queue.</h2>
+    <div class="modules">
+      <div class="mod"><b>Credit book</b><span>Who owes what, due dates, one-tap WhatsApp and SMS reminders</span></div>
+      <div class="mod"><b>Cash book</b><span>Sales and expenses by cash, Orange Money, Afrimoney or QMoney; daily profit</span></div>
+      <div class="mod"><b>Stock</b><span>Updates itself on every sale; warns days before an item runs out</span></div>
+      <div class="mod"><b>Osusu &amp; dues</b><span>Whose turn it is, who paid, payouts, reliability of each member</span></div>
+      <div class="mod"><b>Invoices &amp; payments</b><span>PDF invoices, payment links and USSD codes any phone can dial</span></div>
+      <div class="mod"><b>Speak in Krio</b><span>"Aminata tek 2 tin oil 360 on credit" becomes a record</span></div>
+      <div class="mod"><b>Staff &amp; branches</b><span>Owner, manager and cashier roles with an activity log</span></div>
+      <div class="mod"><b>Loan-ready report</b><span>Health score and 90-day report with a verification code</span></div>
+    </div>
+  </section>
+
+  <section class="slide" aria-label="Product">
+    <span class="no">05</span>
+    <span class="eyebrow">Working product</span>
+    <h2>Built, tested and ready to pilot.</h2>
+    <div class="phones">
+      <figure><div class="phone"><img src="img/credit.png" alt="Credit book: a customer's balance with remind, SMS, call and statement buttons"></div><figcaption class="cap">Credit book</figcaption></figure>
+      <figure><div class="phone"><img src="img/voice.png" alt="Speak screen: a Krio sentence turned into a credit record"></div><figcaption class="cap">Speak in Krio</figcaption></figure>
+      <figure><div class="phone"><img src="img/osusu.png" alt="Osusu group: round progress, who collects, member payments"></div><figcaption class="cap">Osusu</figcaption></figure>
+      <figure><div class="phone"><img src="img/health.png" alt="Business health score and loan-ready report"></div><figcaption class="cap">Loan readiness</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="slide" aria-label="Why now">
+    <span class="no">06</span>
+    <span class="eyebrow">Why now</span>
+    <h2>Phones are everywhere, payments are open, and AI is nearly free.</h2>
+    <div class="g3">
+      <div class="box"><span class="big">8.94M</span><span class="small muted">mobile connections, about 101% of the population (late 2025)</span></div>
+      <div class="box"><span class="big blue">1.85M</span><span class="small muted">internet users (20.8%), growing every year. Kopor works offline for everyone else.</span></div>
+      <div class="box"><span class="big">1 API</span><span class="small muted">Monime, licensed by the Bank of Sierra Leone, now connects Orange Money, Afrimoney, cards and banks.</span></div>
+    </div>
+    <ul class="clean">
+      <li><span>Lenders are actively looking for SME borrowers: IFC and Access Bank signed a $10M guarantee in 2025 for up to $20M of new SME loans. They need trustworthy records, which Kopor creates.</span></li>
+      <li><span>Free and open AI models now understand Krio-style English, so voice entry is affordable for the first time.</span></li>
+    </ul>
+  </section>
+
+  <section class="slide" aria-label="Business model">
+    <span class="no">07</span>
+    <span class="eyebrow">Business model</span>
+    <h2>Free to start. Paid when the business grows.</h2>
+    <div class="scroll"><table class="t">
+      <thead><tr><th>Revenue stream</th><th>Who pays</th><th class="r">Price</th></tr></thead>
+      <tbody>
+        <tr><td><b>Kopor Pro</b>: unlimited branches and staff, more AI</td><td>Growing shops, wholesalers, pharmacies</td><td class="r mono">Le 75 / month</td></tr>
+        <tr><td><b>Groups &amp; institutions</b>: dues, fees, reports</td><td>Associations, schools, churches</td><td class="r mono">Le 300 / month</td></tr>
+        <tr><td><b>Lending referrals</b>: verified loan-ready reports (with owner consent)</td><td>Microfinance institutions, banks</td><td class="r mono">~2% of loan</td></tr>
+        <tr><td><b>Payments share</b>: invoices and links paid through Monime</td><td>Payment partner</td><td class="r mono">to negotiate</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small muted">The free plan stays genuinely useful for one shop (1 branch, 3 staff, all core features). Every WhatsApp reminder, invoice and receipt a free user sends carries the Kopor name.</p>
+  </section>
+
+  <section class="slide" aria-label="Go to market">
+    <span class="no">08</span>
+    <span class="eyebrow">Go-to-market</span>
+    <h2>Market by market, group by group.</h2>
+    <div class="g3">
+      <div class="box"><h3>Market agents</h3><p class="small muted">Local agents sign up shops in Freetown's markets (Kissy Road, Dove Cot, Big Market) and earn a commission for every shop still active after 30 days.</p></div>
+      <div class="box"><h3>Osusu and associations</h3><p class="small muted">One group leader brings 10 to 50 members. Every reminder and group update spreads Kopor through WhatsApp.</p></div>
+      <div class="box"><h3>Lender partners</h3><p class="small muted">Microfinance institutions recommend Kopor to borrowers because it gives them clean repayment and sales data.</p></div>
+    </div>
+    <p class="muted">Phase 1: Freetown pilot with 50 shops and 5 osusu groups. Phase 2: Bo, Kenema, Makeni. Phase 3: Liberia and Guinea (English and French are already built in).</p>
+  </section>
+
+  <section class="slide" aria-label="Competition">
+    <span class="no">09</span>
+    <span class="eyebrow">Competition</span>
+    <h2>Proven globally. Missing in Sierra Leone.</h2>
+    <div class="scroll"><table class="t">
+      <thead><tr><th></th><th>Paper notebook</th><th>Khatabook (India)</th><th>Kippa (Nigeria)</th><th>Kopor</th></tr></thead>
+      <tbody>
+        <tr><td>Available in Sierra Leone</td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td></tr>
+        <tr><td>Works fully offline</td><td class="yes">Yes</td><td>Partly</td><td>Partly</td><td class="yes">Yes</td></tr>
+        <tr><td>Krio, Leones, local mobile money</td><td>—</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td></tr>
+        <tr><td>Osusu and group dues</td><td>—</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td></tr>
+        <tr><td>Loan-ready report</td><td class="no">No</td><td>Lending</td><td>Partly</td><td class="yes">Yes</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small muted">Khatabook raised about $187M and reached millions of merchants with the same core idea. Kippa raised about $11.6M and later scaled back. The lesson we apply: charge from day one and stay lean.</p>
+  </section>
+
+  <section class="slide" aria-label="Traction">
+    <span class="no">10</span>
+    <span class="eyebrow">Where we are</span>
+    <h2>A complete product, verified by automated tests.</h2>
+    <div class="g4">
+      <div class="box"><span class="big">41</span><span class="small muted">unit tests: money, stock, credit, tax, PDF, Excel, receipts</span></div>
+      <div class="box"><span class="big">13</span><span class="small muted">database security checks for every staff role</span></div>
+      <div class="box"><span class="big">37</span><span class="small muted">end-to-end checks in a real browser at phone size</span></div>
+      <div class="box"><span class="big blue">3</span><span class="small muted">languages: English, Krio, French</span></div>
+    </div>
+    <div class="g2" style="align-items:start">
+      <div><h3>Next 90 days</h3>
+        <ul class="clean small" style="margin-top:10px">
+          <li><span>Register the company; connect the cloud and Monime accounts</span></li>
+          <li><span>Pilot with 50 shops and 5 osusu groups in Freetown</span></li>
+          <li><span>Native-speaker review of Krio; publish on Google Play</span></li>
+          <li><span>Sign one microfinance partner for loan referrals</span></li>
+        </ul></div>
+      <div class="box"><span class="eyebrow">Pilot success measures</span><p class="small">60% of shops still recording after 30 days · Le 50,000+ of debts collected through reminders · 10 Pro subscribers · 1 lender agreement</p></div>
+    </div>
+  </section>
+
+  <section class="slide" aria-label="Financials">
+    <span class="no">11</span>
+    <span class="eyebrow">Projections (assumptions, not results)</span>
+    <h2>Revenue grows with active businesses.</h2>
+    <div class="g2" style="align-items:start">
+      <svg class="chart" viewBox="0 0 420 250" role="img" aria-label="Projected revenue: Year 1 $22k, Year 2 $147k, Year 3 $537k">
+        <line class="grid" x1="40" x2="410" y1="210" y2="210"/>
+        <line class="grid" x1="40" x2="410" y1="155" y2="155"/>
+        <line class="grid" x1="40" x2="410" y1="100" y2="100"/>
+        <line class="grid" x1="40" x2="410" y1="45" y2="45"/>
+        <text x="34" y="214" text-anchor="end">0</text>
+        <text x="34" y="159" text-anchor="end">200k</text>
+        <text x="34" y="104" text-anchor="end">400k</text>
+        <text x="34" y="49" text-anchor="end">600k</text>
+        <path class="bar" d="M80 210 V208 Q80 204 84 204 H136 Q140 204 140 208 V210 Z"/>
+        <path class="bar" d="M195 210 V173.6 Q195 169.6 199 169.6 H251 Q255 169.6 255 173.6 V210 Z"/>
+        <path class="bar" d="M310 210 V66.3 Q310 62.3 314 62.3 H366 Q370 62.3 370 66.3 V210 Z"/>
+        <text class="val" x="110" y="196" text-anchor="middle">$22k</text>
+        <text class="val" x="225" y="161" text-anchor="middle">$147k</text>
+        <text class="val" x="340" y="54" text-anchor="middle">$537k</text>
+        <text x="110" y="232" text-anchor="middle">Year 1</text>
+        <text x="225" y="232" text-anchor="middle">Year 2</text>
+        <text x="340" y="232" text-anchor="middle">Year 3</text>
+      </svg>
+      <div class="scroll"><table class="t">
+        <thead><tr><th></th><th class="r">Y1</th><th class="r">Y2</th><th class="r">Y3</th></tr></thead>
+        <tbody>
+          <tr><td>Active businesses</td><td class="r">5,000</td><td class="r">25,000</td><td class="r">75,000</td></tr>
+          <tr><td>Paying Pro</td><td class="r">300</td><td class="r">2,000</td><td class="r">7,500</td></tr>
+          <tr><td>Revenue</td><td class="r">$22k</td><td class="r">$147k</td><td class="r">$537k</td></tr>
+          <tr><td>Costs</td><td class="r">$40k</td><td class="r">$120k</td><td class="r">$300k</td></tr>
+          <tr><td><b>Result</b></td><td class="r" style="color:var(--red)">−$18k</td><td class="r">+$27k</td><td class="r">+$237k</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <p class="small muted">Assumes Le 23 ≈ US$1, Pro at Le 75/month, 6–10% Pro conversion and Liberia/Guinea from year 3. Full assumptions are in the business plan.</p>
+  </section>
+
+  <section class="slide" aria-label="The ask">
+    <span class="no">12</span>
+    <span class="eyebrow">The ask</span>
+    <h2>$60,000 to reach 5,000 active businesses in 12 months.</h2>
+    <div class="g2" style="align-items:start">
+      <div class="scroll"><table class="t">
+        <thead><tr><th>Use of funds</th><th class="r">US$</th></tr></thead>
+        <tbody>
+          <tr><td>Product &amp; engineering (developer, cloud, AI)</td><td class="r">11,000</td></tr>
+          <tr><td>Field team &amp; agent commissions</td><td class="r">15,000</td></tr>
+          <tr><td>Marketing (radio, WhatsApp, market activations)</td><td class="r">6,000</td></tr>
+          <tr><td>Registration, legal, devices, Play Store</td><td class="r">4,000</td></tr>
+          <tr><td>Founder stipend &amp; operations</td><td class="r">4,000</td></tr>
+          <tr><td>Runway reserve into year 2</td><td class="r">20,000</td></tr>
+          <tr><td><b>Total</b></td><td class="r"><b>60,000</b></td></tr>
+        </tbody>
+      </table></div>
+      <div class="box">
+        <span class="eyebrow">Good fits</span>
+        <p class="small">Pre-seed investors, impact funds and grant programmes for financial inclusion and women-owned businesses, microfinance partners, and accelerators in Freetown.</p>
+        <span class="stamp" style="align-self:flex-start;margin-top:8px">PAID IN FULL</span>
+        <p class="small muted">is the stamp we want on every debt in Sierra Leone.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" aria-label="Team">
+    <span class="no">13</span>
+    <span class="eyebrow">Team</span>
+    <h2>Built in Salone, for Salone first.</h2>
+    <div class="g3">
+      <div class="box"><span class="chip warn">Add name &amp; photo</span><h3>Founder &amp; CEO</h3><p class="small muted">Product vision, partnerships with lenders and associations, fundraising.</p></div>
+      <div class="box"><span class="chip">Hiring</span><h3>Lead developer</h3><p class="small muted">Owns the app, cloud and payment integrations. The codebase is documented and fully tested.</p></div>
+      <div class="box"><span class="chip">Hiring</span><h3>Field lead + 4 agents</h3><p class="small muted">Onboard shops and groups, run trainings in Krio, collect feedback every week.</p></div>
+    </div>
+  </section>
+
+  <section class="slide" aria-label="Sources" style="min-height:0">
+    <span class="no">14</span>
+    <span class="eyebrow">Sources</span>
+    <ul class="sources">
+      <li>MSME share of businesses, employment and GDP: <a href="https://mof.gov.sl/wp-content/uploads/2025/04/Pathways-to-formalisation-of-informal-sector-businesses-in-Sierra-Leone.pdf" target="_blank" rel="noopener">Ministry of Finance, Pathways to formalisation</a></li>
+      <li>17% of SMEs with formal credit; $10M guarantee: <a href="https://www.ifc.org/en/pressroom/2025/ifc-provides-local-currency-support-to-access-bank-to-expand-sme-lending-in-sierra" target="_blank" rel="noopener">IFC press release, 2025</a></li>
+      <li>Mobile connections and internet users: <a href="https://datareportal.com/reports/digital-2026-sierra-leone" target="_blank" rel="noopener">DataReportal, Digital 2026: Sierra Leone</a></li>
+      <li>Account ownership and informal savings: <a href="https://www.uncdf.org/article/8994/national-digital-financial-literacy-baseline-survey-sierra-leone" target="_blank" rel="noopener">UNCDF financial literacy baseline survey</a></li>
+      <li>Payments platform: <a href="https://monime.io/" target="_blank" rel="noopener">Monime</a></li>
+      <li>Khatabook funding: <a href="https://tracxn.com/d/companies/khatabook/__eDRrLjOmNlhOqRHeaRojQ-Iogt3Ta9yfYViSlx6CPWI" target="_blank" rel="noopener">Tracxn</a></li>
+      <li>Kippa funding and status: <a href="https://tracxn.com/d/companies/kippa/__kyxsW_oGH19kBdupdngp6nIXDuFNKGcyY_DFnrsbLtg" target="_blank" rel="noopener">Tracxn</a></li>
+      <li>Payments regulation: <a href="https://sierralii.gov.sl/akn/sl/act/2022/8/eng@2022-06-23" target="_blank" rel="noopener">National Payment Systems Act, 2022</a></li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0, presenting = false;
+  var mode = document.getElementById('mode'), prev = document.getElementById('prev'), next = document.getElementById('next'), count = document.getElementById('count');
+  function show() {
+    slides.forEach(function (s, k) { s.classList.toggle('on', k === i); });
+    count.textContent = (i + 1) + ' / ' + slides.length;
+  }
+  function setMode(on) {
+    presenting = on;
+    document.body.classList.toggle('present', on);
+    [prev, next, count].forEach(function (el) { el.hidden = !on; });
+    mode.textContent = on ? 'All slides' : 'Present';
+    if (on) { show(); window.scrollTo(0, 0); }
+  }
+  function go(d) { i = Math.max(0, Math.min(slides.length - 1, i + d)); show(); }
+  mode.addEventListener('click', function () { setMode(!presenting); });
+  prev.addEventListener('click', function () { go(-1); });
+  next.addEventListener('click', function () { go(1); });
+  document.addEventListener('keydown', function (e) {
+    if (!presenting) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
+    if (e.key === 'Escape') setMode(false);
+  });
+  var x0 = null;
+  document.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (!presenting || x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+    x0 = null;
+  }, { passive: true });
+})();
+</script>
