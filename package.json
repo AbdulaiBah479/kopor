@@ -35,7 +35,7 @@
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^1.1.7",
     "driver.js": "^1.9.0",
-    "i18next": "^23.16.8",
+    "i18next": "^26.4.3",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.57.0",
