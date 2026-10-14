@@ -18,23 +18,23 @@
   --fill-strong: rgba(120, 120, 128, .2);
   --muted: rgba(120, 120, 128, .12);
   --border: rgba(60, 60, 67, .2);
-  --primary: #08834a;             /* Kopor tint */
+  --primary: #047857;             /* Kopor emerald (5.5:1 on white) */
   --primary-foreground: #ffffff;
-  --primary-soft: rgba(8, 131, 74, .12);
-  --positive: #138a4b;
-  --accent: #007aff;              /* systemBlue (links) */
-  --accent-soft: rgba(0, 122, 255, .12);
-  --danger: #e0352b;
-  --danger-soft: rgba(255, 59, 48, .12);
-  --warning: #c56b00;
-  --warning-soft: rgba(255, 149, 0, .14);
-  --ring: rgba(8, 131, 74, .35);
+  --primary-soft: rgba(4, 120, 87, .11);
+  --positive: #047857;
+  --accent: #0a63d4;              /* links (5:1 on white) */
+  --accent-soft: rgba(10, 99, 212, .11);
+  --danger: #d92d20;
+  --danger-soft: rgba(217, 45, 32, .10);
+  --warning: #b54708;
+  --warning-soft: rgba(245, 158, 11, .14);
+  --ring: rgba(4, 120, 87, .35);
   --bar: rgba(249, 249, 249, .92);  /* translucent nav/tab bars */
   --shadow-float: 0 8px 28px rgba(0, 0, 0, .12);
   /* Settings-style icon tiles (white glyphs) */
   --tile-green: #34c759; --tile-blue: #007aff; --tile-orange: #ff9500; --tile-red: #ff3b30; --tile-purple: #af52de;
   --tile-teal: #30b0c7; --tile-indigo: #5856d6; --tile-gray: #8e8e93; --tile-pink: #ff2d55; --tile-yellow: #f5b800;
-  --hero-from: #0b8a4c; --hero-to: #05603a;
+  --hero-from: #059669; --hero-to: #064e3b;
   --tabbar-h: 50px;
   color-scheme: light;
 }
@@ -50,20 +50,20 @@
   --fill-strong: rgba(118, 118, 128, .36);
   --muted: rgba(118, 118, 128, .24);
   --border: rgba(84, 84, 88, .65);
-  --primary: #30d158;
-  --primary-foreground: #03150a;
-  --primary-soft: rgba(48, 209, 88, .16);
-  --positive: #30d158;
-  --accent: #0a84ff;
-  --accent-soft: rgba(10, 132, 255, .18);
-  --danger: #ff453a;
-  --danger-soft: rgba(255, 69, 58, .18);
-  --warning: #ff9f0a;
-  --warning-soft: rgba(255, 159, 10, .18);
-  --ring: rgba(48, 209, 88, .4);
+  --primary: #34d399;
+  --primary-foreground: #022c22;
+  --primary-soft: rgba(52, 211, 153, .15);
+  --positive: #34d399;
+  --accent: #4ea1ff;
+  --accent-soft: rgba(78, 161, 255, .16);
+  --danger: #ff6b5e;
+  --danger-soft: rgba(255, 107, 94, .16);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, .15);
+  --ring: rgba(52, 211, 153, .4);
   --bar: rgba(22, 22, 24, .9);
   --shadow-float: 0 8px 28px rgba(0, 0, 0, .5);
-  --hero-from: #0b6b3c; --hero-to: #053d24;
+  --hero-from: #047857; --hero-to: #022c22;
   color-scheme: dark;
 }
 
@@ -180,6 +180,10 @@
   .item:active { background: var(--fill); }
   @media (hover: hover) { .item:hover { background: color-mix(in srgb, var(--fill) 50%, transparent); } }
   .item .main { flex: 1; min-width: 0; }
+  /* A link inside a row that makes the whole row tappable, while buttons in the row stay separate targets. */
+  .item .stretch { display: block; color: inherit; text-decoration: none; }
+  .item .stretch::after { content: ""; position: absolute; inset: 0; }
+  .item :is(a, button):not(.stretch) { position: relative; z-index: 1; }
   .item .t { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .item .s { font-size: 14px; color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; letter-spacing: 0; }
   .item .amt { text-align: right; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -327,7 +331,7 @@
 
   /* ---------- Documents (always printed on white) ---------- */
   .doc { background: #fff; color: #15201a; border-radius: 14px; padding: 22px; font-size: 14px; letter-spacing: 0; }
-  .doc h2 { font-size: 22px; color: #08834a; }
+  .doc h2 { font-size: 22px; color: #047857; }
   .doc table { width: 100%; border-collapse: collapse; margin: 12px 0; }
   .doc th, .doc td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e5e5ea; }
   .doc th { font-size: 12px; color: #6b6b70; text-transform: uppercase; letter-spacing: .04em; }

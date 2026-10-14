@@ -88,8 +88,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const switchSession = useCallback(async (s: Session | null) => { await setSession(s); setSess(s); }, []);
 
   // Auto-lock after inactivity when any PIN is set on this device.
-  const lastActive = useRef(Date.now());
+  const lastActive = useRef(0);
   useEffect(() => {
+    lastActive.current = Date.now();
     const bump = () => { lastActive.current = Date.now(); };
     const events = ['pointerdown', 'keydown', 'scroll'];
     events.forEach((e) => window.addEventListener(e, bump, { passive: true }));

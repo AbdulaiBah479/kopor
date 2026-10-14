@@ -19,8 +19,9 @@ export function Lock() {
   const [withPin, setWithPin] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    Promise.all(members.map(async (m) => [m.id, await hasPin(m.id)] as const)).then((r) => setWithPin(new Set(r.filter((x) => x[1]).map((x) => x[0]))));
-  }, [book]);
+    const active = book.members.filter((m) => m.active);
+    Promise.all(active.map(async (m) => [m.id, await hasPin(m.id)] as const)).then((r) => setWithPin(new Set(r.filter((x) => x[1]).map((x) => x[0]))));
+  }, [book.members]);
 
   const tryPin = async (p: string) => {
     try {

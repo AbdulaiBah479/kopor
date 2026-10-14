@@ -1,5 +1,5 @@
 // Bottom sheets (vaul: draggable, swipe down to close) and toasts (sonner: stackable, with Undo).
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Drawer } from 'vaul';
@@ -59,7 +59,8 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
 
   // Navigating (including the phone's back button) closes any open sheet.
   const { pathname } = useLocation();
-  useEffect(() => { setOpen(false); }, [pathname]);
+  const [shownPath, setShownPath] = useState(pathname);
+  if (shownPath !== pathname) { setShownPath(pathname); setOpen(false); }
 
   return (
     <Ctx.Provider value={{ openSheet, closeSheet, toast, fail }}>

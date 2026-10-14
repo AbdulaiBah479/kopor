@@ -140,10 +140,10 @@ export function Home() {
       <div className="section-title big"><span>{t('ux.toCollect')}</span><Link to="/credit">{t('ux.seeAll')}</Link></div>
       <div className="list">
         {debtors.length ? debtors.map(({ c, b, od }) => (
-          <div key={c.id} className="item" onClick={() => nav(`/credit/${c.id}`)}>
+          <div key={c.id} className="item">
             <Avatar name={c.name} />
             <div className="main">
-              <div className="t">{c.name}</div>
+              <Link className="t stretch" to={`/credit/${c.id}`}>{c.name}</Link>
               <div className="s">{od ? <span className="bad">{t('credit.overdue')} · {fmt(od)}</span> : c.phone || '—'}</div>
             </div>
             <div className="amt good">{formatMoney(b)}</div>
