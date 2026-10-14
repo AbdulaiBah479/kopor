@@ -146,7 +146,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   team: {
     title: 'Tim ɛn Branch', sub: 'Staf akawnt, wok ɛn shɔp', staff: 'Staf', addStaff: 'Ad staf', role: 'Wok', branch: 'Branch', allBranches: 'Ɔl branch',
     branches: 'Branch dɛn', addBranch: 'Ad branch', branchName: 'Branch nem', switchUser: 'Chenj yuza', you: 'Yu', inactive: 'Dɔn kɔmɔt', remove: 'Rimov frɔm tim',
-    setPin: 'Put PIN na dis fon', pinSet: 'PIN dɔn put', inviteHelp: 'We dis pɔsin mek Kopor akawnt wit dis fon nɔmba, dɛn go jɔyn yu biznɛs wantɛm.',
+    setPin: 'Put PIN na dis fon', pinSet: 'PIN dɔn put', inviteHelp: 'We dis pɔsin mek Kopor akawnt wit dis nɔmba, sɛn dɛn invayt kod (dɔŋ ya, afta yu sev) fɔ jɔyn yu biznɛs.',
     audit: 'Aktiviti lɔg', auditSub: 'Ɛni chenj, udat mek am ɛn wetin tɛm',
   },
   settings: {

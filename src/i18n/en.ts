@@ -147,7 +147,7 @@ const base = {
   team: {
     title: 'Team & Branches', sub: 'Staff accounts, roles and shops', staff: 'Staff', addStaff: 'Add staff', role: 'Role', branch: 'Branch', allBranches: 'All branches',
     branches: 'Branches', addBranch: 'Add branch', branchName: 'Branch name', switchUser: 'Switch user', you: 'You', inactive: 'Removed', remove: 'Remove from team',
-    setPin: 'Set PIN on this phone', pinSet: 'PIN set', inviteHelp: 'When this person creates a Kopor account with this phone number, they will join your business automatically.',
+    setPin: 'Set PIN on this phone', pinSet: 'PIN set', inviteHelp: 'When this person creates a Kopor account with this number, send them an invite code (below, after saving) to join your business.',
     audit: 'Activity log', auditSub: 'Every change, who made it and when',
   },
   settings: {

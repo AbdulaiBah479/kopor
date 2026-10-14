@@ -10,6 +10,9 @@ import { Empty, Field, initials } from '@/ui/widgets';
 import { db, type Member, type Role } from '@/db/schema';
 import { ROLES } from '@/db/permissions';
 import { saveMember, deactivateMember, addBranch, setPin, hasPin } from '@/domain/org';
+import { createInvite } from '@/cloud/invites';
+import { waLink } from '@/lib/phone';
+import { APP_URL } from '@/features/pwa';
 
 export function Team() {
   const { t } = useTranslation();
@@ -33,7 +36,7 @@ export function Team() {
             onClick={() => (can('team') || m.id === member?.id) && openSheet(m.name, <MemberSheet member={m} />)}>
             <div className="avatar">{initials(m.name)}</div>
             <div className="main">
-              <div className="t">{m.name} {m.id === member?.id && <span className="badge good">{t('team.you')}</span>} {!m.active && <span className="badge">{t('team.inactive')}</span>}</div>
+              <div className="t with-badge"><span className="trunc">{m.name}</span> {m.id === member?.id && <span className="badge good">{t('team.you')}</span>} {!m.active && <span className="badge">{t('team.inactive')}</span>}</div>
               <div className="s">{t(`roles.${m.role}`)} · {branchName(m.branch_id)}{m.phone && ` · ${m.phone}`}{pins.has(m.id) && ' · 🔒'}{m.user_id && ' · ☁'}</div>
             </div>
             <Icon name="chev" />
@@ -83,10 +86,40 @@ function MemberSheet({ member }: { member?: Member }) {
       )}
       <Field label={t('team.setPin')}><input type="password" inputMode="numeric" pattern="\d{4,8}" maxLength={8} value={pin} onChange={(e) => setPinText(e.target.value.replace(/\D/g, ''))} autoComplete="new-password" /></Field>
       <button className="btn primary block">{t('common.save')}</button>
+      {member && can('team') && !isMe && member.active === 1 && !member.user_id && member.phone && <InviteBlock member={member} />}
       {member && can('team') && !isMe && member.active === 1 && (
         <button type="button" className="btn danger block" onClick={() => confirm(t('common.confirm')) && deactivateMember(ctx, member.id).then(closeSheet).catch(fail)}>{t('team.remove')}</button>
       )}
     </form>
+  );
+}
+
+/** Owner sends a staff member a one-time code to join this business from their own phone. */
+function InviteBlock({ member }: { member: Member }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx } = useApp();
+  const { fail } = useOverlay();
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const message = (c: string) => t('invite.msg', { name: member.name.split(' ')[0], business: book.org.name, phone: member.phone, code: c, link: APP_URL });
+  return (
+    <div className="card flat stack" data-testid="invite">
+      <h3><Icon name="key" size={18} /> {t('invite.title')}</h3>
+      <div className="small muted">{t('invite.help')}</div>
+      {code ? (
+        <>
+          <div className="recovery-code num">{code}</div>
+          <a className="btn get block" href={waLink(member.phone, message(code), book.org.country_code)} target="_blank" rel="noopener noreferrer"><Icon name="chat" size={18} /> {t('invite.send')}</a>
+          <div className="small muted">{t('invite.expires')}</div>
+        </>
+      ) : (
+        <button type="button" className="btn tinted block" disabled={busy} onClick={async () => {
+          setBusy(true);
+          try { setCode(await createInvite(ctx.orgId, member.id)); } catch (e) { fail(e); } finally { setBusy(false); }
+        }}><Icon name="send" size={18} /> {t('invite.create')}</button>
+      )}
+    </div>
   );
 }
 

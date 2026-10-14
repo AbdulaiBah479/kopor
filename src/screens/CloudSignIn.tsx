@@ -11,6 +11,7 @@ import { signIn, signUp } from '@/cloud/auth';
 import { remoteOrgs } from '@/cloud/sync';
 import { openCloudOrg, connectOrg } from '@/cloud/account';
 import { createRecoveryCode } from '@/cloud/recovery';
+import { claimInvite } from '@/cloud/invites';
 import { RecoveryCodeCard, ResetPinForm } from './Recovery';
 
 export default function CloudSignIn({ onDone }: { onDone?: () => void }) {
@@ -22,6 +23,7 @@ export default function CloudSignIn({ onDone }: { onDone?: () => void }) {
   const [f, setF] = useState({ phone: '', pin: '', name: '' });
   const [mode, setMode] = useState<'in' | 'up' | 'reset'>('in');
   const [code, setCode] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [orgs, setOrgs] = useState<{ id: string; name: string; role: string }[] | null>(null);
   useEffect(() => { getCloudConfig().then((c) => setHasCfg(!!c)); }, []);
 
@@ -59,6 +61,15 @@ export default function CloudSignIn({ onDone }: { onDone?: () => void }) {
           }}><Icon name="store" size={18} /> {o.name} · {t(`roles.${o.role}`)}</button>
         ))}
         {!orgs.length && !canUpload && <div className="muted">{t('settings.noCloudOrgs')}</div>}
+        <form className="form card flat" data-testid="join-invite" onSubmit={async (e) => {
+          e.preventDefault();
+          try { await claimInvite(inviteCode); setInviteCode(''); toast(t('invite.joined')); await showOrgs(); } catch (err) { fail(err); }
+        }}>
+          <div className="small"><b>{t('invite.joinTitle')}</b> {t('invite.joinHelp')}</div>
+          <Field label={t('invite.code')}><input name="invite" required autoCapitalize="characters" autoComplete="one-time-code" placeholder="XXXX-XXXX-XXXX"
+            value={inviteCode} onChange={(e) => setInviteCode(e.target.value.toUpperCase())} /></Field>
+          <button className="btn tinted block">{t('invite.join')}</button>
+        </form>
       </div>
     );
   }

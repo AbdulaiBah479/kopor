@@ -80,6 +80,7 @@ const extra: ExtraDict = {
     deleted: 'Akawnt dɔn dilit',
   },
   errx: {
+    inviteBad: 'Dis invayt kod nɔ rayt, dɛn dɔn yuz am, ɔ i dɔn ɛkspay, ɔ dis akawnt nɔ get di fon nɔmba we dɛn invayt.', inviteRole: 'Na jɔs di ɔna kin invayt staf.', inviteMember: 'Put fon nɔmba fɔ dis pɔsin fɔs, ɛn sev.', inviteSignIn: 'Sayn in na yu Kopor klawd akawnt fɔs (Mɔ → Klawd ɛn akawnt).',
     recoverBad: 'Di fon nɔmba ɔ di kod nɔ rayt.', recoverLocked: 'Yu tray tumɔs. Tray bak afta wan awa.',
     offline: 'No nɛt naw. Yu rɛkɔd dɛn sef na dis fon. Chɛk yu data ɔ Wi-Fi ɛn tray bak.',
     returnTooMany: 'Yu nɔ kin tek mɔ {{name}} bak pas wetin yu sɛl.', voidPaid: 'Na invɔys we nɔ pe nɔmɔ yu kin kansul. Rayt "tek tin bak" instead.',

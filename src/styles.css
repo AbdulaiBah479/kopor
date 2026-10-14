@@ -415,6 +415,14 @@
   .pay-amount { font-size: 40px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 
   .nowrap { white-space: nowrap; }
+  /* Row title with badges: the name shortens, badges always stay visible. */
+  .item .t.with-badge { display: flex; align-items: center; gap: 6px; }
+  .item .t.with-badge > .trunc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .t.with-badge > .badge { flex: none; }
+  /* Rows that are buttons look and behave exactly like rows that are links. */
+  button.item { width: 100%; border: 0; text-align: left; font: inherit; color: inherit; background: transparent; }
+  /* Small text links get a 44px tap area without changing how they look. */
+  .section-title a, .section-title button.link, .card h3 .right { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; margin: -12px -8px; }
   .grid3 .stat .v { font-size: clamp(16px, 4.6vw, 22px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* Appearance */

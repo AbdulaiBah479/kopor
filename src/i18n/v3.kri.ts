@@ -69,6 +69,11 @@ const v3: V3Dict = {
     e: { transactions: 'sɛl ɔ ɛkspens', ledger: 'kredit entri', contacts: 'kɔstɔma ɔ sɔplaya', products: 'prɔdak', stock_moves: 'stɔk',
       groups: 'grup', contributions: 'kɔntribyushɔn', invoices: 'invɔys', members: 'tim mɛmba', branches: 'branch', orgs: 'biznɛs tin dɛn',
       closings: 'de klos', payment_requests: 'aks fɔ pe', other: 'rɛkɔd' },
+  },  invite: {
+    title: 'Invayt am na in yon fon', help: 'Kopor go mek kod we yu kin yuz wan tɛm. Sɛn am to dis pɔsin; dɛn go mek Kopor akawnt wit dis fon nɔmba ɛn put di kod fɔ jɔyn.',
+    create: 'Mek invayt kod', send: 'Sɛn kod na WhatsApp', expires: 'Di kod de wok wan tɛm ɛn i go ɛkspay afta 7 de.',
+    msg: 'Kushɛ {{name}}, jɔyn {{business}} na Kopor. 1) Opin {{link}} 2) Mek akawnt wit yu fon {{phone}} 3) Put dis invayt kod: {{code}}',
+    joinTitle: 'Biznɛs invayt yu?', joinHelp: 'Put di kod we di ɔna sɛn yu.', code: 'Invayt kod', join: 'Jɔyn biznɛs', joined: 'Yu dɔn jɔyn di biznɛs',
   },  pwa: {
     install: 'Put Kopor na yu fon', installHelp: 'Put Kopor na yu om skrin. I go opin lɛk ap ɛn i de wok widawt nɛt.',
     offline: 'Nɛt nɔ de. Ɔltin stil de wok ɛn i go sink we nɛt kam bak.', online: 'Nɛt dɔn kam bak',

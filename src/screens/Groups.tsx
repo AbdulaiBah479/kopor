@@ -33,7 +33,7 @@ export function GroupList() {
             <Link key={g.id} className="item" to={`/groups/${g.id}`}>
               <div className="avatar" style={{ background: 'var(--brand-soft)', color: 'var(--brand)' }}><Icon name="users" size={18} /></div>
               <div className="main">
-                <div className="t">{g.name} <span className="badge">{t(g.kind === 'osusu' ? 'groups.osusuShort' : 'groups.duesShort')}</span></div>
+                <div className="t with-badge"><span className="trunc">{g.name}</span> <span className="badge">{t(g.kind === 'osusu' ? 'groups.osusuShort' : 'groups.duesShort')}</span></div>
                 <div className="s">{g.members.length} · {formatMoney(g.amount)} {t(`groups.${g.frequency}`)} · {totalRounds(g) ? t('groups.roundOf', { r, max: totalRounds(g) }) : t('groups.round', { r })}</div>
                 <div className="meter" style={{ marginTop: 6 }}><i style={{ width: `${pct}%` }} /></div>
               </div>
@@ -104,7 +104,7 @@ export function GroupDetail() {
           <div className="item" key={m.id}>
             <div className="avatar">{initials(m.name)}</div>
             <div className="main">
-              <div className="t">{m.name} {collector?.id === m.id && <span className="badge good">{t('groups.collects')}</span>}</div>
+              <div className="t with-badge"><span className="trunc">{m.name}</span> {collector?.id === m.id && <span className="badge good">{t('groups.collects')}</span>}</div>
               <div className="s">{g.kind === 'osusu' ? `${t('groups.turn', { n: i + 1 })} · ${fmt(roundDate(g, i + 1))}` : m.phone} · {t('groups.reliability', { pct: Math.round((rel.get(m.id) ?? 0) * 100) })}</div>
             </div>
             {!s.paidIds.has(m.id) && m.phone && <a className="icon-btn" href={waLink(m.phone, remindText(m.name), cc)} target="_blank" rel="noopener noreferrer" aria-label={`${t('credit.remind')} ${m.name}`}><Icon name="chat" size={18} /></a>}

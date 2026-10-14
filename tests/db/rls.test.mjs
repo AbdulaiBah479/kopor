@@ -58,14 +58,32 @@ await test('a stranger cannot see or write into the business', async () => {
   await rejects(q(`insert into members (id, org_id, created_at, updated_at, user_id, name, role) values (gen_random_uuid(), $1, 1, 1, $2, 'Me', 'owner')`, [ORG, U.stranger]));
 });
 
-await test('owner invites a cashier by phone; the cashier claims the invite on sign-in', async () => {
+await test('staff join only with the owner\'s invite code AND the invited phone number', async () => {
   await as('owner');
   await q(`insert into members (id, org_id, created_at, updated_at, created_by, name, phone, role) values ($1,$2,$3,$4,$5,'Sorie','078 555 777','cashier')`, base(CASHIER_M));
+  // Signing up with the invited number is no longer enough on its own.
   await as('cashier');
-  assert.equal((await q('select claim_invites() as n')).rows[0].n, 1);
-  assert.equal((await q('select name from orgs')).rows[0].name, 'Fatu Shop');
-  await as('stranger');
   assert.equal((await q('select claim_invites() as n')).rows[0].n, 0);
+  assert.equal((await q('select * from orgs')).rows.length, 0);
+  // Only the owner can create an invite code.
+  await rejects(q('select create_member_invite($1)', [CASHIER_M]), /inviteRole/);
+  await as('stranger');
+  await rejects(q('select create_member_invite($1)', [CASHIER_M]), /inviteRole/);
+  await as('owner');
+  const code = (await q('select create_member_invite($1) as c', [CASHIER_M])).rows[0].c;
+  assert.match(code, /^[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/);
+  // The code is useless with a different phone number, and a wrong code is refused.
+  await as('stranger');
+  await rejects(q('select claim_invite($1)', [code]), /inviteBad/);
+  await as('cashier');
+  await rejects(q('select claim_invite($1)', ['0000-0000-0000']), /inviteBad/);
+  // Right person + right code (any case or spacing) joins, once.
+  assert.equal((await q('select claim_invite($1) as o', [code.toLowerCase().replace(/-/g, ' ')])).rows[0].o, ORG);
+  assert.equal((await q('select name from orgs')).rows[0].name, 'Fatu Shop');
+  await rejects(q('select claim_invite($1)', [code]), /inviteBad/);
+  // Nobody can read the stored code hashes directly.
+  const hidden = await q('select * from member_invites').then((r) => r.rows.length === 0, (e) => /permission denied/.test(e.message));
+  assert.ok(hidden, 'invite hashes must not be readable');
 });
 
 let cashierTxn;
@@ -126,7 +144,9 @@ await test('public invoice link reveals one invoice by secret token only', async
   await q(`insert into invoices (id, org_id, created_at, updated_at, created_by, number, customer, items, date, status, public_token)
            values (gen_random_uuid(), $1, 1, 1, $2, 'INV-0001', 'Hotel', '[{"name":"Water","qty":2,"price":500}]', current_date, 'unpaid', 'tok_abcdefghijklmnop')`, [ORG, OWNER_M]);
   await as(null);
-  assert.equal((await q('select * from invoices')).rows.length, 0);
+  // Signed-out users get nothing: either an empty result or a refusal.
+  const none = await q('select * from invoices').then((r) => r.rows.length === 0, (e) => /permission denied/.test(e.message));
+  assert.ok(none, 'signed-out users must not read invoices');
   const hit = await q(`select * from public_invoice('tok_abcdefghijklmnop')`);
   assert.equal(hit.rows[0].org_name, 'Fatu Shop');
   assert.equal((await q(`select * from public_invoice('tok_wrong_token_000000')`)).rows.length, 0);

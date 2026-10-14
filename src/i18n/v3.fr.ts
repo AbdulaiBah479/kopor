@@ -69,6 +69,11 @@ const v3: V3Dict = {
     e: { transactions: 'vente ou dépense', ledger: 'écriture de crédit', contacts: 'client ou fournisseur', products: 'produit', stock_moves: 'stock',
       groups: 'groupe', contributions: 'cotisation', invoices: 'facture', members: 'membre de l’équipe', branches: 'succursale', orgs: 'infos du commerce',
       closings: 'clôture de journée', payment_requests: 'demande de paiement', other: 'enregistrement' },
+  },  invite: {
+    title: 'Inviter sur son propre téléphone', help: 'Kopor crée un code à usage unique. Envoyez-le à cette personne ; elle crée un compte Kopor avec ce numéro et saisit le code pour rejoindre.',
+    create: 'Créer un code d’invitation', send: 'Envoyer le code sur WhatsApp', expires: 'Le code ne sert qu’une fois et expire dans 7 jours.',
+    msg: 'Bonjour {{name}}, rejoignez {{business}} sur Kopor. 1) Ouvrez {{link}} 2) Créez un compte avec votre numéro {{phone}} 3) Saisissez ce code : {{code}}',
+    joinTitle: 'Invité par un commerce ?', joinHelp: 'Saisissez le code envoyé par le propriétaire.', code: 'Code d’invitation', join: 'Rejoindre le commerce', joined: 'Vous avez rejoint le commerce',
   },  pwa: {
     install: 'Installer Kopor', installHelp: 'Ajoutez Kopor à votre écran d’accueil. Il s’ouvre comme une application et marche sans internet.',
     offline: 'Vous êtes hors ligne. Tout fonctionne et se synchronisera plus tard.', online: 'De nouveau en ligne',

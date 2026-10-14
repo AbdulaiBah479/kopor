@@ -78,7 +78,7 @@ export function CreditList() {
           <Link key={c.id} className="item" to={`/credit/${c.id}`}>
             <Avatar name={c.name} />
             <div className="main">
-              <div className="t">{c.name} {od && <span className="badge bad">{t('credit.overdue')}</span>}{c.kind === 'supplier' && <span className="badge"> {t('credit.supplier')}</span>}</div>
+              <div className="t with-badge"><span className="trunc">{c.name}</span> {od && <span className="badge bad">{t('credit.overdue')}</span>}{c.kind === 'supplier' && <span className="badge"> {t('credit.supplier')}</span>}</div>
               <div className="s">{lastDate.get(c.id) ? fmt(lastDate.get(c.id)) : t('credit.noEntries')}{c.phone && ` · ${c.phone}`}</div>
             </div>
             <div className={`amt num ${b > 0 ? 'good' : b < 0 ? 'bad' : ''}`}>{formatMoney(Math.abs(b))}<small>{b > 0 ? t('credit.willGet') : b < 0 ? t('credit.willGive') : t('credit.settled')}</small></div>

@@ -107,13 +107,12 @@ export function syncNow(orgId: string): Promise<void> {
   return running;
 }
 
-/** Organisations the signed-in user belongs to (including staff invites claimed by phone number). */
+/** Organisations the signed-in user belongs to (staff join with an invite code: see invites.ts). */
 export async function remoteOrgs(): Promise<{ id: string; name: string; role: string }[]> {
   const sb = await getSupabase();
   if (!sb) return [];
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) return [];
-  await sb.rpc('claim_invites');
   const { data, error } = await sb.from('members').select('org_id, role, orgs(name)').eq('user_id', auth.user.id).eq('active', 1).eq('deleted', 0);
   if (error) throw new Error(error.message);
   return (data ?? []).map((m) => ({ id: m.org_id as string, role: m.role as string, name: ((m as unknown as { orgs: { name: string } | null }).orgs?.name) ?? '' }));

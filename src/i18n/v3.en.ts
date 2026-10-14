@@ -67,6 +67,11 @@ const v3 = {
     e: { transactions: 'a sale or expense', ledger: 'a credit entry', contacts: 'a customer or supplier', products: 'a product', stock_moves: 'stock',
       groups: 'a group', contributions: 'a contribution', invoices: 'an invoice', members: 'a team member', branches: 'a branch', orgs: 'business details',
       closings: 'a day close', payment_requests: 'a payment request', other: 'a record' },
+  },  invite: {
+    title: 'Invite to their own phone', help: 'Kopor makes a one-time code. Send it to this person; they create a Kopor account with this phone number and enter the code to join.',
+    create: 'Create invite code', send: 'Send code on WhatsApp', expires: 'The code works once and expires in 7 days.',
+    msg: 'Hello {{name}}, join {{business}} on Kopor. 1) Open {{link}} 2) Create an account with your phone {{phone}} 3) Enter this invite code: {{code}}',
+    joinTitle: 'Invited by a business?', joinHelp: 'Enter the code the owner sent you.', code: 'Invite code', join: 'Join business', joined: 'You have joined the business',
   },  pwa: {
     install: 'Install Kopor', installHelp: 'Put Kopor on your home screen. It opens like an app and works without internet.',
     offline: 'You are offline. Everything still works and will sync when you are back.', online: 'Back online',

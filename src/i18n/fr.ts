@@ -146,7 +146,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   team: {
     title: 'Équipe et succursales', sub: 'Comptes du personnel, rôles et points de vente', staff: 'Personnel', addStaff: 'Ajouter un membre', role: 'Rôle', branch: 'Succursale', allBranches: 'Toutes les succursales',
     branches: 'Succursales', addBranch: 'Ajouter une succursale', branchName: 'Nom de la succursale', switchUser: "Changer d'utilisateur", you: 'Vous', inactive: 'Retiré', remove: "Retirer de l'équipe",
-    setPin: 'Définir un PIN sur ce téléphone', pinSet: 'PIN défini', inviteHelp: 'Quand cette personne créera un compte Kopor avec ce numéro, elle rejoindra automatiquement votre commerce.',
+    setPin: 'Définir un PIN sur ce téléphone', pinSet: 'PIN défini', inviteHelp: 'Quand cette personne crée un compte Kopor avec ce numéro, envoyez-lui un code d’invitation (ci-dessous, après enregistrement) pour rejoindre votre commerce.',
     audit: "Journal d'activité", auditSub: 'Chaque modification, par qui et quand',
   },
   settings: {
