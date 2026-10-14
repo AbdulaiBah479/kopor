@@ -5,7 +5,7 @@ import {
   MessageCircle, MessageSquareText, Phone, Search, ChevronLeft, ChevronRight, TriangleAlert, Printer, Share2, Check, Trash2,
   Pencil, ArrowUpRight, ArrowDownLeft, Sparkles, Lock, Download, Upload, Landmark, X, Camera, Bell, Send, Globe, Cloud,
   ShieldCheck, List, Store, Link, CircleHelp, Crown, ScanBarcode, Contact, Delete, RefreshCw, Undo2, Wallet, TrendingUp, TrendingDown,
-  Copy, QrCode, Info, Smartphone, WifiOff, KeyRound, ArrowLeftRight,
+  Copy, QrCode, Info, Smartphone, WifiOff, KeyRound, ArrowLeftRight, Square, Palette, Sun, Moon, SunMoon, Type,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -17,7 +17,7 @@ const ICONS: Record<string, LucideIcon> = {
   upload: Upload, bank: Landmark, x: X, camera: Camera, bell: Bell, send: Send, globe: Globe, cloud: Cloud, shield: ShieldCheck,
   list: List, store: Store, link: Link, help: CircleHelp, crown: Crown, barcode: ScanBarcode, contact: Contact, backspace: Delete,
   refresh: RefreshCw, undo: Undo2, wallet: Wallet, trendUp: TrendingUp, trendDown: TrendingDown,
-  copy: Copy, qr: QrCode, info: Info, install: Smartphone, offline: WifiOff, key: KeyRound, swap: ArrowLeftRight,
+  copy: Copy, qr: QrCode, info: Info, install: Smartphone, offline: WifiOff, key: KeyRound, swap: ArrowLeftRight, stop: Square, palette: Palette, sun: Sun, moon: Moon, auto: SunMoon, text: Type,
 };
 
 export function Icon({ name, size = 20, className = '', strokeWidth = 2 }: { name: string; size?: number; className?: string; strokeWidth?: number }) {

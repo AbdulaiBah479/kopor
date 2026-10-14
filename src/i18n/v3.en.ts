@@ -50,7 +50,24 @@ const v3 = {
     noCode: 'No recovery code? Contact Kopor support with your phone number.', make: 'Create a new recovery code', made: 'New recovery code created. The old one no longer works.',
     msg: 'My Kopor recovery code: {{code}}',
   },
-  pwa: {
+  voice: {
+    tap: 'Tap the microphone and say what happened', stop: 'Stop recording', recording: 'Listening… tap again when you finish', transcribing: 'Writing down what you said…',
+    orType: 'Or type it', denied: 'The microphone is blocked. Tap the lock icon next to the web address (or open phone Settings → Apps → Kopor → Permissions), allow the microphone, then try again.',
+    noMic: 'No microphone was found on this device.', busyMic: 'Another app is using the microphone. Close it and try again.',
+    tooShort: 'That was too short. Tap the microphone, speak, then tap again.', needNet: 'Voice needs internet. You can type it instead; Kopor still understands it offline.',
+    needCloud: 'Voice needs the Kopor cloud or an AI key. You can type instead.', unsupported: 'This browser cannot record audio. Open Kopor in Chrome, or type instead.',
+    failed: 'Kopor could not hear that clearly. Please try again or type it.', busy: 'Voice is busy right now. Please type it, or try again in a minute.',
+  },
+  look: {
+    title: 'Appearance', sub: 'Light or dark, colour and text size', mode: 'Mode', accent: 'Colour', text: 'Text size',
+    normal: 'Normal text', large: 'Large text', xl: 'Extra large text', sample: 'This is how buttons and text will look.',
+    emerald: 'Emerald', ocean: 'Ocean', royal: 'Royal', sunset: 'Sunset', rose: 'Rose', graphite: 'Graphite',
+  },  audit: {
+    line: '{{verb}} {{what}}', create: 'Added', update: 'Changed', delete: 'Removed',
+    e: { transactions: 'a sale or expense', ledger: 'a credit entry', contacts: 'a customer or supplier', products: 'a product', stock_moves: 'stock',
+      groups: 'a group', contributions: 'a contribution', invoices: 'an invoice', members: 'a team member', branches: 'a branch', orgs: 'business details',
+      closings: 'a day close', payment_requests: 'a payment request', other: 'a record' },
+  },  pwa: {
     install: 'Install Kopor', installHelp: 'Put Kopor on your home screen. It opens like an app and works without internet.',
     offline: 'You are offline. Everything still works and will sync when you are back.', online: 'Back online',
     update: 'A new version of Kopor is ready.', reload: 'Update now', share: 'Share Kopor',

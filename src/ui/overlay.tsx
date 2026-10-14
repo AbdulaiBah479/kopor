@@ -1,5 +1,5 @@
 // Bottom sheets (vaul: draggable, swipe down to close) and toasts (sonner: stackable, with Undo).
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Drawer } from 'vaul';
@@ -59,6 +59,13 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
 
   // Navigating (including the phone's back button) closes any open sheet.
   const { pathname } = useLocation();
+  // Toasts follow the app's light/dark mode as it changes.
+  const [dark, setDark] = useState(() => document.documentElement.dataset.theme === 'dark');
+  useEffect(() => {
+    const mo = new MutationObserver(() => setDark(document.documentElement.dataset.theme === 'dark'));
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => mo.disconnect();
+  }, []);
   const [shownPath, setShownPath] = useState(pathname);
   if (shownPath !== pathname) { setShownPath(pathname); setOpen(false); }
 
@@ -76,6 +83,8 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
             onOpenAutoFocus={(e) => {
               // Focus the first field (e.g. the amount) instead of the close button.
               e.preventDefault();
+              // Sheets whose main control is not a text field (e.g. the microphone) opt out, so no keyboard pops up.
+              if ((e.currentTarget as HTMLElement | null)?.querySelector('[data-autofocus-off]')) return;
               const el = (e.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>('[autofocus], input:not([type=hidden]):not([type=file]), select, textarea');
               el?.focus();
             }}>
@@ -93,7 +102,7 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
-      <Toaster position="top-center" richColors closeButton theme={document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'}
+      <Toaster position="top-center" richColors closeButton theme={dark ? 'dark' : 'light'}
         toastOptions={{ style: { fontFamily: 'inherit', borderRadius: 18, fontSize: 15, backdropFilter: 'blur(20px)' } }} offset={{ top: 'calc(12px + env(safe-area-inset-top))' }} />
     </Ctx.Provider>
   );

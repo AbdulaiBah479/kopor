@@ -52,7 +52,24 @@ const v3: V3Dict = {
     noCode: 'Pas de code de récupération ? Contactez l’assistance Kopor avec votre numéro.', make: 'Créer un nouveau code de récupération', made: 'Nouveau code créé. L’ancien ne fonctionne plus.',
     msg: 'Mon code de récupération Kopor : {{code}}',
   },
-  pwa: {
+  voice: {
+    tap: 'Touchez le micro et dites ce qui s’est passé', stop: 'Arrêter l’enregistrement', recording: 'J’écoute… touchez encore quand vous avez fini', transcribing: 'J’écris ce que vous avez dit…',
+    orType: 'Ou tapez-le', denied: 'Le micro est bloqué. Touchez le cadenas à côté de l’adresse (ou Réglages du téléphone → Applications → Kopor → Autorisations), autorisez le micro, puis réessayez.',
+    noMic: 'Aucun micro trouvé sur cet appareil.', busyMic: 'Une autre application utilise le micro. Fermez-la et réessayez.',
+    tooShort: 'C’était trop court. Touchez le micro, parlez, puis touchez à nouveau.', needNet: 'La voix a besoin d’internet. Vous pouvez taper ; Kopor comprend aussi hors ligne.',
+    needCloud: 'La voix a besoin du cloud Kopor ou d’une clé IA. Vous pouvez taper.', unsupported: 'Ce navigateur ne peut pas enregistrer. Ouvrez Kopor dans Chrome, ou tapez.',
+    failed: 'Kopor n’a pas bien entendu. Réessayez ou tapez-le.', busy: 'Le service vocal est occupé. Tapez-le, ou réessayez dans une minute.',
+  },
+  look: {
+    title: 'Apparence', sub: 'Clair ou sombre, couleur et taille du texte', mode: 'Mode', accent: 'Couleur', text: 'Taille du texte',
+    normal: 'Texte normal', large: 'Grand texte', xl: 'Très grand texte', sample: 'Voici l’aspect des boutons et du texte.',
+    emerald: 'Émeraude', ocean: 'Océan', royal: 'Royal', sunset: 'Couchant', rose: 'Rose', graphite: 'Graphite',
+  },  audit: {
+    line: '{{verb}} {{what}}', create: 'Ajout :', update: 'Modification :', delete: 'Suppression :',
+    e: { transactions: 'vente ou dépense', ledger: 'écriture de crédit', contacts: 'client ou fournisseur', products: 'produit', stock_moves: 'stock',
+      groups: 'groupe', contributions: 'cotisation', invoices: 'facture', members: 'membre de l’équipe', branches: 'succursale', orgs: 'infos du commerce',
+      closings: 'clôture de journée', payment_requests: 'demande de paiement', other: 'enregistrement' },
+  },  pwa: {
     install: 'Installer Kopor', installHelp: 'Ajoutez Kopor à votre écran d’accueil. Il s’ouvre comme une application et marche sans internet.',
     offline: 'Vous êtes hors ligne. Tout fonctionne et se synchronisera plus tard.', online: 'De nouveau en ligne',
     update: 'Une nouvelle version de Kopor est prête.', reload: 'Mettre à jour', share: 'Partager Kopor',

@@ -4,7 +4,7 @@ import { useBook } from '@/state/app';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
 import { ScoreRing, useDate } from '@/ui/widgets';
-import { formatMoney } from '@/lib/money';
+import { formatMoney, currencySymbol } from '@/lib/money';
 import { today, addDays, fmtMonth } from '@/lib/dates';
 import { refCode } from '@/lib/crypto';
 import { health, monthlySeries, type HealthPart } from '@/domain/health';
@@ -48,6 +48,9 @@ export function Health() {
   );
 }
 
+/** Whole currency units without the symbol (the column header names the currency), so report tables fit a phone. */
+const whole = (m: number) => formatMoney(Math.round(m / 100) * 100, { symbol: false });
+
 export function Report() {
   const { t } = useTranslation();
   const book = useBook();
@@ -69,10 +72,10 @@ export function Report() {
           <div style={{ textAlign: 'right' }}><b>{t('health.reportTitle')}</b><div className="small">{fmt(from)} – {fmt(now)}</div></div>
         </div>
         <table>
-          <thead><tr><th>{t('health.month')}</th><th className="r">{t('cash.sales')}</th><th className="r">{t('cash.expenses')}</th><th className="r">{t('cash.profit')}</th></tr></thead>
+          <thead><tr><th>{t('health.month')}</th><th className="r">{t('cash.sales')} ({currencySymbol()})</th><th className="r">{t('cash.expenses')} ({currencySymbol()})</th><th className="r">{t('cash.profit')} ({currencySymbol()})</th></tr></thead>
           <tbody>
-            {months.map((m) => <tr key={m.month}><td>{fmtMonth(m.month, loc)}</td><td className="r">{formatMoney(m.sales)}</td><td className="r">{formatMoney(m.expenses)}</td><td className="r">{formatMoney(m.profit)}</td></tr>)}
-            <tr className="tot"><td>{t('health.last90')}</td><td className="r">{formatMoney(q.sales)}</td><td className="r">{formatMoney(q.expenses)}</td><td className="r">{formatMoney(q.profit)}</td></tr>
+            {months.map((m) => <tr key={m.month}><td>{fmtMonth(m.month, loc)}</td><td className="r">{whole(m.sales)}</td><td className="r">{whole(m.expenses)}</td><td className="r">{whole(m.profit)}</td></tr>)}
+            <tr className="tot"><td>{t('health.last90')}</td><td className="r">{whole(q.sales)}</td><td className="r">{whole(q.expenses)}</td><td className="r">{whole(q.profit)}</td></tr>
           </tbody>
         </table>
         <table><tbody>

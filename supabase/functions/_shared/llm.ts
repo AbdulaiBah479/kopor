@@ -66,3 +66,32 @@ export async function complete(messages: Msg[], opts: { vision?: boolean; maxTok
   console.error('All AI providers failed', errors);
   throw new Error('AI is busy right now. Kopor will use offline mode.');
 }
+
+/* Speech to text with Whisper (free on Groq; any OpenAI-compatible /audio/transcriptions endpoint works). */
+const KRIO_PROMPT = 'Shop record in Sierra Leone Krio or English. A sɛl tu bag rɛs fayv tawzin. Aminata tek wan tin ɔyl pan trɔs. ' +
+  'Mohamed dɔn pe tri ɔndrɛd. A spɛn tu ɔndrɛd fɔ transpɔt tide. Orange Money, Afrimoney, QMoney, Le, Leones.';
+
+export async function transcribe(file: File, lang: string): Promise<{ text: string; provider: string }> {
+  const e = (k: string) => Deno.env.get(k) || undefined;
+  const chain = [
+    { name: 'groq', base: 'https://api.groq.com/openai/v1', key: e('GROQ_API_KEY'), models: list(e('GROQ_STT_MODELS'), ['whisper-large-v3-turbo', 'whisper-large-v3']) },
+    { name: 'custom', base: e('STT_BASE_URL') ?? '', key: e('STT_API_KEY'), models: list(e('STT_MODEL'), []) },
+  ].filter((p) => p.key && p.base).flatMap((p) => p.models.map((model) => ({ p, model })));
+  if (!chain.length) throw new Error('No speech-to-text provider configured');
+  for (const { p, model } of chain) {
+    const form = new FormData();
+    form.append('file', file, file.name || 'speech.webm');
+    form.append('model', model);
+    form.append('language', lang === 'fr' ? 'fr' : 'en'); // Krio is closest to English for Whisper
+    if (lang !== 'fr') form.append('prompt', KRIO_PROMPT);
+    form.append('response_format', 'json');
+    form.append('temperature', '0');
+    try {
+      const res = await fetch(`${p.base}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${p.key}` }, body: form, signal: AbortSignal.timeout(30_000) });
+      if (!res.ok) { console.error('STT', p.name, model, res.status, await res.text().catch(() => '')); continue; }
+      const j = await res.json();
+      return { text: String(j.text ?? '').trim(), provider: p.name };
+    } catch (err) { console.error('STT', p.name, model, err); }
+  }
+  throw new Error('Voice service is busy. Please type instead.');
+}

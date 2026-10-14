@@ -34,9 +34,9 @@ const reuse = await invoke('recover', { action: 'reset', email, code: created.co
 check('used code cannot be reused', reuse.error === 'errx.recoverBad', JSON.stringify(reuse));
 await sb.auth.signInWithPassword({ email, password: 'kopor-pin-222222' });
 
-// The AI proxy needs a business membership; a fresh account has none, so it must refuse cleanly (403), not crash.
+// A fresh account has no business yet, so it uses the guest AI allowance (answers, or a clear daily-limit message).
 const ai = await invoke('ai', { messages: [{ role: 'user', content: 'Say OK' }] });
-check('AI refuses accounts without a business (no crash)', /member/i.test(ai.error ?? ''), JSON.stringify(ai).slice(0, 120));
+check('AI works for accounts without a business (guest allowance)', !!ai.content || /limit/i.test(ai.error ?? ''), JSON.stringify(ai).slice(0, 120));
 
 const del = await invoke('delete-account', {});
 check('test account deleted', !del.error, JSON.stringify(del).slice(0, 120));

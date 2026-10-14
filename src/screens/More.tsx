@@ -7,6 +7,8 @@ import { health } from '@/domain/health';
 import { isPro } from '@/domain/plan';
 import { useInstall, APP_URL } from '@/features/pwa';
 import { shareText } from '@/lib/share';
+import { useOverlay } from '@/ui/overlay';
+import { AppearancePanel } from '@/ui/Appearance';
 
 export const ORG_TYPES = ['shop', 'trader', 'wholesale', 'pharmacy', 'restaurant', 'salon', 'tailor', 'transport', 'farm', 'services', 'school', 'church', 'association', 'personal', 'other'];
 
@@ -28,6 +30,7 @@ export function More() {
   const h = health(book);
   const { sync } = useApp();
   const { canInstall, install } = useInstall();
+  const { openSheet } = useOverlay();
   return (
     <Page title={t('nav.more')}>
       <div className="list">
@@ -49,6 +52,11 @@ export function More() {
       <div className="list">
         <MenuItem to="/team" icon="store" tile="teal" title={t('team.title')} sub={t('more.teamSub', { count: book.members.filter((m) => m.active).length })} />
         <MenuItem to="/plan" icon="crown" tile="yellow" title={t('plan.title')} sub={isPro(book.org) ? t('plan.proActive') : t('plan.freeSub')} />
+        <button className="item" onClick={() => openSheet(t('look.title'), <AppearancePanel />)} data-testid="appearance-row">
+          <span className="tile" style={{ background: 'var(--tile-purple)' }}><Icon name="palette" size={18} strokeWidth={2.2} /></span>
+          <div className="main"><div className="t">{t('look.title')}</div><div className="s">{t('look.sub')}</div></div>
+          <Icon name="chev" size={18} className="text-subtle" />
+        </button>
         <MenuItem to="/settings" icon="sliders" tile="gray" title={t('settings.title')} sub={t('more.settingsSub')} />
         <MenuItem to="/help" icon="help" tile="blue" title={t('help.title')} sub={t('help.sub')} />
       </div>

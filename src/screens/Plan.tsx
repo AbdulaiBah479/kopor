@@ -7,7 +7,7 @@ import { useDate } from '@/ui/widgets';
 import { ActionButton } from '@/ui/extras';
 import { formatMoney } from '@/lib/money';
 import { isoDate } from '@/lib/dates';
-import { FREE_LIMITS, PRO_PRICE_MINOR, isPro } from '@/domain/plan';
+import { FREE_LIMITS, PRO_PRICE_MINOR, isPro, AI_PER_DAY } from '@/domain/plan';
 import { startProCheckout } from '@/cloud/account-extra';
 
 export function Plan() {
@@ -22,7 +22,7 @@ export function Plan() {
     [t('plan.f.offline'), '✓', '✓'],
     [t('plan.f.branches'), String(FREE_LIMITS.branches), t('plan.unlimited')],
     [t('plan.f.staff'), String(FREE_LIMITS.staff), t('plan.unlimited')],
-    [t('plan.f.ai'), '30/day', '300/day'],
+    [t('plan.f.ai'), `${AI_PER_DAY.free}/day`, `${AI_PER_DAY.pro}/day`],
     [t('plan.f.support'), '—', '✓'],
   ];
   const buy = async (months: 1 | 12) => {

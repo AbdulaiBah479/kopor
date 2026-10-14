@@ -67,6 +67,23 @@
   color-scheme: dark;
 }
 
+/* Accent colours (Settings → Appearance). Each keeps 4.5:1+ contrast for text on the background in both modes.
+   Money in/out keep their own green and red so meaning never depends on the chosen accent. */
+:root[data-accent="ocean"] { --primary: #0a63d4; --primary-soft: rgba(10, 99, 212, .11); --ring: rgba(10, 99, 212, .35); --hero-from: #2563eb; --hero-to: #1e3a8a; }
+:root[data-accent="royal"] { --primary: #6d28d9; --primary-soft: rgba(109, 40, 217, .11); --ring: rgba(109, 40, 217, .35); --hero-from: #7c3aed; --hero-to: #3b0764; }
+:root[data-accent="sunset"] { --primary: #c2410c; --primary-soft: rgba(194, 65, 12, .11); --ring: rgba(194, 65, 12, .35); --hero-from: #ea580c; --hero-to: #7c2d12; }
+:root[data-accent="rose"] { --primary: #be123c; --primary-soft: rgba(190, 18, 60, .1); --ring: rgba(190, 18, 60, .35); --hero-from: #e11d48; --hero-to: #881337; }
+:root[data-accent="graphite"] { --primary: #1f2937; --primary-soft: rgba(31, 41, 55, .1); --ring: rgba(31, 41, 55, .35); --hero-from: #4b5563; --hero-to: #111827; }
+:root[data-theme="dark"][data-accent="ocean"] { --primary: #4ea1ff; --primary-foreground: #00172f; --primary-soft: rgba(78, 161, 255, .16); --ring: rgba(78, 161, 255, .4); --hero-from: #1d4ed8; --hero-to: #0b1a3d; }
+:root[data-theme="dark"][data-accent="royal"] { --primary: #a78bfa; --primary-foreground: #1e0b3a; --primary-soft: rgba(167, 139, 250, .16); --ring: rgba(167, 139, 250, .4); --hero-from: #6d28d9; --hero-to: #1e0b3a; }
+:root[data-theme="dark"][data-accent="sunset"] { --primary: #fb923c; --primary-foreground: #2a1003; --primary-soft: rgba(251, 146, 60, .16); --ring: rgba(251, 146, 60, .4); --hero-from: #c2410c; --hero-to: #2a1003; }
+:root[data-theme="dark"][data-accent="rose"] { --primary: #fb7185; --primary-foreground: #2b0611; --primary-soft: rgba(251, 113, 133, .16); --ring: rgba(251, 113, 133, .4); --hero-from: #be123c; --hero-to: #2b0611; }
+:root[data-theme="dark"][data-accent="graphite"] { --primary: #e5e7eb; --primary-foreground: #111827; --primary-soft: rgba(229, 231, 235, .14); --ring: rgba(229, 231, 235, .4); --hero-from: #4b5563; --hero-to: #0b0f14; }
+
+/* Larger text for easier reading. zoom scales the whole interface evenly, including sheets. */
+:root[data-text="large"] body { zoom: 1.12; }
+:root[data-text="xl"] body { zoom: 1.25; }
+
 /* Aliases kept for older screen code. */
 :root, [data-theme="dark"] {
   --good: var(--positive); --good-soft: var(--primary-soft); --bad: var(--danger); --bad-soft: var(--danger-soft);
@@ -271,7 +288,9 @@
     width: 100%; min-height: 50px; padding: 12px 14px; border-radius: 12px; border: 0; background: var(--card); outline: none; font-size: 17px; transition: box-shadow .15s; -webkit-appearance: none; appearance: none; }
   .form select, .card select, .content > select { background-image: linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%), linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
     background-position: calc(100% - 20px) 22px, calc(100% - 15px) 22px; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 36px; }
-  .sheet .form input:not([type=checkbox]):not([type=radio]):not([type=file]), .sheet .form select, .sheet .form textarea, .card .form input, .card.form input, .card.form select { background-color: var(--fill); }
+  /* Fields on a white card or sheet get the grey fill (same specificity as the rule above, so this later rule wins). */
+  .sheet :is(input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea),
+  .card :is(input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea) { background-color: var(--fill); }
   .form textarea { min-height: 96px; resize: vertical; }
   .form input:focus, .form select:focus, .form textarea:focus, .input:focus { box-shadow: 0 0 0 2px var(--primary); }
   .amount-input { font-size: 40px !important; font-weight: 700; text-align: center; letter-spacing: -.02em; font-variant-numeric: tabular-nums; background: transparent !important; min-height: 60px !important; }
@@ -336,6 +355,8 @@
   .doc th, .doc td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e5e5ea; }
   .doc th { font-size: 12px; color: #6b6b70; text-transform: uppercase; letter-spacing: .04em; }
   .doc td.r, .doc th.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .doc td.r { white-space: nowrap; }
+  .doc th { line-height: 1.25; }
   .doc .tot td { font-weight: 700; font-size: 16px; border-bottom: 0; }
   .doc .meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: #4a4a50; }
   .doc .stamp { display: inline-block; border: 2px solid currentColor; padding: 2px 10px; border-radius: 8px; font-weight: 800; letter-spacing: .1em; transform: rotate(-4deg); }
@@ -392,6 +413,43 @@
   .pay-page h1 { font-size: 22px; font-weight: 700; margin: 6px 0 0; text-wrap: balance; }
   .pay-page .avatar { margin: 0 auto; }
   .pay-amount { font-size: 40px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+
+  .nowrap { white-space: nowrap; }
+  .grid3 .stat .v { font-size: clamp(16px, 4.6vw, 22px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Appearance */
+  .field-label { font-size: 13px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: .02em; margin: 4px 0 -4px; }
+  .mode-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .mode-pick button { border: 0; background: none; padding: 0; cursor: pointer; display: grid; gap: 8px; justify-items: center; color: var(--foreground); }
+  .mode-preview { width: 100%; aspect-ratio: 1 / 1.1; max-width: 100%; border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: inset 0 0 0 1px var(--separator); }
+  .mode-preview i { display: block; height: 10px; border-radius: 4px; }
+  .mode-preview i:first-child { width: 60%; height: 14px; }
+  .mode-preview.light { background: #f2f2f7; } .mode-preview.light i { background: #fff; } .mode-preview.light i:first-child { background: var(--primary); }
+  .mode-preview.dark { background: #000; } .mode-preview.dark i { background: #2c2c2e; } .mode-preview.dark i:first-child { background: var(--primary); }
+  .mode-preview.auto { background: linear-gradient(135deg, #f2f2f7 50%, #000 50%); } .mode-preview.auto i { background: rgba(128, 128, 128, .45); } .mode-preview.auto i:first-child { background: var(--primary); }
+  .mode-pick button.on .mode-preview { box-shadow: 0 0 0 3px var(--primary); }
+  .mode-name { display: inline-flex; align-items: center; gap: 5px; font-size: 15px; }
+  .mode-pick button.on .mode-name { color: var(--primary); font-weight: 600; }
+  .accent-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 12px 6px; }
+  .accent-pick button { border: 0; background: none; padding: 0; cursor: pointer; display: grid; justify-items: center; gap: 6px; color: var(--foreground); }
+  .swatch { width: 44px; height: 44px; border-radius: 50%; background: var(--swatch); display: grid; place-items: center; color: #fff; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1); transition: transform .15s; }
+  .accent-pick button.on .swatch { box-shadow: 0 0 0 3px var(--background), 0 0 0 5px var(--swatch); transform: scale(1.04); }
+  .accent-name { font-size: 13px; color: var(--muted-foreground); }
+  .accent-pick button.on .accent-name { color: var(--foreground); font-weight: 600; }
+  .look-sample { display: flex; align-items: center; gap: 12px; padding-top: 4px; }
+
+  /* Voice entry */
+  .voice-mic { display: grid; justify-items: center; gap: 10px; padding: 6px 0 2px; }
+  .mic-btn { --lvl: 0; position: relative; width: 84px; height: 84px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center;
+    background: var(--primary); color: var(--primary-foreground); box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 35%, transparent); transition: transform .12s; }
+  .mic-btn:active { transform: scale(.95); }
+  .mic-btn::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 3px solid var(--primary); opacity: 0; transform: scale(1); transition: transform .08s linear, opacity .2s; }
+  .mic-btn.rec, .mic-btn.browser { background: var(--danger); color: #fff; box-shadow: 0 6px 20px color-mix(in srgb, var(--danger) 35%, transparent); }
+  .mic-btn.rec::before { border-color: var(--danger); opacity: .55; transform: scale(calc(1 + var(--lvl) * .45)); }
+  .mic-btn.browser::before { border-color: var(--danger); opacity: .5; animation: pulse 1.2s infinite; }
+  .mic-btn.stt { opacity: .6; cursor: progress; }
+  .mic-status { font-size: 15px; color: var(--muted-foreground); min-height: 20px; text-align: center; }
+  .voice-mic .alert { width: 100%; }
 
   /* How-it-works guide, offline banner, recovery code */
   .guide { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }

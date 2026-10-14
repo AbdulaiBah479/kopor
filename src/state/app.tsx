@@ -11,8 +11,11 @@ import { getSession, setSession, anyPin, type Session } from '@/domain/org';
 import { setCurrencySymbol } from '@/lib/money';
 import { syncNow, onSyncState, type SyncState } from '@/cloud/sync';
 
-export interface DeviceSettings { lang: string; theme: 'auto' | 'light' | 'dark'; autoLockMin: number }
-const DEVICE_DEFAULTS: DeviceSettings = { lang: 'en', theme: 'auto', autoLockMin: 5 };
+export type Accent = 'emerald' | 'ocean' | 'royal' | 'sunset' | 'rose' | 'graphite';
+export type TextSize = 'normal' | 'large' | 'xl';
+export interface Appearance { theme: 'auto' | 'light' | 'dark'; accent: Accent; text: TextSize }
+export interface DeviceSettings extends Appearance { lang: string; autoLockMin: number }
+const DEVICE_DEFAULTS: DeviceSettings = { lang: 'en', theme: 'auto', accent: 'emerald', text: 'normal', autoLockMin: 5 };
 
 interface AppState {
   ready: boolean;
@@ -37,17 +40,31 @@ export const useApp = () => useContext(AppCtx)!;
 /** Book is guaranteed inside the main shell. */
 export const useBook = () => useApp().book as Book;
 
-// The resolved theme always lives in data-theme; "auto" follows the phone and updates live.
+// Appearance lives on <html>: data-theme (resolved light/dark; "auto" follows the phone live), data-accent, data-text.
+// A copy is kept in localStorage so main.tsx can apply it before the first paint (no colour flash on start).
 const darkQuery = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null;
-let themeChoice: DeviceSettings['theme'] = 'auto';
+const APPEARANCE_KEY = 'kopor-appearance';
+let current: Appearance = { theme: 'auto', accent: 'emerald', text: 'normal' };
 const resolveTheme = () => {
-  const dark = themeChoice === 'dark' || (themeChoice === 'auto' && !!darkQuery?.matches);
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b100e' : '#f3f6f4');
+  const root = document.documentElement;
+  const dark = current.theme === 'dark' || (current.theme === 'auto' && !!darkQuery?.matches);
+  root.dataset.theme = dark ? 'dark' : 'light';
+  if (current.accent === 'emerald') delete root.dataset.accent; else root.dataset.accent = current.accent;
+  if (current.text === 'normal') delete root.dataset.text; else root.dataset.text = current.text;
+  const bg = getComputedStyle(root).getPropertyValue('--background').trim();
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg || (dark ? '#000000' : '#f2f2f7'));
 };
 darkQuery?.addEventListener?.('change', resolveTheme);
-export function applyTheme(theme: DeviceSettings['theme']) {
-  themeChoice = theme;
+export function applyAppearance(a: Partial<Appearance>) {
+  current = { ...current, ...a };
+  resolveTheme();
+  try { localStorage.setItem(APPEARANCE_KEY, JSON.stringify(current)); } catch { /* private mode */ }
+}
+/** Apply the last saved appearance immediately at start-up. */
+export function applySavedAppearance() {
+  let saved: Partial<Appearance> = {};
+  try { saved = JSON.parse(localStorage.getItem(APPEARANCE_KEY) ?? '{}'); } catch { /* none yet */ }
+  current = { ...current, ...saved };
   resolveTheme();
 }
 
@@ -64,7 +81,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDeviceState(d);
       await i18n.changeLanguage(d.lang);
       document.documentElement.lang = d.lang === 'kri' ? 'kri' : d.lang;
-      applyTheme(d.theme);
+      applyAppearance({ theme: d.theme, accent: d.accent, text: d.text });
       setSess(await getSession());
       setLocked(await anyPin());
       setReady(true);
@@ -82,7 +99,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setDeviceState(next);
     await setMeta('device', next);
     if (p.lang) { await i18n.changeLanguage(p.lang); document.documentElement.lang = p.lang; }
-    if (p.theme) applyTheme(p.theme);
+    if (p.theme || p.accent || p.text) applyAppearance({ theme: next.theme, accent: next.accent, text: next.text });
   }, [device]);
 
   const switchSession = useCallback(async (s: Session | null) => { await setSession(s); setSess(s); }, []);

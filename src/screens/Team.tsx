@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { dateLocale } from '@/i18n';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
@@ -103,7 +104,7 @@ function BranchSheet() {
 }
 
 export function Audit() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { ctx } = useApp();
   const rows = useLiveQuery(() => db.audit.where('org_id').equals(ctx.orgId).reverse().sortBy('at').then((r) => r.slice(0, 300)), [ctx.orgId]);
   return (
@@ -112,8 +113,10 @@ export function Audit() {
         {rows?.length ? rows.map((a) => (
           <div key={a.id} className="item audit-row">
             <div className="avatar">{initials(a.member_name || '?')}</div>
-            <div className="main"><div className="t">{a.summary || `${a.action} ${a.entity}`}</div>
-              <div className="s">{a.member_name} · {new Date(a.at).toLocaleString()}</div></div>
+            <div className="main">
+              <div className="t">{t('audit.line', { verb: t(`audit.${a.action}`), what: t(`audit.e.${a.entity}`, { defaultValue: t('audit.e.other') }) })}</div>
+              <div className="s">{[a.summary, a.member_name, new Date(a.at).toLocaleString(dateLocale(i18n.language))].filter(Boolean).join(' · ')}</div>
+            </div>
           </div>
         )) : <Empty icon="list" title={t('team.audit')} />}
       </div>

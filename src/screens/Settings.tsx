@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useApp, useBook, useLocalOrgs } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
+import { AppearancePanel } from '@/ui/Appearance';
 import { Icon } from '@/ui/Icon';
 import { Field } from '@/ui/widgets';
 import { LANGUAGES } from '@/i18n';
@@ -122,6 +123,10 @@ export function Settings() {
           <Icon name="chev" size={18} className="text-subtle" />
         </Link>
       </div>
+      <div className="card stack">
+        <h3><Icon name="palette" size={18} /> {t('look.title')}</h3>
+        <AppearancePanel />
+      </div>
       {can('business') && <BusinessCard />}
       {can('business') && <TaxCard />}
       <PreferencesCard />
@@ -177,11 +182,6 @@ function PreferencesCard() {
     <div className="card stack">
       <h3><Icon name="globe" size={18} /> {t('settings.language')}</h3>
       <div className="lang-pick">{LANGUAGES.map((l) => <button key={l.code} className={device.lang === l.code ? 'on' : ''} aria-pressed={device.lang === l.code} onClick={() => setDevice({ lang: l.code })}>{l.label}</button>)}</div>
-      <Field label={t('settings.theme')}>
-        <select value={device.theme} onChange={(e) => setDevice({ theme: e.target.value as 'auto' })}>
-          {(['auto', 'light', 'dark'] as const).map((k) => <option key={k} value={k}>{t(`settings.${k}`)}</option>)}
-        </select>
-      </Field>
     </div>
   );
 }

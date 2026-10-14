@@ -74,5 +74,11 @@
     "vite": "^7.3.7",
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^4.1.11"
-  }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AbdulaiBah479/kopor.git"
+  },
+  "homepage": "https://abdulaibah479.github.io/kopor/"
 }

@@ -52,7 +52,24 @@ const v3: V3Dict = {
     noCode: 'Yu nɔ get kod? Kɔl Kopor sɔpɔt wit yu fon nɔmba.', make: 'Mek nyu kod', made: 'Nyu kod dɔn mek. Di ol wan nɔ go wok igen.',
     msg: 'Mi Kopor kod fɔ gɛt akawnt bak: {{code}}',
   },
-  pwa: {
+  voice: {
+    tap: 'Tap di maykrofon ɛn se wetin apin', stop: 'Stɔp fɔ rɛkɔd', recording: 'A de lisin… tap bak we yu dɔn', transcribing: 'A de rayt wetin yu se…',
+    orType: 'Ɔ tayp am', denied: 'Di maykrofon dɔn blɔk. Tap di lɔk na di say we di wɛbsayt adrɛs de (ɔ opin fon Sɛtin → Ap → Kopor → Pamishɔn), gri fɔ di maykrofon, dɔn tray bak.',
+    noMic: 'No maykrofon nɔ de na dis fon.', busyMic: 'Ɔda ap de yuz di maykrofon. Klos am ɛn tray bak.',
+    tooShort: 'I shɔt tumɔs. Tap di maykrofon, tɔk, dɔn tap bak.', needNet: 'Fɔ tɔk, yu nid nɛt. Yu kin tayp am; Kopor stil ɔndastand am widawt nɛt.',
+    needCloud: 'Fɔ tɔk, yu nid Kopor klawd ɔ AI ki. Yu kin tayp am.', unsupported: 'Dis brawza nɔ kin rɛkɔd sawnd. Opin Kopor na Chrome, ɔ tayp am.',
+    failed: 'Kopor nɔ yɛri dat klia. Duya tray bak ɔ tayp am.', busy: 'Di vɔys savis bizi naw. Duya tayp am, ɔ tray bak afta wan minit.',
+  },
+  look: {
+    title: 'Aw i tan', sub: 'Layt ɔ dak, kɔlɔ ɛn rayt sayz', mode: 'Mod', accent: 'Kɔlɔ', text: 'Rayt sayz',
+    normal: 'Nɔmal rayt', large: 'Big rayt', xl: 'Big big rayt', sample: 'Na so bɔtin ɛn rayt go tan.',
+    emerald: 'Grin', ocean: 'Blu', royal: 'Pɔpul', sunset: 'Ɔrenj', rose: 'Rɛd', graphite: 'Blak',
+  },  audit: {
+    line: '{{verb}} {{what}}', create: 'Ad', update: 'Chenj', delete: 'Pul',
+    e: { transactions: 'sɛl ɔ ɛkspens', ledger: 'kredit entri', contacts: 'kɔstɔma ɔ sɔplaya', products: 'prɔdak', stock_moves: 'stɔk',
+      groups: 'grup', contributions: 'kɔntribyushɔn', invoices: 'invɔys', members: 'tim mɛmba', branches: 'branch', orgs: 'biznɛs tin dɛn',
+      closings: 'de klos', payment_requests: 'aks fɔ pe', other: 'rɛkɔd' },
+  },  pwa: {
     install: 'Put Kopor na yu fon', installHelp: 'Put Kopor na yu om skrin. I go opin lɛk ap ɛn i de wok widawt nɛt.',
     offline: 'Nɛt nɔ de. Ɔltin stil de wok ɛn i go sink we nɛt kam bak.', online: 'Nɛt dɔn kam bak',
     update: 'Nyu Kopor dɔn rɛdi.', reload: 'Ɔpdet naw', share: 'Sheb Kopor',

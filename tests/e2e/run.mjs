@@ -14,10 +14,15 @@ if (server) await new Promise((resolve, reject) => {
   server.stdout.on('data', (d) => { if (String(d).includes(String(PORT))) { clearTimeout(t); resolve(); } });
 });
 
-const browser = await chromium.launch({ channel });
+// A recorded sentence plays as the microphone, so the real voice flow can be tested (live mode only).
+const LIVE_AI = !!process.env.E2E_LIVE_AI;
+const browser = await chromium.launch({ channel, args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--use-file-for-fake-audio-capture=' + new URL('../fixtures/sale.wav', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')] });
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'en-GB' });
 // Force the download path for exported files (desktop Web Share would open a system dialog).
 await ctx.addInitScript(() => { Object.defineProperty(navigator, 'canShare', { value: undefined, configurable: true }); });
+// Default: no cloud AI, so results are repeatable and the offline fallbacks are what gets tested.
+if (!LIVE_AI) await ctx.route('**/functions/v1/**', (r) => r.abort('internetdisconnected'));
+await ctx.grantPermissions(['microphone']).catch(() => {});
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
@@ -123,10 +128,43 @@ await step('speak/type entry (offline parser)', async () => {
   const f = page.getByTestId('voice-form');
   await f.locator('textarea').fill('Isatu took 2 tins palm oil 360 on credit');
   await f.getByRole('button', { name: /Understand/ }).click();
-  await page.getByTestId('ai-preview').getByText('Credit given (they owe you)').waitFor();
+  // Offline parser: credit entry. Live AI may (correctly) record it as a credit sale to Isatu instead.
+  await page.getByTestId('ai-preview').getByText(LIVE_AI ? /Credit given|On credit/ : 'Credit given (they owe you)').first().waitFor();
   await shot('05-voice');
   await page.getByTestId('ai-save').click();
   await page.getByText('Saved').first().waitFor();
+});
+
+if (LIVE_AI) await step('microphone: record, transcribe with Whisper, understand', async () => {
+  await go('/');
+  await page.getByRole('button', { name: 'Speak' }).click();
+  const f = page.getByTestId('voice-form');
+  await f.getByTestId('mic').click();
+  await page.getByText(/Listening/).waitFor();
+  await page.waitForTimeout(6000);
+  await f.getByTestId('mic').click();
+  await page.waitForFunction(() => /rice/i.test(document.querySelector('#voice-text')?.value ?? ''), null, { timeout: 30000 });
+  await page.getByTestId('ai-preview').waitFor({ timeout: 30000 });
+  await shot('05b-voice-mic');
+});
+
+await step('appearance: dark mode, accent colour and large text', async () => {
+  await go('/more');
+  await page.getByTestId('appearance-row').click();
+  await page.getByTestId('appearance').getByRole('radio', { name: /Dark/ }).click();
+  await page.locator('[data-accent-option="royal"]').click();
+  await page.getByTestId('appearance').getByRole('radio', { name: 'Large text', exact: true }).click();
+  const a = await page.evaluate(() => ({ ...document.documentElement.dataset, primary: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() }));
+  if (a.theme !== 'dark' || a.accent !== 'royal' || a.text !== 'large' || a.primary !== '#a78bfa') throw new Error(JSON.stringify(a));
+  await shot('15-appearance');
+  await page.reload(); await page.locator('main.content').first().waitFor();
+  const after = await page.evaluate(() => ({ ...document.documentElement.dataset }));
+  if (after.accent !== 'royal' || after.text !== 'large') throw new Error('appearance not kept after reload ' + JSON.stringify(after));
+  // Back to defaults for the remaining steps.
+  await page.getByTestId('appearance-row').click();
+  await page.getByTestId('appearance').getByRole('radio', { name: /Auto/ }).click();
+  await page.locator('[data-accent-option="emerald"]').click();
+  await page.getByTestId('appearance').getByRole('radio', { name: 'Normal text', exact: true }).click();
 });
 
 await step('osusu: mark a contribution', async () => {
@@ -266,7 +304,8 @@ await step('assistant answers without AI from the records', async () => {
   await go('/assistant');
   await page.getByPlaceholder(/Who owes me the most/i).fill('Who owes me the most?');
   await page.getByPlaceholder(/Who owes me the most/i).press('Enter');
-  await page.locator('.bubble.ai', { hasText: /owe you the most|Nobody owes you/ }).first().waitFor({ timeout: 30000 });
+  // Offline: the rule-based answer. Live: any AI answer that names a debtor or says nobody owes.
+  await page.locator('.bubble.ai', { hasText: LIVE_AI ? /Aminata|Isatu|Mohamed|owe/i : /owe you the most|Nobody owes you/ }).nth(LIVE_AI ? 1 : 0).waitFor({ timeout: 30000 });
 });
 await step('Excel export downloads', async () => {
   await go('/settings');

@@ -31,6 +31,14 @@ jobs:
           VITE_SUPPORT_WHATSAPP: ${{ vars.VITE_SUPPORT_WHATSAPP }}
       - name: Create Android project if missing
         run: test -d android || npx cap add android
+      - name: Declare microphone and camera permissions (voice entry, receipt photos, barcode scanning)
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          for p in RECORD_AUDIO MODIFY_AUDIO_SETTINGS CAMERA; do
+            grep -q "android.permission.$p" "$M" || sed -i "s#</manifest>#    <uses-permission android:name=\"android.permission.$p\" />\n</manifest>#" "$M"
+          done
+          grep -q 'android.hardware.camera' "$M" || sed -i 's#</manifest>#    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>#' "$M"
+          grep -n "uses-permission\|uses-feature" "$M"
       - run: npx cap sync android
       - name: Build debug APK
         working-directory: android

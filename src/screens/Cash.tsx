@@ -50,9 +50,9 @@ export function CashBook() {
       )}>
       <Seg value={range} onChange={setRange} options={[['today', t('common.today')], ['week', t('cash.range7')], ['month', t('cash.rangeMonth')], ['all', t('common.all')]]} />
       <div className="grid3">
-        <div className="stat"><div className="k">{t('cash.sales')}</div><div className="v"><Money v={s.sales} className="good" /></div></div>
-        <div className="stat"><div className="k">{t('cash.expenses')}</div><div className="v"><Money v={s.expenses} className="bad" /></div></div>
-        <div className="stat"><div className="k">{t('cash.profit')}</div><div className="v"><Money v={s.profit} /></div></div>
+        <div className="stat"><div className="k">{t('cash.sales')}</div><div className="v"><Money compact v={s.sales} className="good" /></div></div>
+        <div className="stat"><div className="k">{t('cash.expenses')}</div><div className="v"><Money compact v={s.expenses} className="bad" /></div></div>
+        <div className="stat"><div className="k">{t('cash.profit')}</div><div className="v"><Money compact v={s.profit} className={s.profit < 0 ? 'bad' : ''} /></div></div>
       </div>
       {(s.tax > 0 || s.refunds > 0 || s.discounts > 0) && (
         <div className="card flat small row between" style={{ flexWrap: 'wrap' }}>

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from './Icon';
-import { formatMoney, formatShort, parseMoney, toMajor } from '@/lib/money';
+import { formatMoney, formatShort, parseMoney, toMajor, currencySymbol } from '@/lib/money';
 import { fmtDate, weekdayShort } from '@/lib/dates';
 import { dateLocale } from '@/i18n';
 import { evaluate, hasOperator } from '@/lib/calc';
@@ -22,8 +22,13 @@ export function Empty({ icon, title, text }: { icon: string; title: string; text
   return <div className="empty"><Icon name={icon} size={32} /><b>{title}</b>{text}</div>;
 }
 
-export const Money = ({ v, className = '', sign }: { v: number; className?: string; sign?: boolean }) =>
-  <span className={`num ${className}`}>{formatMoney(v, { sign })}</span>;
+/** Amount. compact (for narrow tiles) drops the cents and shortens very large amounts; the exact value stays in the label. */
+export const Money = ({ v, className = '', sign, compact }: { v: number; className?: string; sign?: boolean; compact?: boolean }) => {
+  const full = formatMoney(v, { sign });
+  if (!compact) return <span className={`num ${className}`}>{full}</span>;
+  const short = Math.abs(v) >= 100_000_00 ? `${currencySymbol()} ${formatShort(v)}` : formatMoney(Math.round(v / 100) * 100, { sign });
+  return <span className={`num nowrap ${className}`} title={full} aria-label={full}>{short}</span>;
+};
 
 export function useDate() {
   const { i18n } = useTranslation();

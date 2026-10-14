@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/AbdulaiBah479/kopor/actions/workflows/ci.yml/badge.svg)](https://github.com/AbdulaiBah479/kopor/actions/workflows/ci.yml)
 [![Deploy](https://github.com/AbdulaiBah479/kopor/actions/workflows/pages.yml/badge.svg)](https://github.com/AbdulaiBah479/kopor/actions/workflows/pages.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-047857.svg)](LICENSE)
 [![CodeQL](https://github.com/AbdulaiBah479/kopor/actions/workflows/codeql.yml/badge.svg)](https://github.com/AbdulaiBah479/kopor/actions/workflows/codeql.yml)
 
 **Try it:** <https://abdulaibah479.github.io/kopor/> (open on a phone and choose "Add to Home screen" to install)
@@ -32,6 +33,8 @@ takes mobile money payments, and answers questions about the business in English
 | **Receipt printers** | 58mm and 80mm Bluetooth thermal printers (ESC/POS); classic Bluetooth printers via the free RawBT app |
 | **Barcode scanning** | Scan products into a sale or invoice, scan to find stock, scan to set a product code |
 | **Kopor Pro** | Free: 1 branch, 3 staff. Pro (paid via Monime): unlimited branches and staff, more AI. Limits are enforced by the server |
+| **Voice entry** | Tap the mic and speak English or Krio. Works in every modern browser and the Android app: the phone records the audio and Whisper (free on Groq, biased towards Krio spelling with corpus vocabulary) writes it down; the browser's own speech recognition is a fallback. Clear help when the mic is blocked or missing |
+| **Appearance** | Light, dark or automatic; six accent colours (Emerald, Ocean, Royal, Sunset, Rose, Graphite) with checked contrast; three text sizes for easier reading. Saved per phone, applied before the first paint |
 | **How it works** | An (i) button on every main screen explains that screen in 4 steps, in all three languages |
 | **PIN recovery** | One-time recovery code at sign-up (saved to WhatsApp); reset a forgotten PIN without SMS. Only a salted hash is stored; 5 wrong tries lock it for an hour |
 | **Install & share** | Install button (Android/Chrome), offline banner, WhatsApp link preview card, share-the-app message |
@@ -76,6 +79,14 @@ so Groq alone gives three. Add more free keys as Supabase secrets to multiply th
 | `MISTRAL_API_KEY` | console.mistral.ai |
 | `GITHUB_MODELS_TOKEN` | github.com/settings/tokens (fine-grained, "Models: read" only) |
 | `OPENROUTER_API_KEY` | openrouter.ai/keys |
+
+**Everyone gets AI**, including people who have not made a cloud account yet: 20 requests a day per network (hashed, never stored in clear), 50 a day per free business and 500 for Pro. Voice uses the same allowance.
+
+### Turn on Google Gemini (free, 2 minutes)
+
+1. Open <https://aistudio.google.com/apikey>, sign in with a Google account, click **Create API key** and copy it.
+2. Open your Supabase project → **Edge Functions → Secrets** (<https://supabase.com/dashboard/project/hpmpbzcloklaeghekjfz/functions/secrets>).
+3. Add a secret named `GEMINI_API_KEY` with the key as its value and save. Gemini joins the chain at once; no redeploy is needed.
 
 When no AI is reachable at all (offline, daily limit), the assistant still answers the common questions (who owes me,
 what to restock, profit, biggest costs, best sellers) from the records, in English and Krio, and voice entry uses the
@@ -193,3 +204,7 @@ offline at the same time never overwrite each other's sales.
   records are blocked on the server.
 - QMoney is recorded as a payment method. Online collection through QMoney depends on Monime adding it.
 - Next: native-speaker review of Krio and French, Temne/Mende, barcode scanning, Pro billing.
+
+## License
+
+[MIT](LICENSE). Krio data credits are listed under *Krio language data* above.
