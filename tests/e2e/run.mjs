@@ -1,15 +1,15 @@
 // End-to-end test of the production build in a real browser (Edge locally, Chrome in CI).
-// Run: npm run build && npm run test:e2e
+// Run: npm run build && npm run test:e2e   (or E2E_BASE=https://…/kopor/ to test a deployed copy)
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { chromium } from 'playwright-core';
 
-const PORT = 4173, BASE = `http://localhost:${PORT}/`;
+const PORT = 4173, BASE = process.env.E2E_BASE || `http://localhost:${PORT}/`;
 const channel = process.env.BROWSER_CHANNEL || (process.platform === 'win32' ? 'msedge' : 'chrome');
 mkdirSync('screenshots', { recursive: true });
 
-const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
-await new Promise((resolve, reject) => {
+const server = process.env.E2E_BASE ? null : spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
+if (server) await new Promise((resolve, reject) => {
   const t = setTimeout(() => reject(new Error('preview server did not start')), 30000);
   server.stdout.on('data', (d) => { if (String(d).includes(String(PORT))) { clearTimeout(t); resolve(); } });
 });
@@ -263,7 +263,7 @@ await step('works offline after first visit', async () => {
 });
 
 await browser.close();
-server.kill();
+server?.kill();
 if (errors.length) { console.log('\nJS errors:\n' + errors.join('\n')); failed++; }
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
