@@ -1,0 +1,37 @@
+name: Maintenance
+# One-click fixes for the live service, run from GitHub → Actions → Maintenance → Run workflow.
+# Only these fixed actions are possible (no free-form database commands).
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: What to do
+        required: true
+        type: choice
+        options:
+          - reset-guest-ai-allowance
+          - unlock-locked-accounts
+          - remove-test-accounts
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT: hpmpbzcloklaeghekjfz
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: ${{ inputs.action }}
+        run: |
+          set -euo pipefail
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN secret is missing"; exit 1; }
+          sql() { jq -Rs '{query: .}' | curl -fsS -X POST "https://api.supabase.com/v1/projects/$PROJECT/database/query" \
+                    -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' --data-binary @-; echo; }
+          case "${{ inputs.action }}" in
+            reset-guest-ai-allowance) echo "delete from public.ai_usage_anon where day = current_date returning 1" | sql | jq 'length' | xargs echo "Guest allowances reset:";;
+            unlock-locked-accounts)   echo "delete from public.pin_attempts returning 1" | sql | jq 'length' | xargs echo "Lock records cleared:";;
+            remove-test-accounts)     sql < supabase/cleanup-test-data.sql;;
+          esac

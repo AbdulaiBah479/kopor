@@ -82,8 +82,10 @@ const KRIO_PROMPT = 'Shop record in Sierra Leone, always with the amount in Leon
   'Fatu took 2 tins of oil for 360 Leones on credit. Mohamed don pay 300 Leones. A sel tu bag res fo 1,700. Spent 200 Leones on transport.';
 
 export async function transcribe(file: File, lang: string, hints = ''): Promise<{ text: string; provider: string }> {
-  // The business's own customer and product names make Whisper spell them right (prompt limit ~224 tokens).
-  const prompt = ((hints ? `Names: ${hints.replace(/ɛ/g, 'e').replace(/ɔ/g, 'o').replace(/ŋ/g, 'ng').replace(/[^A-Za-z0-9 ,.'()-]/g, ' ').slice(0, 400)}. ` : '') + KRIO_PROMPT).slice(0, 900);
+  // Customer/product names are NOT put in Whisper's prompt: tested live, they made it drop amounts ("360 Leones").
+  // Names are matched afterwards instead (fuzzy matching and the AI correction step in the app).
+  void hints;
+  const prompt = KRIO_PROMPT;
   const e = (k: string) => Deno.env.get(k) || undefined;
   const chain = [
     { name: 'groq', base: 'https://api.groq.com/openai/v1', key: e('GROQ_API_KEY'), models: list(e('GROQ_STT_MODELS'), ['whisper-large-v3', 'whisper-large-v3-turbo']) },
