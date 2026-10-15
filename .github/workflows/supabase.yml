@@ -1,12 +1,12 @@
-name: Deploy server functions
-# When server code (supabase/functions) changes on main, deploy it to Supabase automatically.
-# Needs a repository secret SUPABASE_ACCESS_TOKEN (Settings → Secrets and variables → Actions). Without it this
-# workflow does nothing. Database migrations stay manual on purpose: run new files in supabase/migrations once in the
-# Supabase SQL editor.
+name: Update the server
+# Keeps the Supabase server in step with the code, with no computer needed:
+#   1. applies new database migrations (supabase/migrations/*.sql) once each, in order, recording what was applied;
+#   2. deploys every server function.
+# Needs one repository secret, SUPABASE_ACCESS_TOKEN (Settings → Secrets and variables → Actions). Without it, nothing runs.
 on:
   push:
     branches: [main]
-    paths: ['supabase/functions/**']
+    paths: ['supabase/**']
   workflow_dispatch:
 
 permissions:
@@ -22,11 +22,33 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       PROJECT: hpmpbzcloklaeghekjfz
+      # Migrations up to this number were applied by hand before this workflow existed.
+      BASELINE: '0010'
     steps:
       - if: env.SUPABASE_ACCESS_TOKEN == ''
-        run: echo "::notice::SUPABASE_ACCESS_TOKEN is not set, so server functions were not deployed automatically."
+        run: echo "::notice::SUPABASE_ACCESS_TOKEN is not set, so the server was not updated automatically."
       - if: env.SUPABASE_ACCESS_TOKEN != ''
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Apply new database migrations
+        if: env.SUPABASE_ACCESS_TOKEN != ''
+        run: |
+          set -euo pipefail
+          api="https://api.supabase.com/v1/projects/$PROJECT/database/query"
+          sql() { jq -Rs '{query: .}' | curl -fsS -X POST "$api" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' --data-binary @-; }
+          echo "create table if not exists public.kopor_migrations (name text primary key, applied_at timestamptz not null default now());
+                alter table public.kopor_migrations enable row level security;
+                revoke all on public.kopor_migrations from anon, authenticated;" | sql >/dev/null
+          applied=$(echo "select coalesce(string_agg(name, ' '), '') as names from public.kopor_migrations" | sql | jq -r '.[0].names')
+          for f in $(ls supabase/migrations/*.sql | sort); do
+            name=$(basename "$f" .sql); num=${name%%_*}
+            if [[ " $applied " == *" $name "* ]]; then continue; fi
+            if [[ "$num" < "$BASELINE" || "$num" == "$BASELINE" ]]; then
+              echo "insert into public.kopor_migrations (name) values ('$name') on conflict do nothing" | sql >/dev/null; continue
+            fi
+            echo "Applying $name"
+            sql < "$f" >/dev/null
+            echo "insert into public.kopor_migrations (name) values ('$name')" | sql >/dev/null
+          done
       - if: env.SUPABASE_ACCESS_TOKEN != ''
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
@@ -34,7 +56,7 @@ jobs:
           cache: npm
       - if: env.SUPABASE_ACCESS_TOKEN != ''
         run: npm ci
-      - name: Deploy every function
+      - name: Deploy every server function
         if: env.SUPABASE_ACCESS_TOKEN != ''
         run: |
           for dir in supabase/functions/*/; do

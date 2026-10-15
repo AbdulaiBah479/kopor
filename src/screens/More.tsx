@@ -11,6 +11,9 @@ import { useOverlay } from '@/ui/overlay';
 import { AppearancePanel } from '@/ui/Appearance';
 import { useEffect, useState } from 'react';
 import { isAppAdmin } from '@/cloud/admin';
+import { Suspense } from 'react';
+import { lazyRetry } from '@/ui/lazy';
+const ReportSheet = lazyRetry(() => import('./Report').then((m) => ({ default: m.ReportSheet })));
 
 export const ORG_TYPES = ['shop', 'trader', 'wholesale', 'pharmacy', 'restaurant', 'salon', 'tailor', 'transport', 'farm', 'services', 'school', 'church', 'association', 'personal', 'other'];
 
@@ -68,6 +71,11 @@ export function More() {
         </button>
         <MenuItem to="/settings" icon="sliders" tile="gray" title={t('settings.title')} sub={t('more.settingsSub')} />
         <MenuItem to="/help" icon="help" tile="blue" title={t('help.title')} sub={t('help.sub')} />
+        <button className="item" data-testid="report-row" onClick={() => openSheet(t('report.title'), <Suspense fallback={t('common.loading')}><ReportSheet /></Suspense>)}>
+          <span className="tile" style={{ background: 'var(--tile-red)' }}><Icon name="alert" size={18} strokeWidth={2.2} /></span>
+          <div className="main"><div className="t">{t('report.title')}</div><div className="s">{t('report.sub')}</div></div>
+          <Icon name="chev" size={18} className="text-subtle" />
+        </button>
       </div>
       <div className="list">
         {canInstall && (

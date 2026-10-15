@@ -80,6 +80,7 @@ const extra: ExtraDict = {
     deleted: 'Akawnt dɔn dilit',
   },
   errx: {
+    reportBusy: 'Bɔku ripɔt de kam naw. Duya tray bak afta wan minit.',
     pinLocked: 'Yu put rɔng PIN tumɔs, so dis akawnt lɔk fɔ smɔl tɛm fɔ sef am. Tray bak leta, ɔ yuz "Yu fɔgɛt yu PIN?" wit yu kod.', signupLimit: 'Tumɔs nyu akawnt frɔm dis nɛtwɔk tide. Duya tray bak tumara.',
     inviteBad: 'Dis invayt kod nɔ rayt, dɛn dɔn yuz am, ɔ i dɔn ɛkspay, ɔ dis akawnt nɔ get di fon nɔmba we dɛn invayt.', inviteRole: 'Na jɔs di ɔna kin invayt staf.', inviteMember: 'Put fon nɔmba fɔ dis pɔsin fɔs, ɛn sev.', inviteSignIn: 'Sayn in na yu Kopor klawd akawnt fɔs (Mɔ → Klawd ɛn akawnt).',
     recoverBad: 'Di fon nɔmba ɔ di kod nɔ rayt.', recoverLocked: 'Yu tray tumɔs. Tray bak afta wan awa.',

@@ -73,11 +73,21 @@ const v3 = {
     msg: 'Hello {{name}}, join {{business}} on Kopor. 1) Open {{link}} 2) Create an account with your phone {{phone}} 3) Enter this invite code: {{code}}',
     joinTitle: 'Invited by a business?', joinHelp: 'Enter the code the owner sent you.', code: 'Invite code', join: 'Join business', joined: 'You have joined the business',
   },  owner: {
+    reports: 'Reports', waiting: 'waiting for you', inbox: 'Problem reports and complaints', noReports: 'No reports yet.', resolve: 'Mark resolved', reply: 'Reply on WhatsApp', replyMsg: 'Hello, this is Kopor support about the report you sent.', auto: 'automatic', status: { new: 'New', seen: 'Seen', resolved: 'Resolved' },
     title: 'Owner dashboard', sub: 'How Kopor is doing in the market', accounts: 'Accounts', thisWeek: '+{{n}} this week', businesses: 'Businesses',
     activeWeek: '{{n}} active this week', pro: 'Pro subscribers', staff: '{{n}} staff accounts', aiToday: 'AI requests today', locked: '{{n}} accounts locked (wrong PINs)',
     records: 'Records this week', payments: 'Online payments completed', signups: 'New accounts, last 14 days', tools: 'Run the service',
     linkUsers: 'Accounts (Supabase)', linkData: 'Database tables (Supabase)', linkLogs: 'Server functions and logs (Supabase)', linkDeploys: 'Updates and deploys (GitHub)',
     linkAi: 'AI usage (Groq)', updated: 'Updated {{time}}',
+  },  report: {
+    title: 'Report a problem or complaint', sub: 'Something wrong? Tell us, we read every report', help: 'Choose what it is about and describe what happened. The Kopor team reads every report.',
+    what: 'What happened?', about: 'About', contact: 'Your phone or email (optional)', contactHelp: 'Only if you want a reply.',
+    send: 'Send report', thanks: 'Thank you', sent: 'Your report has reached the Kopor team.', queued: 'You are offline. Your report is saved and will be sent automatically.',
+    ref: 'Reference: {{ref}}', alsoWa: 'Also send on WhatsApp', waIntro: 'Kopor report', business: 'Report this business',
+    privacy: 'Your report includes the screen you were on and your phone type, never your business records.',
+    kind: { bug: 'App not working', money: 'Wrong amount', payment: 'Payment problem', account: 'Account or PIN', abuse: 'Complaint about a business', suggestion: 'Suggestion', other: 'Something else' },
+    ph: { bug: 'e.g. When I tap Save sale, nothing happens', money: 'e.g. My profit for today shows Le 0 but I sold 3 bags of rice', payment: 'e.g. I paid with Orange Money but the invoice still says unpaid',
+      account: 'e.g. I cannot sign in on my new phone', abuse: 'e.g. This business keeps sending me messages for a debt I already paid', suggestion: 'e.g. Please add …', other: 'Tell us what happened' },
   },  pwa: {
     install: 'Install Kopor', installHelp: 'Put Kopor on your home screen. It opens like an app and works without internet.',
     offline: 'You are offline. Everything still works and will sync when you are back.', online: 'Back online',

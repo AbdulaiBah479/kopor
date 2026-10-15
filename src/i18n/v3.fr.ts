@@ -75,11 +75,21 @@ const v3: V3Dict = {
     msg: 'Bonjour {{name}}, rejoignez {{business}} sur Kopor. 1) Ouvrez {{link}} 2) Créez un compte avec votre numéro {{phone}} 3) Saisissez ce code : {{code}}',
     joinTitle: 'Invité par un commerce ?', joinHelp: 'Saisissez le code envoyé par le propriétaire.', code: 'Code d’invitation', join: 'Rejoindre le commerce', joined: 'Vous avez rejoint le commerce',
   },  owner: {
+    reports: 'Signalements', waiting: 'en attente', inbox: 'Signalements et plaintes', noReports: 'Aucun signalement.', resolve: 'Marquer résolu', reply: 'Répondre sur WhatsApp', replyMsg: 'Bonjour, ici le support Kopor au sujet de votre signalement.', auto: 'automatique', status: { new: 'Nouveau', seen: 'Vu', resolved: 'Résolu' },
     title: 'Tableau de bord', sub: 'Comment Kopor se porte sur le marché', accounts: 'Comptes', thisWeek: '+{{n}} cette semaine', businesses: 'Commerces',
     activeWeek: '{{n}} actifs cette semaine', pro: 'Abonnés Pro', staff: '{{n}} comptes employés', aiToday: 'Requêtes IA aujourd’hui', locked: '{{n}} comptes bloqués (PIN erronés)',
     records: 'Écritures cette semaine', payments: 'Paiements en ligne réussis', signups: 'Nouveaux comptes, 14 derniers jours', tools: 'Gérer le service',
     linkUsers: 'Comptes (Supabase)', linkData: 'Tables de la base (Supabase)', linkLogs: 'Fonctions serveur et journaux (Supabase)', linkDeploys: 'Mises à jour (GitHub)',
     linkAi: 'Usage IA (Groq)', updated: 'Mis à jour {{time}}',
+  },  report: {
+    title: 'Signaler un problème ou une plainte', sub: 'Un souci ? Dites-le nous, nous lisons tout', help: 'Choisissez le sujet et décrivez ce qui s’est passé. L’équipe Kopor lit chaque signalement.',
+    what: 'Que s’est-il passé ?', about: 'Concerne', contact: 'Votre téléphone ou e-mail (facultatif)', contactHelp: 'Seulement si vous voulez une réponse.',
+    send: 'Envoyer', thanks: 'Merci', sent: 'Votre signalement est arrivé à l’équipe Kopor.', queued: 'Vous êtes hors ligne. Le signalement est enregistré et partira automatiquement.',
+    ref: 'Référence : {{ref}}', alsoWa: 'Envoyer aussi sur WhatsApp', waIntro: 'Signalement Kopor', business: 'Signaler ce commerce',
+    privacy: 'Le signalement inclut l’écran ouvert et le type de téléphone, jamais vos comptes.',
+    kind: { bug: 'L’app ne marche pas', money: 'Montant faux', payment: 'Problème de paiement', account: 'Compte ou PIN', abuse: 'Plainte contre un commerce', suggestion: 'Suggestion', other: 'Autre chose' },
+    ph: { bug: 'ex. Quand je touche Enregistrer la vente, rien ne se passe', money: 'ex. Mon bénéfice du jour affiche 0 alors que j’ai vendu 3 sacs de riz', payment: 'ex. J’ai payé par Orange Money mais la facture est toujours impayée',
+      account: 'ex. Je n’arrive pas à me connecter sur mon nouveau téléphone', abuse: 'ex. Ce commerce me relance pour une dette déjà payée', suggestion: 'ex. Ajoutez s’il vous plaît …', other: 'Dites-nous ce qui s’est passé' },
   },  pwa: {
     install: 'Installer Kopor', installHelp: 'Ajoutez Kopor à votre écran d’accueil. Il s’ouvre comme une application et marche sans internet.',
     offline: 'Vous êtes hors ligne. Tout fonctionne et se synchronisera plus tard.', online: 'De nouveau en ligne',

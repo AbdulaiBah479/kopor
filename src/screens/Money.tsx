@@ -19,6 +19,7 @@ import { addEntry, balances, ensureContact } from '@/domain/credit';
 import { DIAL_CODE, NETWORKS, NETWORK_NAME, decodePayRequest, dialLink, formatWallets, payLink, walletsOf, type Network, type Wallets } from '@/domain/wallets';
 import type { Book } from '@/domain/book';
 import { PayoutSheet } from './Groups';
+import { ReportBusinessLink } from './Report';
 
 const MOMO = new Set<string>(NETWORKS);
 
@@ -337,6 +338,7 @@ export function PayPage({ data }: { data: string }) {
       </div>
       <div className="small muted" style={{ textAlign: 'center' }}>{t('money.payNote', { business: p.b })}</div>
       <div className="small muted" style={{ textAlign: 'center' }}>{t('money.poweredBy')}</div>
+      <ReportBusinessLink business={p.b} />
     </div>
   );
 }

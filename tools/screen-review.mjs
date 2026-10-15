@@ -19,6 +19,8 @@ page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(BASE);
 await page.getByTestId('demo').click();
 await page.getByText("Today's profit").waitFor({ timeout: 90000 });
+// The first-use tour appears after a short delay: wait for it, then finish it, so it is not caught mid-fade.
+await page.locator('.driver-popover').waitFor({ timeout: 8000 }).catch(() => {});
 for (let i = 0; i < 8 && await page.locator('.driver-popover').count(); i++) { await page.locator('.driver-popover-next-btn').click(); await page.waitForTimeout(200); }
 
 for (const scheme of ['light', 'dark']) {

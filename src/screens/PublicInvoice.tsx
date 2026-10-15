@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ReportBusinessLink } from './Report';
 import { getSupabase } from '@/cloud/supabase';
 import { formatMoney, setCurrencySymbol } from '@/lib/money';
 import { useDate } from '@/ui/widgets';
@@ -56,6 +57,7 @@ export function PublicInvoice() {
           <div className="foot">{t('inv.generated')}</div>
         </div>
         {!paid && inv.pay_url && /^https:\/\//.test(inv.pay_url) && <a className="btn primary block" href={inv.pay_url} rel="noopener noreferrer">{t('public.pay')}</a>}
+        <ReportBusinessLink business={inv.org_name} />
       </div>
     </div>
   );

@@ -1,10 +1,10 @@
 // Owner dashboard access (supabase/functions/admin). Only phones listed in the KOPOR_ADMIN_PHONES secret are admins.
 import { getSupabase } from './supabase';
 
-export async function adminCall<T>(action: string): Promise<T> {
+export async function adminCall<T>(action: string, extra: Record<string, unknown> = {}): Promise<T> {
   const sb = await getSupabase();
   if (!sb) throw new Error('err.noCloud');
-  const { data, error } = await sb.functions.invoke('admin', { body: { action } });
+  const { data, error } = await sb.functions.invoke('admin', { body: { action, ...extra } });
   if (error) throw new Error((await (error as { context?: Response }).context?.json?.().catch(() => null))?.error ?? error.message);
   return data as T;
 }

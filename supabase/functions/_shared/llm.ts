@@ -24,6 +24,14 @@ function providers(): Provider[] {
       text: list(e('GITHUB_MODELS'), ['openai/gpt-4.1-mini']), vision: list(e('GITHUB_MODELS'), ['openai/gpt-4.1-mini']) },
     { name: 'openrouter', base: 'https://openrouter.ai/api/v1', key: e('OPENROUTER_API_KEY'),
       text: list(e('OPENROUTER_MODELS'), ['openrouter/free']), vision: list(e('OPENROUTER_VISION_MODELS'), []) },
+    { name: 'nvidia', base: 'https://integrate.api.nvidia.com/v1', key: e('NVIDIA_API_KEY'),
+      text: list(e('NVIDIA_MODELS'), ['meta/llama-3.3-70b-instruct']), vision: list(e('NVIDIA_VISION_MODELS'), []) },
+    { name: 'sambanova', base: 'https://api.sambanova.ai/v1', key: e('SAMBANOVA_API_KEY'),
+      text: list(e('SAMBANOVA_MODELS'), ['Meta-Llama-3.3-70B-Instruct']), vision: list(e('SAMBANOVA_VISION_MODELS'), []) },
+    { name: 'huggingface', base: 'https://router.huggingface.co/v1', key: e('HF_TOKEN'),
+      text: list(e('HF_MODELS'), ['openai/gpt-oss-120b']), vision: list(e('HF_VISION_MODELS'), []) },
+    { name: 'cloudflare', base: e('CLOUDFLARE_ACCOUNT_ID') ? `https://api.cloudflare.com/client/v4/accounts/${e('CLOUDFLARE_ACCOUNT_ID')}/ai/v1` : '', key: e('CLOUDFLARE_API_TOKEN'),
+      text: list(e('CLOUDFLARE_MODELS'), ['@cf/meta/llama-3.3-70b-instruct-fp8-fast']), vision: list(e('CLOUDFLARE_VISION_MODELS'), []) },
   ].filter((p) => p.key && p.base);
 }
 
@@ -92,6 +100,21 @@ export async function transcribe(file: File, lang: string): Promise<{ text: stri
       const j = await res.json();
       return { text: String(j.text ?? '').trim(), provider: p.name };
     } catch (err) { console.error('STT', p.name, model, err); }
+  }
+  // Backup: Whisper on Cloudflare Workers AI (free daily allowance) when its account id and token are set.
+  const cfAccount = e('CLOUDFLARE_ACCOUNT_ID'), cfToken = e('CLOUDFLARE_API_TOKEN');
+  if (cfAccount && cfToken) {
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${cfAccount}/ai/run/@cf/openai/whisper-large-v3-turbo`, {
+        method: 'POST', headers: { Authorization: `Bearer ${cfToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio: btoa(bin), language: lang === 'fr' ? 'fr' : 'en', initial_prompt: lang === 'fr' ? undefined : KRIO_PROMPT }),
+        signal: AbortSignal.timeout(40_000),
+      });
+      if (res.ok) { const j = await res.json(); const text = String(j.result?.text ?? '').trim(); if (text) return { text, provider: 'cloudflare' }; }
+      else console.error('STT cloudflare', res.status, await res.text().catch(() => ''));
+    } catch (err) { console.error('STT cloudflare', err); }
   }
   throw new Error('Voice service is busy. Please type instead.');
 }

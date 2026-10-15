@@ -415,6 +415,13 @@
   .pay-amount { font-size: 40px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 
   .nowrap { white-space: nowrap; }
+  .report-kinds { display: flex; flex-wrap: wrap; gap: 8px; }
+  .report-kinds button { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 99px; border: 0; cursor: pointer;
+    background: var(--fill); color: var(--foreground); font-size: 15px; }
+  .report-kinds button.on { background: var(--primary); color: var(--primary-foreground); }
+  .report-item { align-items: flex-start; }
+  .report-msg { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; margin: 4px 0; }
+  .report-ok { width: 72px; height: 72px; border-radius: 50%; margin: 8px auto 0; display: grid; place-items: center; background: var(--primary-soft); color: var(--positive); }
   .owner-bars { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; height: 120px; align-items: end; margin-top: 8px; }
   .owner-bar { display: grid; grid-template-rows: 1fr auto; height: 100%; text-align: center; }
   .owner-bar span { align-self: end; background: var(--primary); border-radius: 4px 4px 0 0; min-height: 2px; }

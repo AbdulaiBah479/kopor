@@ -4,6 +4,8 @@ import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
 import { setMeta } from '@/db/repo';
 import { waLink } from '@/lib/phone';
+import { useOverlay } from '@/ui/overlay';
+import { ReportSheet } from './Report';
 
 const SUPPORT_WHATSAPP = import.meta.env.VITE_SUPPORT_WHATSAPP as string | undefined;
 const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL as string | undefined;
@@ -12,8 +14,10 @@ const QUESTIONS = ['start', 'credit', 'offline', 'backup', 'staff', 'payments', 
 export function Help() {
   const { t } = useTranslation();
   const nav = useNavigate();
+  const { openSheet } = useOverlay();
   return (
     <Page title={t('help.title')} sub={t('help.sub')} back="/more">
+      <button className="btn tinted block" data-testid="report-btn" onClick={() => openSheet(t('report.title'), <ReportSheet />)}><Icon name="alert" size={18} /> {t('report.title')}</button>
       <button className="btn primary block" onClick={async () => { await setMeta('tourDone', false); nav('/'); }}><Icon name="spark" size={18} /> {t('help.tour')}</button>
       <div className="list">
         {QUESTIONS.map((k) => (

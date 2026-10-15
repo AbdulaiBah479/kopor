@@ -26,4 +26,10 @@ export async function initMonitoring() {
   capture = (e) => Sentry.captureException(e);
 }
 
-export const reportError = (e: unknown) => { try { capture?.(e); } catch { /* never let reporting crash the app */ } };
+/** Sentry when configured; otherwise a throttled automatic bug report to the owner's report inbox. */
+export const reportError = (e: unknown) => {
+  try {
+    if (capture) capture(e);
+    else import('@/cloud/reports').then((m) => m.autoCrashReport(e)).catch(() => {});
+  } catch { /* never let reporting crash the app */ }
+};

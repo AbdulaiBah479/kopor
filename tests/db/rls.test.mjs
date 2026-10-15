@@ -198,6 +198,23 @@ await test('owner dashboard numbers are for the server only, and contain no pers
   assert.ok(!JSON.stringify(s).match(/Fatu|Sorie|0760|0785/), 'no names or phone numbers');
 });
 
+await test('anyone can send a problem report or complaint, nobody but the server can read them', async () => {
+  await as(null);
+  await q(`insert into reports (kind, message, about) values ('abuse', 'This business sent me rude reminders', 'Fatu Shop')`);
+  const none = await q('select * from reports').then((r) => r.rows.length === 0, (e) => /permission denied/.test(e.message));
+  assert.ok(none, 'signed-out users must not read reports');
+  await rejects(q(`insert into reports (kind, message, status) values ('bug', 'Pretend this is solved', 'resolved')`));
+  await rejects(q(`insert into reports (kind, message, reply) values ('bug', 'Fake reply here', 'we fixed it')`));
+  await rejects(q(`insert into reports (kind, message) values ('bug', 'no')`)); // too short
+  await as('cashier');
+  await q(`insert into reports (kind, message) values ('money', 'The total on my receipt looks wrong')`);
+  const hidden = await q('select * from reports').then((r) => r.rows.length === 0, (e) => /permission denied/.test(e.message));
+  assert.ok(hidden, 'signed-in users must not read reports either');
+  await rejects(q(`update reports set status = 'resolved'`).then((r) => { if (r.affectedRows) throw new Error('updated'); throw new Error('no-op'); }));
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  assert.equal((await q('select count(*)::int as n from reports')).rows[0].n, 2);
+  assert.equal((await q('select kopor_admin_reports_new() as n')).rows[0].n, 2);
+});
 await test('account deletion removes the user from businesses', async () => {
   await as('cashier');
   await rejects(q(`select kopor_forget_user($1)`, [U.cashier]), /permission denied/);

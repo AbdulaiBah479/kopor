@@ -75,11 +75,21 @@ const v3: V3Dict = {
     msg: 'Kushɛ {{name}}, jɔyn {{business}} na Kopor. 1) Opin {{link}} 2) Mek akawnt wit yu fon {{phone}} 3) Put dis invayt kod: {{code}}',
     joinTitle: 'Biznɛs invayt yu?', joinHelp: 'Put di kod we di ɔna sɛn yu.', code: 'Invayt kod', join: 'Jɔyn biznɛs', joined: 'Yu dɔn jɔyn di biznɛs',
   },  owner: {
+    reports: 'Ripɔt dɛn', waiting: 'de wet fɔ yu', inbox: 'Prɔblɛm ripɔt ɛn kɔmplen', noReports: 'No ripɔt yet.', resolve: 'Mak se i dɔn', reply: 'Ansa na WhatsApp', replyMsg: 'Kushɛ, na Kopor sɔpɔt dis bɔt di ripɔt we yu sɛn.', auto: 'insɛf', status: { new: 'Nyu', seen: 'Dɔn si', resolved: 'I dɔn' },
     title: 'Ɔna dashbɔd', sub: 'Aw Kopor de du na makit', accounts: 'Akawnt dɛn', thisWeek: '+{{n}} dis wik', businesses: 'Biznɛs dɛn',
     activeWeek: '{{n}} de wok dis wik', pro: 'Pro kɔstɔma dɛn', staff: '{{n}} staf akawnt', aiToday: 'AI kwɛstyɔn tide', locked: '{{n}} akawnt lɔk (rɔng PIN)',
     records: 'Rɛkɔd dis wik', payments: 'Ɔnlayn pement we dɔn', signups: 'Nyu akawnt, las 14 de', tools: 'Rɔn di savis',
     linkUsers: 'Akawnt dɛn (Supabase)', linkData: 'Databes (Supabase)', linkLogs: 'Sava fɔnkshɔn ɛn lɔg (Supabase)', linkDeploys: 'Ɔpdet (GitHub)',
     linkAi: 'AI yuz (Groq)', updated: 'Ɔpdet na {{time}}',
+  },  report: {
+    title: 'Ripɔt prɔblɛm ɔ kɔmplen', sub: 'Sɔntin nɔ rayt? Tɛl wi, wi de rid ɛni ripɔt', help: 'Pik wetin i bɔt ɛn tɛl wi wetin apin. Di Kopor tim de rid ɛni ripɔt.',
+    what: 'Wetin apin?', about: 'I bɔt', contact: 'Yu fon ɔ imel (if yu want)', contactHelp: 'Jɔs if yu want ansa.',
+    send: 'Sɛn ripɔt', thanks: 'Tɛnki', sent: 'Yu ripɔt dɔn rich di Kopor tim.', queued: 'Nɛt nɔ de. Yu ripɔt dɔn sev ɛn i go sɛn insɛf.',
+    ref: 'Rɛfrɛns: {{ref}}', alsoWa: 'Sɛn am bak na WhatsApp', waIntro: 'Kopor ripɔt', business: 'Ripɔt dis biznɛs',
+    privacy: 'Yu ripɔt get di skrin we yu bin de ɛn yu fon kayn, nɔ yu biznɛs rɛkɔd.',
+    kind: { bug: 'Ap nɔ de wok', money: 'Ɔmɔs nɔ rayt', payment: 'Pement prɔblɛm', account: 'Akawnt ɔ PIN', abuse: 'Kɔmplen bɔt biznɛs', suggestion: 'Advays', other: 'Ɔda tin' },
+    ph: { bug: 'Lɛk: We a tap Sev sɛl, natin nɔ de apin', money: 'Lɛk: Mi prɔfit tide sho Le 0 bɔt a sɛl 3 bag rɛs', payment: 'Lɛk: A pe wit Orange Money bɔt di invɔys stil se nɔ pe',
+      account: 'Lɛk: A nɔ kin sayn in na mi nyu fon', abuse: 'Lɛk: Dis biznɛs de sɛn mi mɛsej fɔ dɛt we a dɔn pe', suggestion: 'Lɛk: Duya ad …', other: 'Tɛl wi wetin apin' },
   },  pwa: {
     install: 'Put Kopor na yu fon', installHelp: 'Put Kopor na yu om skrin. I go opin lɛk ap ɛn i de wok widawt nɛt.',
     offline: 'Nɛt nɔ de. Ɔltin stil de wok ɛn i go sink we nɛt kam bak.', online: 'Nɛt dɔn kam bak',

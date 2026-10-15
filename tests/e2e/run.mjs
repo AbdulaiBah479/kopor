@@ -22,6 +22,8 @@ const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, de
 await ctx.addInitScript(() => { Object.defineProperty(navigator, 'canShare', { value: undefined, configurable: true }); });
 // Default: no cloud AI, so results are repeatable and the offline fallbacks are what gets tested.
 if (!LIVE_AI) await ctx.route('**/functions/v1/**', (r) => r.abort('internetdisconnected'));
+// Reports never go to the real inbox from tests: they take the offline path (kept on the phone).
+await ctx.route('**/rest/v1/reports**', (r) => r.abort('internetdisconnected'));
 await ctx.grantPermissions(['microphone']).catch(() => {});
 const page = await ctx.newPage();
 const errors = [];
@@ -291,6 +293,7 @@ await step('public pay page from a pay-me link', async () => {
   await page.getByText('076123456').waitFor();
   await page.locator('[data-vaul-drawer]').waitFor({ state: 'detached', timeout: 2000 }).catch(() => { throw new Error('a sheet is still open over the pay page'); });
   await noOverflow();
+  await page.getByTestId('report-business').waitFor();
   await shot('14-pay-page');
 });
 
@@ -307,6 +310,19 @@ await step('assistant answers without AI from the records', async () => {
   await page.getByPlaceholder(/Who owes me the most/i).press('Enter');
   // Offline: the rule-based answer. Live: any AI answer that names a debtor or says nobody owes.
   await page.locator('.bubble.ai', { hasText: LIVE_AI ? /Aminata|Isatu|Mohamed|owe/i : /owe you the most|Nobody owes you/ }).nth(LIVE_AI ? 1 : 0).waitFor({ timeout: 30000 });
+});
+await step('report a problem: send from More, saved for later when offline', async () => {
+  await go('/more');
+  await page.getByTestId('report-row').click();
+  const f = page.getByTestId('report-form');
+  await f.getByRole('radio', { name: 'Wrong amount' }).click();
+  await f.locator('[name=message]').fill('My profit for today shows the wrong amount');
+  await tapInSheet(f.getByRole('button', { name: 'Send report' }));
+  await page.getByTestId('report-done').waitFor();
+  const queued = await page.evaluate(() => JSON.parse(localStorage.getItem('kopor-report-queue') ?? '[]'));
+  if (queued.length !== 1 || queued[0].kind !== 'money' || JSON.stringify(queued[0].app_info).includes('Aminata')) throw new Error(JSON.stringify(queued).slice(0, 200));
+  await shot('16-report');
+  await page.evaluate(() => localStorage.removeItem('kopor-report-queue'));
 });
 await step('Excel export downloads', async () => {
   await go('/settings');

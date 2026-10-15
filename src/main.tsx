@@ -20,6 +20,10 @@ createRoot(document.getElementById('root')!).render(
 
 initMonitoring();
 initInstallPrompt();
+// Problem reports written while offline are sent when the connection is back.
+const flush = () => import('./cloud/reports').then((m) => m.flushReports()).catch(() => {});
+setTimeout(flush, 5000);
+window.addEventListener('online', flush);
 window.addEventListener('unhandledrejection', (e) => reportError(e.reason));
 
 // Offline support (Workbox service worker via vite-plugin-pwa). New versions activate automatically.
