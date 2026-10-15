@@ -78,11 +78,12 @@ export async function complete(messages: Msg[], opts: { vision?: boolean; maxTok
 /* Speech to text with Whisper (free on Groq; any OpenAI-compatible /audio/transcriptions endpoint works). */
 // Plain letters only: special Krio letters (ɛ, ɔ) in the prompt make Whisper answer in phonetic symbols and drop
 // numbers. Krio is written here the way people type it on phones.
-const KRIO_PROMPT = 'Shop record in Sierra Leone. Sold 3 bags of rice for 2,500 Leones. Aminata took 2 tins of palm oil on credit. ' +
-  'Mohamed don pay 300. A sel tu bag res. Spent 200 on transport. Orange Money, Afrimoney, QMoney.';
+const KRIO_PROMPT = 'Shop record in Sierra Leone, always with the amount in Leones. Sold 3 bags of rice for 2,500 Leones. ' +
+  'Fatu took 2 tins of oil for 360 Leones on credit. Mohamed don pay 300 Leones. A sel tu bag res fo 1,700. Spent 200 Leones on transport.';
+
 export async function transcribe(file: File, lang: string, hints = ''): Promise<{ text: string; provider: string }> {
   // The business's own customer and product names make Whisper spell them right (prompt limit ~224 tokens).
-  const prompt = (KRIO_PROMPT + (hints ? ` Names: ${hints.replace(/ɛ/g, 'e').replace(/ɔ/g, 'o').replace(/ŋ/g, 'ng').replace(/[^A-Za-z0-9 ,.'()-]/g, ' ').slice(0, 500)}.` : '')).slice(0, 900);
+  const prompt = ((hints ? `Names: ${hints.replace(/ɛ/g, 'e').replace(/ɔ/g, 'o').replace(/ŋ/g, 'ng').replace(/[^A-Za-z0-9 ,.'()-]/g, ' ').slice(0, 400)}. ` : '') + KRIO_PROMPT).slice(0, 900);
   const e = (k: string) => Deno.env.get(k) || undefined;
   const chain = [
     { name: 'groq', base: 'https://api.groq.com/openai/v1', key: e('GROQ_API_KEY'), models: list(e('GROQ_STT_MODELS'), ['whisper-large-v3', 'whisper-large-v3-turbo']) },
