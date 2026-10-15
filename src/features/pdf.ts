@@ -12,12 +12,13 @@ import { invoiceCode, invoiceTotal } from '@/domain/invoices';
 import { health, monthlySeries } from '@/domain/health';
 import { creditTotals } from '@/domain/credit';
 import { stockValue } from '@/domain/stock';
+import { pnl } from '@/domain/pnl';
 
 type T = (key: string, opts?: Record<string, unknown>) => string;
 
 const pdfSafe = latinSafe;
 
-const GREEN: [number, number, number] = [11, 122, 59];
+const GREEN: [number, number, number] = [4, 120, 87]; // Kopor emerald #047857
 const m = (v: number) => pdfSafe(formatMoney(v));
 
 function header(doc: jsPDF, book: Book, title: string, sub: string) {
@@ -65,6 +66,31 @@ export function invoicePdf(book: Book, inv: Invoice, t: T, loc: string): Blob {
   doc.setDrawColor(200).line(14, y + 2, 196, y + 2);
   doc.setFontSize(8).text(pdfSafe(`${t('inv.verify')}: ${invoiceCode(book.org.name, inv)} · ${t('inv.generated')}`), 14, y + 8);
   if (paid) doc.setTextColor(...GREEN).setFont('helvetica', 'bold').setFontSize(28).text(pdfSafe(t('inv.paid').toUpperCase()), 150, 52, { angle: 12 });
+  return doc.output('blob');
+}
+
+/** Profit & loss statement for a period (see domain/pnl.ts). */
+export function pnlPdf(book: Book, from: string, to: string, t: T, loc: string): Blob {
+  const p = pnl(book, from, to);
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  header(doc, book, t('pnl.title'), `${fmtDate(from, loc)} - ${fmtDate(to, loc)}`);
+  const body: [string, string][] = [
+    [t('pnl.revenue'), m(p.revenue)],
+    [t('pnl.cogs'), m(-p.cogs)],
+    [`${t('pnl.gross')} (${p.grossMargin}%)`, m(p.gross)],
+    ...p.expenses.map((e) => [t(`categories.${e.category}`), m(-e.amount)] as [string, string]),
+    [t('pnl.operating'), m(-p.operating)],
+  ];
+  autoTable(doc, {
+    startY: 40, body: body.map(([a, b]) => [pdfSafe(a), b]),
+    foot: [[pdfSafe(`${t('pnl.net')} (${p.netMargin}%)`), m(p.net)]],
+    footStyles: { fillColor: GREEN, textColor: 255 }, columnStyles: { 1: { halign: 'right' } }, theme: 'striped',
+  });
+  let y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+  doc.setFontSize(9).setTextColor(60).text(doc.splitTextToSize(pdfSafe(t('pnl.stockNote', { amount: formatMoney(p.stockBought) })), 182), 14, y);
+  y += 10;
+  const code = refCode([book.org.id, from, to, p.revenue, p.net].join('|'));
+  doc.setFontSize(8).text(pdfSafe(`${t('inv.verify')}: ${code} · ${t('inv.generated')}`), 14, y);
   return doc.output('blob');
 }
 

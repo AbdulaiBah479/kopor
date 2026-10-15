@@ -68,6 +68,7 @@ const base = {
     due: 'due {{date}}', reminderMsg: 'Hello {{name}}, this is a friendly reminder from {{business}}. Your balance is {{amount}}.{{due}}{{momo}} Thank you!',
     reminderDue: ' It was due on {{date}}.', reminderMomo: ' You can pay by mobile money to {{momo}}.', statementTitle: 'Statement for {{name}} from {{business}}',
     balance: 'Balance', requestPay: 'Request payment',
+    confirmGave: 'Hello {{name}}, {{business}} recorded {{amount}} on your account today{{note}}. Your balance is now {{balance}}. Thank you!', confirmGot: 'Hello {{name}}, {{business}} received your payment of {{amount}} today{{note}}. Your balance is now {{balance}}. Thank you!', sendConfirm: 'Send to customer',
   },
   cash: {
     title: 'Cash Book', sub: 'Sales, expenses and profit', sales: 'Sales', expenses: 'Expenses', profit: 'Profit', bestSellers: 'Best sellers',

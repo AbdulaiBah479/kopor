@@ -13,7 +13,8 @@ import { recordSale, recordExpense, deleteTxn, summary, topProducts, itemsLabel,
 import { computeTotals, taxSettings } from '@/domain/tax';
 import { recordReturn, returnedQty } from '@/domain/returns';
 import { expectedCash, closeDay, lastClosing } from '@/domain/closing';
-import { DeleteButton } from './Credit';
+import { DeleteButton, useEntryConfirm } from './Credit';
+import { creditTotals } from '@/domain/credit';
 
 type Range = 'today' | 'week' | 'month' | 'all';
 const rangeDates = (r: Range): [string, string] => {
@@ -111,6 +112,7 @@ export function SaleSheet({ prefill = {} }: { prefill?: { items?: Partial<LineIt
   const [discount, setDiscount] = useState(0);
   const [method, setMethod] = useState<Method>(prefill.method ?? 'cash');
   const [customer, setCustomer] = useState(prefill.customer ?? '');
+  const confirm = useEntryConfirm();
   const [note, setNote] = useState(prefill.note ?? '');
   const [date, setDate] = useState(today());
   const real = items.filter((i) => i.name?.trim());
@@ -133,7 +135,10 @@ export function SaleSheet({ prefill = {} }: { prefill?: { items?: Partial<LineIt
       e.preventDefault();
       try {
         const txn = await recordSale(ctx, { items, amount, discount, method, customer, note, date });
-        closeSheet(); toast(t(method === 'credit' ? 'cash.creditSaved' : 'cash.saleSaved'), { undo: () => deleteTxn(ctx, txn.id) });
+        // Sold on credit to a customer with a phone: offer the WhatsApp confirmation of what they now owe.
+        const c = method === 'credit' ? book.contacts.find((x) => x.name.toLowerCase() === customer.trim().toLowerCase()) : undefined;
+        const share = c ? confirm(c, 'gave', txn.amount, itemsLabel(txn.items) || note) : undefined;
+        closeSheet(); toast(t(method === 'credit' ? 'cash.creditSaved' : 'cash.saleSaved'), { undo: () => deleteTxn(ctx, txn.id), share });
       } catch (err) { fail(err); }
     }}>
       <ScanToggle onCode={addScanned} />
@@ -270,7 +275,17 @@ function CloseDaySheet() {
   return (
     <form className="form" data-testid="close-form" onSubmit={async (e) => {
       e.preventDefault();
-      try { await closeDay(ctx, { openingFloat: float, counted, expected: x.expected, note }); closeSheet(); toast(t('closing.saved')); } catch (err) { fail(err); }
+      try {
+        await closeDay(ctx, { openingFloat: float, counted, expected: x.expected, note });
+        // A day summary the owner can send to themselves or a partner on WhatsApp.
+        const d = today(), s = summary(book, d, d), owed = creditTotals(book).get, top = topProducts(book, d, d, 3);
+        const text = t('closing.summary', {
+          business: book.org.name, date: d, sales: formatMoney(s.sales), expenses: formatMoney(s.expenses), profit: formatMoney(s.profit),
+          counted: formatMoney(counted), diff: formatMoney(diff, { sign: true }), owed: formatMoney(owed),
+          top: top.length ? top.map((p) => ` ×${p.qty}`).join(', ') : '—',
+        });
+        closeSheet(); toast(t('closing.saved'), { share: { label: t('closing.sendSummary'), href: `https://wa.me/?text=${encodeURIComponent(text)}` } });
+      } catch (err) { fail(err); }
     }}>
       <div className="small muted">{t('closing.help')}</div>
       <Field label={t('closing.float')}><MoneyInput value={float} onChange={setFloat} name="float" /></Field>

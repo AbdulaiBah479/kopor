@@ -10,7 +10,7 @@ import { PermissionError } from '@/db/permissions';
 import { reportError } from '@/features/monitoring';
 
 interface SheetState { title: string; body: ReactNode; key: number }
-export interface ToastOpts { undo?: () => Promise<unknown> | unknown; tone?: 'success' | 'error' | 'info' }
+export interface ToastOpts { undo?: () => Promise<unknown> | unknown; tone?: 'success' | 'error' | 'info'; share?: { label: string; href: string } }
 interface Overlay {
   openSheet: (title: string, body: ReactNode) => void;
   closeSheet: () => void;
@@ -46,8 +46,11 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
   const openSheet = useCallback((title: string, body: ReactNode) => { setSheet({ title, body, key: Date.now() }); setOpen(true); }, []);
   const toast = useCallback((m: string, opts: ToastOpts = {}) => {
     if (opts.tone !== 'error') haptic();
-    const action = opts.undo ? { label: t('common.undo'), onClick: () => { Promise.resolve(opts.undo!()).then(() => sonner(t('common.undone'))); } } : undefined;
-    if (opts.tone === 'error') sonner.error(m); else sonner.success(m, { action, duration: opts.undo ? 6000 : 2800 });
+    const undo = opts.undo ? { label: t('common.undo'), onClick: () => { Promise.resolve(opts.undo!()).then(() => sonner(t('common.undone'))); } } : undefined;
+    // A share action (e.g. "Send to customer" on WhatsApp) goes first; Undo then moves to the secondary button.
+    const share = opts.share ? { label: opts.share.label, onClick: () => { window.open(opts.share!.href, '_blank', 'noopener'); } } : undefined;
+    if (opts.tone === 'error') sonner.error(m);
+    else sonner.success(m, { action: share ?? undo, cancel: share ? undo : undefined, duration: share ? 9000 : opts.undo ? 6000 : 2800 });
   }, [t]);
   const fail = useCallback((e: unknown) => {
     console.error(e);

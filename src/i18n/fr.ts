@@ -68,6 +68,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     due: 'échéance {{date}}', reminderMsg: 'Bonjour {{name}}, petit rappel de {{business}}. Votre solde est de {{amount}}.{{due}}{{momo}} Merci !',
     reminderDue: ' Échéance : {{date}}.', reminderMomo: ' Vous pouvez payer par mobile money au {{momo}}.', statementTitle: 'Relevé de {{name}} chez {{business}}',
     balance: 'Solde', requestPay: 'Demander le paiement',
+    confirmGave: 'Bonjour {{name}}, {{business}} a enregistré {{amount}} sur votre compte aujourd’hui{{note}}. Votre solde est maintenant de {{balance}}. Merci !', confirmGot: 'Bonjour {{name}}, {{business}} a reçu votre paiement de {{amount}} aujourd’hui{{note}}. Votre solde est maintenant de {{balance}}. Merci !', sendConfirm: 'Envoyer au client',
   },
   cash: {
     title: 'Caisse', sub: 'Ventes, dépenses et bénéfice', sales: 'Ventes', expenses: 'Dépenses', profit: 'Bénéfice', bestSellers: 'Meilleures ventes',

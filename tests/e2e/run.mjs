@@ -84,7 +84,7 @@ await step('first-use guided tour shows and can be finished', async () => {
   await shot('02-home');
 });
 
-for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money']) {
+for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl']) {
   await step(`screen ${r} renders at phone width`, async () => { await go(r); await noOverflow(); });
 }
 
@@ -323,6 +323,20 @@ await step('report a problem: send from More, saved for later when offline', asy
   if (queued.length !== 1 || queued[0].kind !== 'money' || JSON.stringify(queued[0].app_info).includes('Aminata')) throw new Error(JSON.stringify(queued).slice(0, 200));
   await shot('16-report');
   await page.evaluate(() => localStorage.removeItem('kopor-report-queue'));
+});
+await step('profit & loss statement and price list', async () => {
+  await go('/health');
+  await page.getByTestId('open-pnl').click();
+  const p = page.getByTestId('pnl');
+  await p.getByText('Gross profit').waitFor();
+  await p.getByText('Net profit').waitFor();
+  const cells = await p.locator('td.r').allInnerTexts();
+  if (cells.length < 4 || !cells.every((c) => /Le/.test(c))) throw new Error('statement figures missing: ' + cells.join(' | '));
+  await page.getByRole('tab', { name: 'This year' }).click();
+  await page.getByRole('tab', { name: 'This year', selected: true }).waitFor();
+  await shot('17-pnl');
+  await go('/stock');
+  await page.getByTestId('share-catalog').waitFor();
 });
 await step('Excel export downloads', async () => {
   await go('/settings');

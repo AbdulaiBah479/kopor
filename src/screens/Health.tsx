@@ -43,6 +43,7 @@ export function Health() {
         ))}
       </div>
       <Link className="btn primary block" to="/report"><Icon name="bank" size={18} /> {t('health.openReport')}</Link>
+      <Link className="btn tinted block" to="/pnl" data-testid="open-pnl"><Icon name="trendUp" size={18} /> {t('pnl.title')}</Link>
       <div className="card flat small">{t('health.reportHelp')}</div>
     </Page>
   );

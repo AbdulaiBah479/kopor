@@ -88,7 +88,9 @@ const v3 = {
     kind: { bug: 'App not working', money: 'Wrong amount', payment: 'Payment problem', account: 'Account or PIN', abuse: 'Complaint about a business', suggestion: 'Suggestion', other: 'Something else' },
     ph: { bug: 'e.g. When I tap Save sale, nothing happens', money: 'e.g. My profit for today shows Le 0 but I sold 3 bags of rice', payment: 'e.g. I paid with Orange Money but the invoice still says unpaid',
       account: 'e.g. I cannot sign in on my new phone', abuse: 'e.g. This business keeps sending me messages for a debt I already paid', suggestion: 'e.g. Please add …', other: 'Tell us what happened' },
-  },  pwa: {
+  },  pnl: { title: 'Profit & loss', sub: 'What the business really earned', month: 'This month', last: 'Last month', quarter: '3 months', year: 'This year', revenue: 'Sales (revenue)', revenueHelp: '{{count}} sales, after tax and refunds', cogs: 'Cost of goods sold', cogsHelp: 'Buying price of the items you sold', gross: 'Gross profit', operating: 'Running costs', net: 'Net profit', stockNote: 'Stock you bought in this period ({{amount}}) is not a cost until it is sold: it is still on your shelves.', cogsWarn: 'Many sales were typed as amounts without products, so their buying cost is unknown and profit may look higher than it is. Add products to sales for an exact statement.' },
+  catalog: { share: 'Share price list', soldOut: 'sold out', msg: '*{{business}}: price list*\n\n{{lines}}\n\nOrder: {{phone}}\nPay: {{momo}}\n\n(Kopor)' },
+  pwa: {
     install: 'Install Kopor', installHelp: 'Put Kopor on your home screen. It opens like an app and works without internet.',
     offline: 'You are offline. Everything still works and will sync when you are back.', online: 'Back online',
     update: 'A new version of Kopor is ready.', reload: 'Update now', share: 'Share Kopor',

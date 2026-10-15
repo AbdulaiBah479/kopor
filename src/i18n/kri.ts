@@ -68,6 +68,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     due: 'fɔ pe {{date}}', reminderMsg: 'Kushɛ {{name}}, dis na fayn rimayn frɔm {{business}}. Yu balans na {{amount}}.{{due}}{{momo}} Tɛnki!',
     reminderDue: ' I bin fɔ pe na {{date}}.', reminderMomo: ' Yu kin pe wit mobayl mɔni to {{momo}}.', statementTitle: 'Stetmɛnt fɔ {{name}} frɔm {{business}}',
     balance: 'Balans', requestPay: 'Aks fɔ pe',
+    confirmGave: 'Kushɛ {{name}}, {{business}} rayt {{amount}} pan yu akawnt tide{{note}}. Yu balans naw na {{balance}}. Tɛnki!', confirmGot: 'Kushɛ {{name}}, {{business}} dɔn get yu pement {{amount}} tide{{note}}. Yu balans naw na {{balance}}. Tɛnki!', sendConfirm: 'Sɛn to kɔstɔma',
   },
   cash: {
     title: 'Kesh Buk', sub: 'Sɛl, ɛkspens ɛn prɔfit', sales: 'Sɛl', expenses: 'Ɛkspens', profit: 'Prɔfit', bestSellers: 'Wetin sɛl pas',

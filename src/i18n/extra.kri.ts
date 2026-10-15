@@ -20,6 +20,7 @@ const extra: ExtraDict = {
     confirm: 'Kɔnfɔm', saved: 'Dɔn rayt di tin we kam bak',
   },
   closing: {
+    sendSummary: 'Sɛn di de sɔmari', summary: '*{{business}}: de sɔmari {{date}}*\nSɛl: {{sales}}\nƐkspens: {{expenses}}\nPrɔfit: {{profit}}\nKesh we a kɔnt: {{counted}} ({{diff}})\nKɔstɔma ɔw: {{owed}}\nWetin sɛl pas: {{top}}\n\n(Kopor)',
     title: 'Klos di de', help: 'Kɔnt di kesh na yu drɔ we di de dɔn. Kopor go chɛk am wit yu rɛkɔd.',
     last: 'Las klos {{date}} · difrɛns {{diff}}', float: 'Kesh na drɔ dis mɔnin', cashSales: 'Kesh sɛl tide', cashOut: 'Kesh we kɔmɔt tide',
     expected: 'Kesh we fɔ de na drɔ', counted: 'Kesh we yu kɔnt naw', difference: 'Difrɛns',

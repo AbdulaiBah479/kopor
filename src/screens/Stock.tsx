@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { shareText } from '@/lib/share';
 import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
@@ -28,8 +29,18 @@ export function StockList() {
     .filter((p) => !q || `${p.name} ${p.sku}`.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  // Price list to share on WhatsApp (a simple online catalogue): every product with a price, sold-out items marked.
+  const catalogText = () => {
+    const lines = [...book.products].filter((p) => p.price > 0).sort((a, b) => a.name.localeCompare(b.name))
+      .map((p) => `• ${p.name}: ${formatMoney(p.price)}${p.unit ? `/${p.unit}` : ''}${(levels.get(p.id) ?? 0) <= 0 ? `  (${t('catalog.soldOut')})` : ''}`).join('\n');
+    return t('catalog.msg', { business: book.org.name, lines, phone: book.org.phone || '—', momo: book.org.momo_number || '—' });
+  };
+
   return (
     <Page guide="stock" title={t('stock.title')} sub={t('stock.sub', { count: book.products.length, value: formatMoney(stockValue(book)) })}
+      right={book.products.length > 0 && (
+        <button className="icon-btn" aria-label={t('catalog.share')} data-testid="share-catalog" onClick={() => shareText(catalogText())}><Icon name="share" size={22} /></button>
+      )}
       fab={can('stock') && <button className="fab" onClick={() => openSheet(t('stock.newProduct'), <ProductSheet />)}><Icon name="plus" /> {t('stock.product')}</button>}>
       <div className="grid2">
         <div className="stat"><div className="k">{t('stock.value')}</div><div className="v"><Money v={stockValue(book)} /></div></div>

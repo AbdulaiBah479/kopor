@@ -90,7 +90,9 @@ const v3: V3Dict = {
     kind: { bug: 'Ap nɔ de wok', money: 'Ɔmɔs nɔ rayt', payment: 'Pement prɔblɛm', account: 'Akawnt ɔ PIN', abuse: 'Kɔmplen bɔt biznɛs', suggestion: 'Advays', other: 'Ɔda tin' },
     ph: { bug: 'Lɛk: We a tap Sev sɛl, natin nɔ de apin', money: 'Lɛk: Mi prɔfit tide sho Le 0 bɔt a sɛl 3 bag rɛs', payment: 'Lɛk: A pe wit Orange Money bɔt di invɔys stil se nɔ pe',
       account: 'Lɛk: A nɔ kin sayn in na mi nyu fon', abuse: 'Lɛk: Dis biznɛs de sɛn mi mɛsej fɔ dɛt we a dɔn pe', suggestion: 'Lɛk: Duya ad …', other: 'Tɛl wi wetin apin' },
-  },  pwa: {
+  },  pnl: { title: 'Prɔfit ɛn lɔs', sub: 'Wetin di biznɛs rili mek', month: 'Dis mɔnt', last: 'Las mɔnt', quarter: '3 mɔnt', year: 'Dis ia', revenue: 'Sɛl', revenueHelp: '{{count}} sɛl, afta taks ɛn rifɔn', cogs: 'Kɔst fɔ di tin dɛn we yu sɛl', cogsHelp: 'Di prays we yu bay di tin dɛn we yu sɛl', gross: 'Gros prɔfit', operating: 'Rɔnin kɔst', net: 'Nɛt prɔfit', stockNote: 'Stɔk we yu bay na dis tɛm ({{amount}}) nɔto kɔst te yu sɛl am: i stil de na yu shɛlf.', cogsWarn: 'Bɔku sɛl na jɔs ɔmɔs widawt prɔdak, so wi nɔ no di kɔst ɛn di prɔfit kin tan lɛk i big pas aw i bi. Ad prɔdak to sɛl fɔ kɔrɛkt ripɔt.' },
+  catalog: { share: 'Sheb prays list', soldOut: 'dɔn', msg: '*{{business}}: prays list*\n\n{{lines}}\n\nFɔ ɔda: {{phone}}\nFɔ pe: {{momo}}\n\n(Kopor)' },
+  pwa: {
     install: 'Put Kopor na yu fon', installHelp: 'Put Kopor na yu om skrin. I go opin lɛk ap ɛn i de wok widawt nɛt.',
     offline: 'Nɛt nɔ de. Ɔltin stil de wok ɛn i go sink we nɛt kam bak.', online: 'Nɛt dɔn kam bak',
     update: 'Nyu Kopor dɔn rɛdi.', reload: 'Ɔpdet naw', share: 'Sheb Kopor',

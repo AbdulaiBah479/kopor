@@ -25,6 +25,25 @@ function ledgerRows(newestFirst: LedgerEntry[]) {
   });
 }
 import { findByName, AppError } from '@/domain/book';
+/**
+ * Confirmation the customer receives on WhatsApp after an entry ("You took Le 500, your balance is Le 1,500"),
+ * the trust feature of the best credit-book apps: no arguments later about what was owed.
+ * Returns a toast share action, or undefined when the contact has no phone number.
+ */
+export function useEntryConfirm() {
+  const { t } = useTranslation();
+  const book = useBook();
+  return (c: Pick<Contact, 'id' | 'name' | 'phone'>, type: 'gave' | 'got', amount: number, note = '') => {
+    if (!c.phone) return undefined;
+    const before = balances(book.ledger).get(c.id) ?? 0;
+    const after = before + (type === 'gave' ? amount : -amount);
+    const text = t(type === 'gave' ? 'credit.confirmGave' : 'credit.confirmGot', {
+      name: c.name.split(' ')[0], business: book.org.name, amount: formatMoney(amount),
+      note: note.trim() ? ` (${note.trim()})` : '', balance: formatMoney(Math.max(0, after)),
+    });
+    return { label: t('credit.sendConfirm'), href: waLink(c.phone, text, book.org.country_code) };
+  };
+}
 import { createUssdCode } from '@/cloud/payments';
 
 /** Polite reminder message in the current language. */
@@ -192,6 +211,7 @@ const newEntry = (): EntryForm => ({ amount: 0, note: '', date: today(), due: ad
 
 function EntrySheet({ contact, type }: { contact: Contact; type: 'gave' | 'got' }) {
   const { t } = useTranslation();
+  const confirm = useEntryConfirm();
   const { ctx } = useApp();
   const { closeSheet, toast, fail } = useOverlay();
   const [f, setF] = useState(newEntry);
@@ -199,8 +219,9 @@ function EntrySheet({ contact, type }: { contact: Contact; type: 'gave' | 'got' 
     <form className="form" onSubmit={async (e) => {
       e.preventDefault();
       try {
+        const share = confirm(contact, type, f.amount, f.note);
         const entry = await addEntry(ctx, { contactId: contact.id, type, amount: f.amount, note: f.note, date: f.date, dueDate: f.due });
-        closeSheet(); toast(t('common.saved'), { undo: () => removeEntry(ctx, entry.id) });
+        closeSheet(); toast(t('common.saved'), { undo: () => removeEntry(ctx, entry.id), share });
       } catch (err) { fail(err); }
     }}>
       <EntryFields type={type} f={f} setF={setF} />
@@ -215,6 +236,7 @@ export function NewCreditSheet({ name = '', type: initial = 'gave', amount = 0, 
   const { ctx } = useApp();
   const { closeSheet, toast, fail } = useOverlay();
   const nav = useNavigate();
+  const confirm = useEntryConfirm();
   const [who, setWho] = useState({ name, phone: '' });
   const [type, setType] = useState<'gave' | 'got'>(initial);
   const [f, setF] = useState({ ...newEntry(), amount, note });
@@ -226,7 +248,9 @@ export function NewCreditSheet({ name = '', type: initial = 'gave', amount = 0, 
           const c = await ensureContact(ctx, who.name, who.phone);
           return [c, await addEntry(ctx, { contactId: c.id, type, amount: f.amount, note: f.note, date: f.date, dueDate: f.due })] as const;
         });
-        closeSheet(); toast(t('common.saved'), { undo: () => removeEntry(ctx, entry.id) }); nav(`/credit/${c.id}`);
+        // ook is the snapshot from before this save, so the confirmation's starting balance is right.
+        const share = confirm({ ...c, phone: c.phone || who.phone }, type, f.amount, f.note);
+        closeSheet(); toast(t('common.saved'), { undo: () => removeEntry(ctx, entry.id), share }); nav(`/credit/${c.id}`);
       } catch (err) { fail(err); }
     }}>
       <Field label={t('credit.who')}><input name="name" list="dl-contacts" required autoComplete="off" value={who.name} placeholder="e.g. Aminata Kamara"

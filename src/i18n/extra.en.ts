@@ -18,6 +18,7 @@ const extra = {
     confirm: 'Confirm return', saved: 'Return recorded',
   },
   closing: {
+    sendSummary: 'Send day summary', summary: '*{{business}}: day summary {{date}}*\nSales: {{sales}}\nExpenses: {{expenses}}\nProfit: {{profit}}\nCash counted: {{counted}} ({{diff}})\nCustomers owe: {{owed}}\nBest sellers: {{top}}\n\n(Kopor)',
     title: 'Close the day', help: 'Count the cash in your drawer at the end of the day. Kopor compares it with your records.',
     last: 'Last closed {{date}} · difference {{diff}}', float: 'Cash in drawer this morning (float)', cashSales: 'Cash sales today', cashOut: 'Cash paid out today',
     expected: 'Cash expected in drawer', counted: 'Cash counted now', difference: 'Difference',

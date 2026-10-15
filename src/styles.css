@@ -358,13 +358,17 @@
   .round-nav b { flex: 1; text-align: center; font-weight: 600; }
 
   /* ---------- Documents (always printed on white) ---------- */
-  .doc { background: #fff; color: #15201a; border-radius: 14px; padding: 22px; font-size: 14px; letter-spacing: 0; }
+  /* Documents (invoices, reports, statements) are white paper in every mode, with paper-safe text colours. */
+  .doc { background: #fff; color: #15201a; border-radius: 14px; padding: 22px; font-size: 14px; letter-spacing: 0;
+    --foreground: #15201a; --muted-foreground: #5c5c61; --primary: #047857; --danger: #b42318; color-scheme: light; }
   .doc h2 { font-size: 22px; color: #047857; }
   .doc table { width: 100%; border-collapse: collapse; margin: 12px 0; }
   .doc th, .doc td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e5e5ea; }
   .doc th { font-size: 12px; color: #6b6b70; text-transform: uppercase; letter-spacing: .04em; }
   .doc td.r, .doc th.r { text-align: right; font-variant-numeric: tabular-nums; }
   .doc td.r { white-space: nowrap; }
+  .doc tr.sub-tot td { font-weight: 600; }
+  .doc tr.tot td { font-weight: 700; }
   .doc th { line-height: 1.25; }
   .doc .tot td { font-weight: 700; font-size: 16px; border-bottom: 0; }
   .doc .meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: #4a4a50; }

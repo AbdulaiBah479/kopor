@@ -20,6 +20,7 @@ const extra: ExtraDict = {
     confirm: 'Confirmer le retour', saved: 'Retour enregistré',
   },
   closing: {
+    sendSummary: 'Envoyer le résumé du jour', summary: '*{{business}} : résumé du {{date}}*\nVentes : {{sales}}\nDépenses : {{expenses}}\nBénéfice : {{profit}}\nCaisse comptée : {{counted}} ({{diff}})\nDû par les clients : {{owed}}\nMeilleures ventes : {{top}}\n\n(Kopor)',
     title: 'Clôturer la journée', help: 'Comptez l’argent de la caisse en fin de journée. Kopor le compare à vos écritures.',
     last: 'Dernière clôture {{date}} · écart {{diff}}', float: 'Fond de caisse ce matin', cashSales: 'Ventes en espèces aujourd’hui', cashOut: 'Sorties en espèces aujourd’hui',
     expected: 'Espèces attendues en caisse', counted: 'Espèces comptées', difference: 'Écart',

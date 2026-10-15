@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright-core';
 
 const PORT = 4178, BASE = `http://localhost:${PORT}/`;
-const ROUTES = ['/', '/credit', '/cash', '/stock', '/more', '/money', '/groups', '/invoices', '/reminders', '/assistant', '/health', '/team', '/settings', '/help', '/plan', '/report', '/legal/privacy'];
+const ROUTES = ['/', '/credit', '/cash', '/stock', '/more', '/money', '/groups', '/invoices', '/reminders', '/assistant', '/health', '/team', '/settings', '/help', '/plan', '/report', '/pnl', '/legal/privacy'];
 const axe = readFileSync('node_modules/axe-core/axe.min.js', 'utf8');
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
 await new Promise((r) => server.stdout.on('data', (d) => String(d).includes(String(PORT)) && r()));
