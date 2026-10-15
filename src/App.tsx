@@ -5,14 +5,16 @@ import { AppProvider, useApp } from './state/app';
 import { OverlayProvider } from './ui/overlay';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { Welcome } from './screens/Welcome';
-import { Lock } from './screens/Lock';
 import { Home } from './screens/Home';
-import { CreditList, ContactDetail } from './screens/Credit';
+import { CreditList } from './screens/Credit';
 import { CashBook } from './screens/Cash';
-import { StockList } from './screens/Stock';
-import { More } from './screens/More';
 
-// Less-used screens load on demand to keep the first load small on slow networks.
+// Less-used screens load on demand to keep the first load small on slow networks (after the first visit they are
+// stored for offline use, so they still open instantly).
+const Lock = lazyRetry(() => import('./screens/Lock').then((m) => ({ default: m.Lock })));
+const ContactDetail = lazyRetry(() => import('./screens/Credit').then((m) => ({ default: m.ContactDetail })));
+const StockList = lazyRetry(() => import('./screens/Stock').then((m) => ({ default: m.StockList })));
+const More = lazyRetry(() => import('./screens/More').then((m) => ({ default: m.More })));
 const Groups = lazyRetry(() => import('./screens/Groups').then((m) => ({ default: m.GroupList })));
 const GroupDetail = lazyRetry(() => import('./screens/Groups').then((m) => ({ default: m.GroupDetail })));
 const Invoices = lazyRetry(() => import('./screens/Invoices').then((m) => ({ default: m.InvoiceList })));
@@ -49,7 +51,7 @@ function Gate() {
   );
   if (!ready || (session && book === undefined)) return <Boot />;
   if (!session || !book) return <Welcome />;
-  if (locked) return <Lock />;
+  if (locked) return <Suspense fallback={<Boot />}><Lock /></Suspense>;
   return (
     <ErrorBoundary resetKey={pathname}>
     <Suspense fallback={<Boot />}>

@@ -7,7 +7,6 @@ import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
 import { Avatar, BarChart, Money, ScoreRing, Seg, useDate } from '@/ui/widgets';
-import { SearchSheet } from '@/ui/SearchSheet';
 import { formatMoney } from '@/lib/money';
 import { today, monthStart, addDays } from '@/lib/dates';
 import { waLink } from '@/lib/phone';
@@ -21,6 +20,7 @@ import { NewCreditSheet, useReminderText } from './Credit';
 
 // AI tools (and their validation library) download only when first used.
 const VoiceSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.VoiceSheet })));
+const SearchSheet = lazyRetry(() => import('@/ui/SearchSheet').then((m) => ({ default: m.SearchSheet })));
 const ScanSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.ScanSheet })));
 
 type Period = 'today' | 'week' | 'month';
@@ -69,12 +69,12 @@ export function Home() {
   const creditEntry = () => openSheet(t('credit.addEntry'), <NewCreditSheet />);
   const speak = () => openSheet(t('ai.speakTitle'), <Suspense fallback={t('common.loading')}><VoiceSheet /></Suspense>);
   const scan = () => openSheet(t('ai.scanTitle'), <Suspense fallback={t('common.loading')}><ScanSheet /></Suspense>);
-  const search = () => openSheet(t('ux.searchTitle'), <SearchSheet actions={[
+  const search = () => openSheet(t('ux.searchTitle'), <Suspense fallback={t('common.loading')}><SearchSheet actions={[
     { label: t('cash.newSale'), icon: 'plus', run: sale }, { label: t('cash.newExpense'), icon: 'minus', run: expense },
     { label: t('credit.addEntry'), icon: 'book', run: creditEntry }, { label: t('ai.speakTitle'), icon: 'mic', run: speak },
     { label: t('ai.askTitle'), icon: 'spark', run: () => nav('/assistant') }, { label: t('inv.new'), icon: 'file', run: () => nav('/invoices') },
     { label: t('settings.reminders'), icon: 'bell', run: () => nav('/reminders') },
-  ]} />);
+  ]} /></Suspense>);
 
   const canPickBranch = book.branches.length > 1 && member && !member.branch_id;
   const periodLabel = t(period === 'today' ? 'ux.periodToday' : period === 'week' ? 'ux.periodWeek' : 'ux.periodMonth');

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'motion/react';
 import { Icon } from './Icon';
 import { haptic, useOverlay } from './overlay';
 import { useApp } from '@/state/app';
@@ -83,9 +82,9 @@ export function Page({ title, sub, back, right, children, fab, after, guide }: {
           </div>
         </div>
       )}
-      <motion.main className="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
+      <main className="content fade-in">
         {children}
-      </motion.main>
+      </main>
       {fab}
       {after}
       <BottomNav />
