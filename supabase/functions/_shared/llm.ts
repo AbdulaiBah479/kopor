@@ -116,12 +116,11 @@ export async function transcribe(file: File, lang: string, hints = ''): Promise<
     if (text === null) continue;
     if (hasAmount(text) || !text) return { text, provider: p.name };
     const first = { text, provider: p.name };
-    const others = chain.filter((c) => c.model !== model).slice(0, 1).map((c) => () => ask(c.p, c.model, true));
-    for (const retry of [...others, () => ask(p, model, false)]) {
-      const again = await retry();
-      if (again && hasAmount(again)) return { text: again, provider: p.name };
-    }
-    return first;
+    // Both retries run at the same time, so the person waits for one extra call at most.
+    const other = chain.find((c) => c.model !== model);
+    const retries = await Promise.all([other ? ask(other.p, other.model, true) : null, ask(p, model, false)]);
+    const again = retries.find((t) => t && hasAmount(t));
+    return again ? { text: again, provider: p.name } : first;
   }
   // Backup: Whisper on Cloudflare Workers AI (free daily allowance) when its account id and token are set.
   const cfAccount = e('CLOUDFLARE_ACCOUNT_ID'), cfToken = e('CLOUDFLARE_API_TOKEN');
