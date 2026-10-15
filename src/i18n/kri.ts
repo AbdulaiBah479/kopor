@@ -121,7 +121,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   ai: {
     speakTitle: 'Tɔk ɔ tayp', speakHelp: 'Se wetin apin wit yu yon wɔd, na Inglish ɔ Krio. Kopor go tɔn am to rɛkɔd fɔ yu chɛk.',
     placeholder: 'Lɛk: A sɛl 3 bag rɛs 1500 to Fatmata pan trɔst', listen: 'Tap fɔ tɔk', listening: 'A de lisin… tap fɔ stɔp', understand: 'Ɔndastand',
-    offlineMode: 'Ɔflayn mod. Kɔnɛkt AI na Sɛtin fɔ i ɔndastand bɛtɛ.', smartMode: 'Smat AI de ɔn.', notSure: 'A nɔ si klia kopor ɛn wetin apin. Tray: "A sɛl 2 bag rɛs 900".',
+    offlineMode: 'Ɔflayn mod: simpul tin dɛn stil de wok. Kɔnɛkt to intanɛt fɔ i ɔndastand bɛtɛ.', smartMode: 'Smat AI de ɔn.', fromPrice: 'A nɔ yɛri di kopor: a kɔnt am frɔm yu prayz list. Chɛk am bifo yu sev.', notSure: 'A nɔ si klia kopor ɛn wetin apin. Tray: "A sɛl 2 bag rɛs 900".',
     actions: { sale: 'Sɛl', expense: 'Ɛkspens', credit_given: 'Kredit (dɛn ɔw yu)', payment_received: 'Pement we yu get', unknown: 'A nɔ shɔ' },
     person: 'Pɔsin', micDenied: 'Gri fɔ yuz maykrofon fɔ tɔk', heard: 'A nɔ yɛri klia, tray bak', fallback: 'AI nɔ de, a de yuz ɔflayn mod',
     askTitle: 'Aks Kopor', askHelp: 'Aks ɛnitin bɔt yu biznɛs. Di ansa kɔmɔt frɔm yu yon rɛkɔd.', askPh: 'Lɛk: Udat ɔw mi pas?', thinking: 'A de tink…',

@@ -121,7 +121,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   ai: {
     speakTitle: 'Parler ou écrire', speakHelp: 'Dites ce qui s’est passé avec vos mots. Kopor le transforme en écriture à vérifier.',
     placeholder: 'ex. Vendu 3 sacs de riz 1500 à Fatou à crédit', listen: 'Appuyer pour parler', listening: 'Écoute… appuyez pour arrêter', understand: 'Comprendre',
-    offlineMode: 'Mode hors ligne. Connectez l’IA dans Réglages pour une meilleure compréhension.', smartMode: 'IA intelligente activée.', notSure: 'Montant ou action introuvable. Essayez : « Vendu 2 sacs de riz 900 ».',
+    offlineMode: 'Mode hors ligne : les saisies simples marchent. Connectez-vous à Internet pour une meilleure compréhension.', smartMode: 'IA intelligente activée.', fromPrice: 'Montant non entendu : calculé avec votre liste de prix. Vérifiez avant d’enregistrer.', notSure: 'Montant ou action introuvable. Essayez : « Vendu 2 sacs de riz 900 ».',
     actions: { sale: 'Vente', expense: 'Dépense', credit_given: 'Crédit accordé (on vous doit)', payment_received: 'Paiement reçu', unknown: 'Incertain' },
     person: 'Personne', micDenied: 'Autorisez le micro pour parler', heard: 'Je n’ai pas bien entendu, réessayez', fallback: 'IA indisponible, mode hors ligne',
     askTitle: 'Demander à Kopor', askHelp: 'Posez une question sur votre commerce. Les réponses utilisent vos propres données.', askPh: 'ex. Qui me doit le plus ?', thinking: 'Réflexion…',

@@ -30,9 +30,11 @@ export interface Recording { stop: () => Promise<Blob>; cancel: () => void }
 
 /** Start recording. onLevel gets 0..1 about 20 times a second (for the "I can hear you" animation). */
 export async function startRecording(onLevel?: (v: number) => void, maxSeconds = 45, onAutoStop?: () => void): Promise<Recording> {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+  // Noise suppression is off: tested live, it cut quickly spoken numbers ("360 Leones") before Whisper heard them.
+  // Whisper copes with shop noise itself. Echo cancellation and automatic volume stay on.
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: true, channelCount: 1 } });
   const mimeType = MIME.find((m) => MediaRecorder.isTypeSupported?.(m));
-  const rec = new MediaRecorder(stream, mimeType ? { mimeType, audioBitsPerSecond: 32_000 } : undefined);
+  const rec = new MediaRecorder(stream, mimeType ? { mimeType, audioBitsPerSecond: 64_000 } : undefined);
   const chunks: Blob[] = [];
   rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
 

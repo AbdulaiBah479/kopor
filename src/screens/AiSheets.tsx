@@ -27,6 +27,7 @@ export function VoiceSheet() {
   const [voice, setVoice] = useState<'idle' | 'rec' | 'stt' | 'browser'>('idle');
   const [level, setLevel] = useState(0);
   const [secs, setSecs] = useState(0);
+  const [fromPrice, setFromPrice] = useState(false);
   const [voiceErr, setVoiceErr] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Parsed | null>(null);
@@ -55,6 +56,10 @@ export function VoiceSheet() {
     if (c) r.name = c.name;
     if (r.item && !findByName(book.products, r.item)) r.item = bestMatch(r.item, book.products.map((p) => p.name)) ?? r.item;
     if (r.action === 'sale' && r.method === 'credit' && !r.name) r.method = 'cash';
+    // Speech-to-text sometimes misses the amount. For a known product, work it out from the price list (shown for checking).
+    const p = !r.amount && (r.action === 'sale' || r.action === 'credit_given') && r.item ? findByName(book.products, r.item) : undefined;
+    if (p && p.price > 0) r.amount = p.price * (r.qty || 1);
+    setFromPrice(!!(p && p.price > 0));
     setResult(r);
     setBusy(false);
   };
@@ -170,6 +175,7 @@ export function VoiceSheet() {
             result.name && [t('ai.person'), result.name], result.item && [t('common.item'), `${result.qty} × ${result.item}`],
             result.action === 'sale' && [t('cash.method'), t(`methods.${result.method}`)], result.action === 'expense' && [t('cash.category'), t(`categories.${result.category}`)],
           ].filter(Boolean) as [string, string][]).map(([k, v]) => <div key={k} className="row between"><span className="muted">{k}</span><b>{v}</b></div>)}
+          {fromPrice && <div className="small muted" data-testid="from-price">{t('ai.fromPrice')}</div>}
           <div className="btn-row">
             <button type="button" className="btn" onClick={edit}><Icon name="edit" size={18} /> {t('common.edit')}</button>
             <button type="button" className="btn primary" onClick={save} data-testid="ai-save"><Icon name="check" size={18} /> {t('common.save')}</button>

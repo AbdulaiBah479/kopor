@@ -122,7 +122,7 @@ const base = {
   ai: {
     speakTitle: 'Speak or type', speakHelp: 'Say what happened in your own words, in English or Krio. Kopor turns it into a record for you to check.',
     placeholder: 'e.g. Sold 3 bags rice 1500 to Fatmata on credit', listen: 'Tap to speak', listening: 'Listening… tap to stop', understand: 'Understand',
-    offlineMode: 'Offline mode. Connect AI in Settings for smarter understanding.', smartMode: 'Smart AI is on.', notSure: 'I could not find a clear amount and action. Try: "Sold 2 bags rice 900".',
+    offlineMode: 'Offline mode: simple entries still work. Connect to the internet for smarter understanding.', smartMode: 'Smart AI is on.', fromPrice: 'Amount not heard: worked out from your price list. Check it before saving.', notSure: 'I could not find a clear amount and action. Try: "Sold 2 bags rice 900".',
     actions: { sale: 'Sale', expense: 'Expense', credit_given: 'Credit given (they owe you)', payment_received: 'Payment received', unknown: 'Not sure' },
     person: 'Person', micDenied: 'Allow microphone access to speak', heard: 'Could not hear clearly, please try again', fallback: 'AI not reachable, using offline mode',
     askTitle: 'Ask Kopor', askHelp: 'Ask anything about your business. Answers use your own records.', askPh: 'e.g. Who owes me the most?', thinking: 'Thinking…',

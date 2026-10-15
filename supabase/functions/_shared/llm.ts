@@ -2,6 +2,8 @@
 // down or retired, the next one answers. Providers are enabled simply by adding their key as a secret.
 // (Free tiers listed in github.com/cheahjs/free-llm-api-resources.)
 
+import { hasAmount } from './amount.ts';
+
 type Msg = { role: string; content: unknown };
 interface Provider { name: string; base: string; key?: string; text: string[]; vision: string[]; extra?: (model: string) => Record<string, unknown> }
 
@@ -92,20 +94,34 @@ export async function transcribe(file: File, lang: string, hints = ''): Promise<
     { name: 'custom', base: e('STT_BASE_URL') ?? '', key: e('STT_API_KEY'), models: list(e('STT_MODEL'), []) },
   ].filter((p) => p.key && p.base).flatMap((p) => p.models.map((model) => ({ p, model })));
   if (!chain.length) throw new Error('No speech-to-text provider configured');
-  for (const { p, model } of chain) {
+  const ask = async (p: (typeof chain)[number]['p'], model: string, withPrompt: boolean): Promise<string | null> => {
     const form = new FormData();
     form.append('file', file, file.name || 'speech.webm');
     form.append('model', model);
     form.append('language', lang === 'fr' ? 'fr' : 'en'); // Krio is closest to English for Whisper
-    if (lang !== 'fr') form.append('prompt', prompt);
+    if (withPrompt && lang !== 'fr') form.append('prompt', prompt);
     form.append('response_format', 'json');
     form.append('temperature', '0');
     try {
       const res = await fetch(`${p.base}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${p.key}` }, body: form, signal: AbortSignal.timeout(30_000) });
-      if (!res.ok) { console.error('STT', p.name, model, res.status, await res.text().catch(() => '')); continue; }
-      const j = await res.json();
-      return { text: String(j.text ?? '').trim(), provider: p.name };
-    } catch (err) { console.error('STT', p.name, model, err); }
+      if (!res.ok) { console.error('STT', p.name, model, res.status, await res.text().catch(() => '')); return null; }
+      return String((await res.json()).text ?? '').trim();
+    } catch (err) { console.error('STT', p.name, model, err); return null; }
+  };
+  // Whisper sometimes skips the amount (tested live: the same clip kept "360 Leones" on one try and lost it on the next).
+  // The amount is the most important part of a record, so when it is missing, ask once more another way
+  // (the other model, then without the prompt) and keep the first answer that has one.
+  for (const { p, model } of chain) {
+    const text = await ask(p, model, true);
+    if (text === null) continue;
+    if (hasAmount(text) || !text) return { text, provider: p.name };
+    const first = { text, provider: p.name };
+    const others = chain.filter((c) => c.model !== model).slice(0, 1).map((c) => () => ask(c.p, c.model, true));
+    for (const retry of [...others, () => ask(p, model, false)]) {
+      const again = await retry();
+      if (again && hasAmount(again)) return { text: again, provider: p.name };
+    }
+    return first;
   }
   // Backup: Whisper on Cloudflare Workers AI (free daily allowance) when its account id and token are set.
   const cfAccount = e('CLOUDFLARE_ACCOUNT_ID'), cfToken = e('CLOUDFLARE_API_TOKEN');
