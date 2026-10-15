@@ -46,10 +46,10 @@ export function Assistant() {
   return (
     <Page guide="assistant" title={t('ai.askTitle')} sub={t('ai.askHelp')} back="/more"
       after={ok !== null && (
-        <div className="chat-input"><form onSubmit={(e) => { e.preventDefault(); ask(q); }}>
+        <footer className="chat-input"><form onSubmit={(e) => { e.preventDefault(); ask(q); }}>
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('ai.askPh')} aria-label={t('ai.askPh')} />
           <button className="btn primary" disabled={busy} aria-label={t('ai.understand')}><Icon name="send" size={18} /></button>
-        </form></div>
+        </form></footer>
       )}>
       <div className="chat">
         {offline && <div className="bubble ai">{offline}</div>}

@@ -28,7 +28,7 @@ export function Team() {
   return (
     <Page guide="team" title={t('team.title')} sub={t('team.sub')} back="/more"
       right={pins.size > 0 && <button className="icon-btn" aria-label={t('team.switchUser')} onClick={lock}><Icon name="lock" /></button>}>
-      <div className="row between"><h3 style={{ fontSize: 15 }}>{t('team.staff')}</h3>
+      <div className="row between"><h2 style={{ fontSize: 15 }}>{t('team.staff')}</h2>
         {can('team') && <button className="btn sm primary" onClick={() => openSheet(t('team.addStaff'), <MemberSheet />)}><Icon name="plus" size={16} /> {t('team.addStaff')}</button>}</div>
       <div className="list">
         {book.members.map((m) => (
@@ -43,7 +43,7 @@ export function Team() {
           </button>
         ))}
       </div>
-      <div className="row between"><h3 style={{ fontSize: 15 }}>{t('team.branches')}</h3>
+      <div className="row between"><h2 style={{ fontSize: 15 }}>{t('team.branches')}</h2>
         {can('team') && <button className="btn sm" onClick={() => openSheet(t('team.addBranch'), <BranchSheet />)}><Icon name="plus" size={16} /> {t('team.addBranch')}</button>}</div>
       <div className="list">{book.branches.map((b) => <div key={b.id} className="item"><div className="avatar"><Icon name="store" size={18} /></div><div className="main"><div className="t">{b.name}</div><div className="s">{b.address}</div></div></div>)}</div>
       {can('reports') && <a className="btn block" href="#/audit"><Icon name="list" size={18} /> {t('team.audit')}</a>}
@@ -105,7 +105,7 @@ function InviteBlock({ member }: { member: Member }) {
   const message = (c: string) => t('invite.msg', { name: member.name.split(' ')[0], business: book.org.name, phone: member.phone, code: c, link: APP_URL });
   return (
     <div className="card flat stack" data-testid="invite">
-      <h3><Icon name="key" size={18} /> {t('invite.title')}</h3>
+      <h2><Icon name="key" size={18} /> {t('invite.title')}</h2>
       <div className="small muted">{t('invite.help')}</div>
       {code ? (
         <>

@@ -26,10 +26,7 @@ jobs:
       - name: Lighthouse (mobile)
         run: |
           npx --yes @lhci/cli@0.15.1 collect --staticDistDir=dist --url=http://localhost/index.html --numberOfRuns=3 \
-            --settings.preset=perf --settings.formFactor=mobile --settings.screenEmulation.mobile=true \
-            --settings.onlyCategories=performance,accessibility,best-practices,seo || true
-          npx --yes @lhci/cli@0.15.1 collect --staticDistDir=dist --url=http://localhost/index.html --numberOfRuns=1 \
-            --settings.onlyCategories=accessibility,best-practices,seo || true
+            --settings.formFactor=mobile --settings.onlyCategories=performance,accessibility,best-practices,seo || true
           node -e "
             const fs = require('fs');
             const files = fs.readdirSync('.lighthouseci').filter((f) => f.startsWith('lhr-') && f.endsWith('.json'));
@@ -45,3 +42,4 @@ jobs:
         with:
           name: lighthouse-reports
           path: .lighthouseci/
+          include-hidden-files: true

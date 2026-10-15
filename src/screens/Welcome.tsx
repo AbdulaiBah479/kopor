@@ -35,7 +35,7 @@ export function Welcome() {
 
   const features: [string, string][] = [['book', 'f1'], ['cash', 'f2'], ['box', 'f3'], ['users', 'f4'], ['file', 'f5'], ['spark', 'f6'], ['store', 'f7'], ['bank', 'f8']];
   return (
-    <div className="shell" style={{ paddingBottom: 24 }}>
+    <main className="shell" style={{ paddingBottom: 24 }}>
       <div className="content" style={{ paddingTop: 28 }}>
         <div className="row">
           <div className="boot-logo" style={{ width: 56, height: 56, fontSize: 30 }}>K</div>
@@ -56,7 +56,7 @@ export function Welcome() {
         </div>
 
         <form className="form card" onSubmit={submit}>
-          <h3>{t('welcome.create')}</h3>
+          <h2>{t('welcome.create')}</h2>
           <Field label={t('onboard.bizName')}><input required value={f.name} placeholder={t('onboard.bizNamePh')} onChange={(e) => setF({ ...f, name: e.target.value })} name="business" /></Field>
           <Field label={t('onboard.type')}>
             <select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>{ORG_TYPES.map((k) => <option key={k} value={k}>{t(`orgTypes.${k}`)}</option>)}</select>
@@ -77,6 +77,6 @@ export function Welcome() {
         </div>
         <div className="small muted" style={{ textAlign: 'center' }}>{t('welcome.free')}</div>
       </div>
-    </div>
+    </main>
   );
 }

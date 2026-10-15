@@ -69,12 +69,12 @@ export function Page({ title, sub, back, right, children, fab, after, guide }: {
       </header>
       <NetBanner />
       {!back && (
-        <div className="large-title">
+        <section className="large-title" aria-label={title}>
           <h1>{title}</h1>
           {sub && <div className="sub">{dot}{sub}</div>}
-        </div>
+        </section>
       )}
-      {back && sub && <div className="px-4 text-center text-[13px] text-muted-foreground">{dot}{sub}</div>}
+      {back && sub && <section aria-label={title} className="px-4 text-center text-[13px] text-muted-foreground">{dot}{sub}</section>}
       {pull.distance > 0 && (
         <div className="flex h-0 justify-center" aria-live="polite">
           <div className="flex items-center gap-2 rounded-full bg-card px-3 py-1.5 text-[13px] text-muted-foreground shadow" style={{ transform: `translateY(${Math.min(pull.distance, 80) - 30}px)` }}>

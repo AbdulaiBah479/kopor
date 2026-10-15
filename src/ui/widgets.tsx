@@ -103,7 +103,7 @@ export function Avatar({ name, size = 42 }: { name: string; size?: number }) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   const tone = `var(${AVATAR_TONES[h % AVATAR_TONES.length]})`;
-  return <div className="avatar" style={{ width: size, height: size, background: `color-mix(in srgb, ${tone} 18%, transparent)`, color: tone }} aria-hidden="true">{initials(name)}</div>;
+  return <div className="avatar" style={{ width: size, height: size, background: `color-mix(in srgb, ${tone} 18%, transparent)`, color: `color-mix(in srgb, ${tone} 55%, var(--foreground))` }} aria-hidden="true">{initials(name)}</div>;
 }
 
 type ContactsApi = { select: (props: string[], opts: { multiple: boolean }) => Promise<{ name?: string[]; tel?: string[] }[]> };

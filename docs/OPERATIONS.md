@@ -43,13 +43,13 @@ AI coding assistant you supervise), because unsupervised changes to an app that 
 riskier than the bug. GitHub disables scheduled jobs after 60 days with no commits; auto-merged updates normally keep it
 active, and if it ever stops, GitHub → Actions → Monitor → **Enable workflow**.
 
-**Optional: let server code deploy itself.** Create a Supabase access token (Account → Access Tokens), then in GitHub
+**Recommended: let the server update itself.** With this secret, the *Update the server* workflow applies new database changes and deploys server code on every update, so new features that need the server (like the reports inbox) go live without anyone touching Supabase. Create a Supabase access token (Account → Access Tokens), then in GitHub
 open the repository → **Settings → Secrets and variables → Actions → New repository secret**, name it
 `SUPABASE_ACCESS_TOKEN` and paste the token. Never paste it anywhere else.
 
 ## Your routine
 
-**Daily (2 minutes):** look at the Owner dashboard. Answer support messages: customers reach you on WhatsApp +232 72 082 348 (Help → Chat with Kopor support) and by email at babdulai225.2@gmail.com (shown in Help and on the privacy and terms pages).
+**Daily (2 minutes):** look at the Owner dashboard and its **Problem reports and complaints** inbox (reports people send from Help, More, invoices and pay pages, plus automatic crash reports). Reply on WhatsApp from the report, then tap **Mark resolved**. Answer support messages: customers reach you on WhatsApp +232 72 082 348 (Help → Chat with Kopor support) and by email at babdulai225.2@gmail.com (shown in Help and on the privacy and terms pages).
 
 **Weekly (10 minutes):**
 - GitHub → **Actions**: every row should be green. **Security** tab: no open alerts.

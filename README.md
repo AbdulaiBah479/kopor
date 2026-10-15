@@ -61,7 +61,7 @@ takes mobile money payments, and answers questions about the business in English
 | Guided tour | driver.js |
 | Crash reporting | Sentry |
 | Payments | Monime API |
-| AI | Free-tier chain: Groq (3 models) → Google Gemini → Cerebras → Mistral → GitHub Models → OpenRouter, from [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) |
+| AI | Free-tier chain: Groq (3 models) → Google Gemini → Cerebras → Mistral → GitHub Models → OpenRouter → NVIDIA NIM → SambaNova → Hugging Face → Cloudflare Workers AI, from [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) |
 | QR codes | node-qrcode |
 | Security scanning | CodeQL, Gitleaks, OSV-Scanner, OpenSSF Scorecard, Dependabot |
 | Linting | ESLint + typescript-eslint, react-hooks, jsx-a11y (accessibility) |
@@ -81,6 +81,10 @@ so Groq alone gives three. Add more free keys as Supabase secrets to multiply th
 | `MISTRAL_API_KEY` | console.mistral.ai |
 | `GITHUB_MODELS_TOKEN` | github.com/settings/tokens (fine-grained, "Models: read" only) |
 | `OPENROUTER_API_KEY` | openrouter.ai/keys |
+| `NVIDIA_API_KEY` | build.nvidia.com (free credits) |
+| `SAMBANOVA_API_KEY` | cloud.sambanova.ai |
+| `HF_TOKEN` | huggingface.co/settings/tokens (Inference Providers) |
+| `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` | dash.cloudflare.com → Workers AI (also a backup for voice) |
 
 **Everyone gets AI**, including people who have not made a cloud account yet: 20 requests a day per network (hashed, never stored in clear), 50 a day per free business and 500 for Pro. Voice uses the same allowance.
 

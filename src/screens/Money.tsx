@@ -87,7 +87,7 @@ export function Money() {
       )}
 
       <div className="card stack">
-        <h3><Icon name="link" size={18} /> {t('money.instantTitle')}</h3>
+        <h2><Icon name="link" size={18} /> {t('money.instantTitle')}</h2>
         <div className="small muted">{t('money.instantHelp')}</div>
         {!monime && can('business') && <Link className="btn ghost block" to="/payments">{t('money.connect')}</Link>}
         {monime && <div className="badge good">{t('pay.connected')}</div>}

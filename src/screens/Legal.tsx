@@ -53,18 +53,18 @@ export function Legal() {
   const privacy = doc !== 'terms';
   const sections = privacy ? PRIVACY : TERMS;
   return (
-    <div className="shell" style={{ paddingBottom: 24 }}>
+    <main className="shell" style={{ paddingBottom: 24 }}>
       <div className="content" style={{ paddingTop: 20 }}>
         <Link to="/" className="small">← Kopor</Link>
         <h1 style={{ fontSize: 24 }}>{privacy ? t('legal.privacy') : t('legal.terms')}</h1>
         <div className="small muted">Last updated: {UPDATED}</div>
         {sections.map(([h, ps]) => (
           <section key={h} className="card flat">
-            <h3>{h}</h3>
+            <h2>{h}</h2>
             {ps.map((p, i) => <p key={i} className="small" style={{ margin: '6px 0' }}>{p}</p>)}
           </section>
         ))}
       </div>
-    </div>
+    </main>
   );
 }

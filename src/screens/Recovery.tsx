@@ -11,7 +11,7 @@ export function RecoveryCodeCard({ code, onDone }: { code: string; onDone?: () =
   const [copied, setCopied] = useState(false);
   return (
     <div className="stack" data-testid="recovery-code">
-      <h3><Icon name="key" size={18} /> {t('recover.codeTitle')}</h3>
+      <h2><Icon name="key" size={18} /> {t('recover.codeTitle')}</h2>
       <div className="recovery-code num" aria-label={t('recover.code')}>{code}</div>
       <div className="small muted">{t('recover.codeHelp')}</div>
       <div className="btn-row">

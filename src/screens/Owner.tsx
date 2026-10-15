@@ -55,7 +55,7 @@ export function Owner() {
             {tile(t('owner.reports'), s.reports_waiting ?? 0, t('owner.waiting'))}
           </div>
           <div className="card">
-            <h3>{t('owner.signups')}</h3>
+            <h2>{t('owner.signups')}</h2>
             <div className="owner-bars" role="img" aria-label={t('owner.signups')}>
               {s.signups_14d.map((d) => (
                 <div key={d.day} className="owner-bar" title={`${d.day}: ${d.n}`}>

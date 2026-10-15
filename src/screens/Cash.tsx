@@ -72,7 +72,7 @@ export function CashBook() {
       )}
       {methodTotal > 0 && (
         <div className="card method-bars">
-          <h3>{t('cash.byMethod')}</h3>
+          <h2>{t('cash.byMethod')}</h2>
           {Object.entries(s.byMethod).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).map(([m, v]) => (
             <div className="row" key={m}><span>{t(`methods.${m}`)}</span><div className="meter"><i style={{ width: `${(v / methodTotal) * 100}%` }} /></div><b className="num small">{formatMoney(v)}</b></div>
           ))}

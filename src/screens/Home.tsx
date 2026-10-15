@@ -163,7 +163,7 @@ export function Home() {
       </div>
 
       <div className="card">
-        <h3>{t('home.last7')} <Link className="right" to="/cash">{t('home.cashBook')} <Icon name="chev" size={16} /></Link></h3>
+        <h2>{t('home.last7')} <Link className="right" to="/cash">{t('home.cashBook')} <Icon name="chev" size={16} /></Link></h2>
         <BarChart series={dailySeries(book, 7, now)} />
       </div>
 

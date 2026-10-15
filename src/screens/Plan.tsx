@@ -37,7 +37,7 @@ export function Plan() {
       </div>
       <div className="card">
         <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
-          <thead><tr><th style={{ textAlign: 'left' }} /><th>Free</th><th>Pro</th></tr></thead>
+          <thead><tr><th style={{ textAlign: 'left' }}><span className="sr-only">{t('plan.current')}</span></th><th>Free</th><th>Pro</th></tr></thead>
           <tbody>{rows.map(([f, a, b]) => <tr key={f} style={{ borderTop: '1px solid var(--line)' }}><td style={{ padding: '8px 0' }}>{f}</td><td style={{ textAlign: 'center' }}>{a}</td><td style={{ textAlign: 'center', fontWeight: 700 }}>{b}</td></tr>)}</tbody>
         </table>
       </div>

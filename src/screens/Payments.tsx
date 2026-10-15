@@ -34,7 +34,7 @@ export function Payments() {
       {cloud === false && <div className="alert"><Icon name="cloud" /><div>{t('pay.needCloud')}</div></div>}
       {cloud && (
         <div className="card stack">
-          <h3><Icon name="shield" size={18} /> Monime <span className={`badge ${status?.connected ? 'good' : ''}`} style={{ marginLeft: 'auto' }}>{status?.connected ? t('pay.connected') : t('pay.notConnected')}</span></h3>
+          <h2><Icon name="shield" size={18} /> Monime <span className={`badge ${status?.connected ? 'good' : ''}`} style={{ marginLeft: 'auto' }}>{status?.connected ? t('pay.connected') : t('pay.notConnected')}</span></h2>
           {status?.connected ? (
             <div className="btn-row">
               {can('payouts') && <button className="btn primary" onClick={() => openSheet(t('pay.payout'), <PayoutSheet amount={0} />)}><Icon name="send" size={18} /> {t('pay.payout')}</button>}
@@ -54,7 +54,7 @@ export function Payments() {
           <div className="small muted">{t('pay.fee')}</div>
         </div>
       )}
-      <h3 style={{ fontSize: 15 }}>{t('pay.requests')}</h3>
+      <h2 style={{ fontSize: 15 }}>{t('pay.requests')}</h2>
       <div className="list">
         {requests.length ? requests.map((p) => (
           <div key={p.id} className="item">

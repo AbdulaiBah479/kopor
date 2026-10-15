@@ -34,7 +34,7 @@ function TaxCard() {
   const [f, setF] = useState({ tax_rate: o.tax_rate ?? 0, tax_inclusive: (o.tax_inclusive ?? 1) as 0 | 1, tax_id: o.tax_id ?? '', receipt_footer: o.receipt_footer ?? '' });
   return (
     <form className="form card" data-testid="tax-form" onSubmit={(e) => { e.preventDefault(); updateOrg(ctx, f).then(() => toast(t('common.saved'))).catch(fail); }}>
-      <h3><Icon name="file" size={18} /> {t('tax.title')}</h3>
+      <h2><Icon name="file" size={18} /> {t('tax.title')}</h2>
       <div className="small muted">{t('tax.help')}</div>
       <div className="grid2">
         <Field label={t('tax.rate')}><input name="tax_rate" inputMode="decimal" value={f.tax_rate} onChange={(e) => setF({ ...f, tax_rate: Math.min(100, Math.max(0, Number(e.target.value) || 0)) })} /></Field>
@@ -61,7 +61,7 @@ function PrinterCard() {
   const save = async (next: typeof p) => { setP(next); (await import('@/features/printer')).savePrinter(next); };
   return (
     <div className="card stack">
-      <h3><Icon name="print" size={18} /> {t('printer.title')}</h3>
+      <h2><Icon name="print" size={18} /> {t('printer.title')}</h2>
       <div className="small muted">{t('printer.help')}</div>
       <div className="grid2">
         <Field label={t('printer.width')}>
@@ -96,7 +96,7 @@ function ExportCard() {
   const { fail } = useOverlay();
   return (
     <div className="card stack">
-      <h3><Icon name="download" size={18} /> {t('export.title')}</h3>
+      <h2><Icon name="download" size={18} /> {t('export.title')}</h2>
       <div className="small muted">{t('export.help')}</div>
       <ActionButton icon="download" label={t('export.excel')} testId="export-excel" run={async () => {
         try {
@@ -122,7 +122,7 @@ export function Settings() {
         </Link>
       </div>
       <div className="card stack">
-        <h3><Icon name="palette" size={18} /> {t('look.title')}</h3>
+        <h2><Icon name="palette" size={18} /> {t('look.title')}</h2>
         <AppearancePanel />
       </div>
       {can('business') && <BusinessCard />}
@@ -152,7 +152,7 @@ function BusinessCard() {
   const [f, setF] = useState({ name: o.name, type: o.type, owner_name: o.owner_name, phone: o.phone, momo_number: o.momo_number, address: o.address, currency: o.currency, country_code: o.country_code });
   return (
     <form className="form card" onSubmit={(e) => { e.preventDefault(); updateOrg(ctx, f).then(() => toast(t('common.saved'))).catch(fail); }}>
-      <h3><Icon name="store" size={18} /> {t('settings.business')}</h3>
+      <h2><Icon name="store" size={18} /> {t('settings.business')}</h2>
       <Field label={t('onboard.bizName')}><input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
       <div className="grid2">
         <Field label={t('onboard.type')}><select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>{ORG_TYPES.map((k) => <option key={k} value={k}>{t(`orgTypes.${k}`)}</option>)}</select></Field>
@@ -177,7 +177,7 @@ function PreferencesCard() {
   const { device, setDevice } = useApp();
   return (
     <div className="card stack">
-      <h3><Icon name="globe" size={18} /> {t('settings.language')}</h3>
+      <h2><Icon name="globe" size={18} /> {t('settings.language')}</h2>
       <div className="lang-pick">{LANGUAGES.map((l) => <button key={l.code} className={device.lang === l.code ? 'on' : ''} aria-pressed={device.lang === l.code} onClick={() => setDevice({ lang: l.code })}>{l.label}</button>)}</div>
     </div>
   );
@@ -196,7 +196,7 @@ function SecurityCard() {
       e.preventDefault();
       try { await setPin(member.id, pin); setOn(true); setPinText(''); toast(t('team.pinSet')); } catch (err) { fail(err); }
     }}>
-      <h3><Icon name="lock" size={18} /> {t('settings.security')}</h3>
+      <h2><Icon name="lock" size={18} /> {t('settings.security')}</h2>
       <div className="small muted">{on ? t('settings.pinOn') : t('settings.pinOff')}</div>
       <Field label={t('settings.newPin')}><input type="password" inputMode="numeric" pattern="\d{4,8}" maxLength={8} required value={pin} onChange={(e) => setPinText(e.target.value.replace(/\D/g, ''))} autoComplete="new-password" /></Field>
       <div className="btn-row">
@@ -226,7 +226,7 @@ export function CloudCard() {
   useEffect(refresh, [sync.status]);
   return (
     <div className="card stack">
-      <h3><Icon name="cloud" size={18} /> {t('settings.cloud')}</h3>
+      <h2><Icon name="cloud" size={18} /> {t('settings.cloud')}</h2>
       <div className="small muted">{t('settings.cloudHelp')}</div>
       {user ? (
         <>
@@ -282,7 +282,7 @@ function BackupCard() {
   };
   return (
     <div className="card stack">
-      <h3><Icon name="download" size={18} /> {t('settings.backup')}</h3>
+      <h2><Icon name="download" size={18} /> {t('settings.backup')}</h2>
       <div className="small muted">{t('settings.backupHelp')}</div>
       <Field label={t('settings.backupPassword')}><input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" /></Field>
       <div className="btn-row">
@@ -312,7 +312,7 @@ function BusinessesCard() {
   };
   return (
     <div className="card stack">
-      <h3><Icon name="store" size={18} /> {t('settings.businesses')}</h3>
+      <h2><Icon name="store" size={18} /> {t('settings.businesses')}</h2>
       {orgs.map((o) => (
         <button key={o.id} className={`btn block ${o.id === ctx.orgId ? 'primary' : ''}`} onClick={() => open(o.id).catch(fail)}>{o.name}</button>
       ))}
