@@ -67,7 +67,7 @@ export function keepsMeaning(original: string, fixed: string, book: Pick<Book, '
   const a = parseLocal(original, known), b = parseLocal(fixed, known);
   if (a.amount > 0 && b.amount !== a.amount) return false;          // never change an amount that was heard clearly
   if (a.action !== 'unknown' && b.action !== 'unknown' && a.action !== b.action) return false;
-  const words = (s: string) => s.toLowerCase().normalize('NFC').match(/[\p{L}\p{N}]+/gu) ?? [];
+  const words = (s: string): string[] => s.toLowerCase().normalize('NFC').match(/[\p{L}\p{N}]+/gu) ?? [];
   const wa = words(original), wb = words(fixed);
   if (wb.length < wa.length * 0.6 || wb.length > wa.length * 1.5 + 2) return false;
   const shared = wb.filter((w) => wa.includes(w)).length;

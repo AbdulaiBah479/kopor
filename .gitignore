@@ -11,3 +11,4 @@ supabase/.temp
 
 v1/screenshots
 tests/e2e/.cache
+*.tsbuildinfo
