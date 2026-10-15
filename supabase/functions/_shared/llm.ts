@@ -76,13 +76,16 @@ export async function complete(messages: Msg[], opts: { vision?: boolean; maxTok
 }
 
 /* Speech to text with Whisper (free on Groq; any OpenAI-compatible /audio/transcriptions endpoint works). */
-const KRIO_PROMPT = 'Shop record in Sierra Leone Krio or English. A sɛl tu bag rɛs fayv tawzin. Aminata tek wan tin ɔyl pan trɔs. ' +
-  'Mohamed dɔn pe tri ɔndrɛd. A spɛn tu ɔndrɛd fɔ transpɔt tide. Orange Money, Afrimoney, QMoney, Le, Leones.';
-
-export async function transcribe(file: File, lang: string): Promise<{ text: string; provider: string }> {
+// Plain letters only: special Krio letters (ɛ, ɔ) in the prompt make Whisper answer in phonetic symbols and drop
+// numbers. Krio is written here the way people type it on phones.
+const KRIO_PROMPT = 'Shop record in Sierra Leone. Sold 3 bags of rice for 2,500 Leones. Aminata took 2 tins of palm oil on credit. ' +
+  'Mohamed don pay 300. A sel tu bag res. Spent 200 on transport. Orange Money, Afrimoney, QMoney.';
+export async function transcribe(file: File, lang: string, hints = ''): Promise<{ text: string; provider: string }> {
+  // The business's own customer and product names make Whisper spell them right (prompt limit ~224 tokens).
+  const prompt = (KRIO_PROMPT + (hints ? ` Names: ${hints.replace(/ɛ/g, 'e').replace(/ɔ/g, 'o').replace(/ŋ/g, 'ng').replace(/[^A-Za-z0-9 ,.'()-]/g, ' ').slice(0, 500)}.` : '')).slice(0, 900);
   const e = (k: string) => Deno.env.get(k) || undefined;
   const chain = [
-    { name: 'groq', base: 'https://api.groq.com/openai/v1', key: e('GROQ_API_KEY'), models: list(e('GROQ_STT_MODELS'), ['whisper-large-v3-turbo', 'whisper-large-v3']) },
+    { name: 'groq', base: 'https://api.groq.com/openai/v1', key: e('GROQ_API_KEY'), models: list(e('GROQ_STT_MODELS'), ['whisper-large-v3', 'whisper-large-v3-turbo']) },
     { name: 'custom', base: e('STT_BASE_URL') ?? '', key: e('STT_API_KEY'), models: list(e('STT_MODEL'), []) },
   ].filter((p) => p.key && p.base).flatMap((p) => p.models.map((model) => ({ p, model })));
   if (!chain.length) throw new Error('No speech-to-text provider configured');
@@ -91,7 +94,7 @@ export async function transcribe(file: File, lang: string): Promise<{ text: stri
     form.append('file', file, file.name || 'speech.webm');
     form.append('model', model);
     form.append('language', lang === 'fr' ? 'fr' : 'en'); // Krio is closest to English for Whisper
-    if (lang !== 'fr') form.append('prompt', KRIO_PROMPT);
+    if (lang !== 'fr') form.append('prompt', prompt);
     form.append('response_format', 'json');
     form.append('temperature', '0');
     try {
@@ -109,7 +112,7 @@ export async function transcribe(file: File, lang: string): Promise<{ text: stri
       let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
       const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${cfAccount}/ai/run/@cf/openai/whisper-large-v3-turbo`, {
         method: 'POST', headers: { Authorization: `Bearer ${cfToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audio: btoa(bin), language: lang === 'fr' ? 'fr' : 'en', initial_prompt: lang === 'fr' ? undefined : KRIO_PROMPT }),
+        body: JSON.stringify({ audio: btoa(bin), language: lang === 'fr' ? 'fr' : 'en', initial_prompt: lang === 'fr' ? undefined : prompt }),
         signal: AbortSignal.timeout(40_000),
       });
       if (res.ok) { const j = await res.json(); const text = String(j.result?.text ?? '').trim(); if (text) return { text, provider: 'cloudflare' }; }

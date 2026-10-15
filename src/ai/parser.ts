@@ -3,6 +3,7 @@
 // Krio words follow the standard spelling found in open English–Krio corpora (OPUS MT560 pairs, CC-BY-4.0;
 // Jaward/Krio-Corpus, Apache-2.0), and also match the everyday phone spelling without ɛ/ɔ ("dɔn pe" = "don pe").
 import { parseMoney } from '@/lib/money';
+import { bestMatch } from '@/lib/fuzzy';
 
 export type ParsedAction = 'sale' | 'expense' | 'credit_given' | 'payment_received' | 'unknown';
 export interface Parsed {
@@ -71,14 +72,16 @@ export function parseLocal(text: string, known: { contacts: string[]; products: 
   const method = /orange|orenj/.test(t) ? 'orange' : /afri/.test(t) ? 'afrimoney' : /q ?money|kyu ?moni|qcell/.test(t) ? 'qmoney' : /bank|transfer/.test(t) ? 'bank'
     : /(credit|kredit|trust|tros|owe)/.test(t) ? 'credit' : 'cash';
 
-  let name = known.contacts.find((c) => t.includes(' ' + foldKrio(c).split(' ')[0] + ' ')) ?? '';
+  // Exact first-name match first, then forgiving match for misheard/misspelt names ("Aminatta" -> Aminata Sesay).
+  let name = known.contacts.find((c) => t.includes(' ' + foldKrio(c).split(' ')[0] + ' ')) ?? bestMatch(raw, known.contacts) ?? '';
   if (!name) {
     const m = raw.match(/\b(?:to|from|for|by|gi|give|fɔ|frɔm)\s+([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)/) || raw.match(/^([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)\s/);
     if (m && !STOP.has(foldKrio(m[1]))) name = m[1];
   }
 
   const product = [...known.products].sort((a, b) => b.length - a.length)
-    .find((p) => { const fp = foldKrio(p); return t.includes(fp) || fp.split(/\s+/).some((w) => w.length > 3 && t.includes(' ' + w)); });
+    .find((p) => { const fp = foldKrio(p); return t.includes(fp) || fp.split(/\s+/).some((w) => w.length > 3 && t.includes(' ' + w)); })
+    ?? bestMatch(raw, known.products);
   const category = CATEGORY_WORDS.find(([, re]) => re.test(t))?.[0] ?? 'other';
 
   return {

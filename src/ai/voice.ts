@@ -67,12 +67,13 @@ export async function startRecording(onLevel?: (v: number) => void, maxSeconds =
 }
 
 /** Turn a recording into text with the Kopor cloud (Whisper on the providers the owner chose). */
-export async function transcribe(blob: Blob, lang: string): Promise<string> {
+export async function transcribe(blob: Blob, lang: string, hints = ''): Promise<string> {
   const file = new File([blob], `speech.${extFor(blob.type)}`, { type: blob.type || 'audio/webm' });
   const sb = await getSupabase();
   if (!sb) throw new Error('voice.needCloud');
   const form = new FormData();
   form.append('file', file); form.append('lang', lang);
+  if (hints) form.append('hints', hints.slice(0, 600));
   const { data, error } = await sb.functions.invoke('ai', { body: form });
   if (error) {
     const body = await (error as { context?: Response }).context?.json?.().catch(() => null);

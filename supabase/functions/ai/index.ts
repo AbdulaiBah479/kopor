@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
       const file = form.get('file');
       if (!(file instanceof File) || file.size < 1000) throw new HttpError(400, 'No audio received');
       if (file.size > MAX_AUDIO) throw new HttpError(413, 'Recording too long. Keep it under a minute.');
-      const out = await transcribe(file, String(form.get('lang') ?? 'en'));
+      const out = await transcribe(file, String(form.get('lang') ?? 'en'), String(form.get('hints') ?? '').slice(0, 600));
       await q.bump();
       return json(out);
     }

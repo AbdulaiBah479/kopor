@@ -6,7 +6,8 @@ import { haptic, useOverlay } from '@/ui/overlay';
 import { Icon } from '@/ui/Icon';
 import { formatMoney } from '@/lib/money';
 import { parseLocal, type Parsed } from '@/ai/parser';
-import { aiAvailable, aiParse, scanReceipt, type ScanResult } from '@/ai/assistant';
+import { aiAvailable, aiParse, fixTranscript, scanReceipt, type ScanResult } from '@/ai/assistant';
+import { bestMatch } from '@/lib/fuzzy';
 import { BrowserSpeech, canRecord, startRecording, transcribe, voiceErrorKey, type Recording } from '@/ai/voice';
 import { recordSale, recordExpense, EXPENSE_CATEGORIES } from '@/domain/cash';
 import { ensureContact, addEntry } from '@/domain/credit';
@@ -49,8 +50,10 @@ export function VoiceSheet() {
     let r: Parsed | null = null;
     if (smart && navigator.onLine) { try { r = await aiParse(input, book); } catch { /* the offline parser below always works */ } }
     r ??= parseLocal(input, known);
-    const c = r.name && findByName(book.contacts, r.name);
+    // Map what was heard to the real customer and product, forgiving spelling and hearing slips.
+    const c = r.name && (findByName(book.contacts, r.name) ?? book.contacts.find((x) => x.name === bestMatch(r!.name, book.contacts.map((y) => y.name))));
     if (c) r.name = c.name;
+    if (r.item && !findByName(book.products, r.item)) r.item = bestMatch(r.item, book.products.map((p) => p.name)) ?? r.item;
     if (r.action === 'sale' && r.method === 'credit' && !r.name) r.method = 'cash';
     setResult(r);
     setBusy(false);
@@ -78,7 +81,10 @@ export function VoiceSheet() {
     rec.current = null;
     setVoice('stt'); setLevel(0);
     try {
-      const said = await transcribe(await current.stop(), i18n.language);
+      // Customer and product names help Whisper spell them right; the AI then fixes any remaining slips.
+      const hints = [...book.contacts.map((c) => c.name), ...book.products.map((p) => p.name)].slice(0, 80).join(', ');
+      const heard = await transcribe(await current.stop(), i18n.language, hints);
+      const said = heard && smart && navigator.onLine ? await fixTranscript(heard, book) : heard;
       if (!said) throw new Error('voice.tooShort');
       setText(said); setResult(null); setVoice('idle');
       haptic(15);

@@ -10,7 +10,7 @@ import { balances, overdueContacts, creditTotals } from '@/domain/credit';
 import { stockLevels, forecast } from '@/domain/stock';
 import { health } from '@/domain/health';
 import { currentRound, roundStatus } from '@/domain/groups';
-import type { Parsed } from './parser';
+import { parseLocal, type Parsed } from './parser';
 
 type Msg = { role: 'system' | 'user' | 'assistant'; content: string | { type: string; text?: string; image_url?: { url: string } }[] };
 
@@ -32,6 +32,47 @@ const ParsedSchema = z.object({
   category: z.string().catch('other'), note: z.string().catch(''),
 });
 
+/**
+ * Speech-to-text often mishears names, products and Krio words. Fix the transcript using the business's own customer
+ * and product names, keeping the meaning and never adding anything. Falls back to the original text on any problem.
+ */
+export async function fixTranscript(text: string, book: Book, timeoutMs = 7000): Promise<string> {
+  const names = book.contacts.slice(0, 60).map((c) => c.name).join(', ') || 'none';
+  const items = book.products.slice(0, 60).map((p) => p.name).join(', ') || 'none';
+  const sys = `You fix speech-to-text slips in ONE short shop record (Sierra Leone English or Krio). Make the SMALLEST possible change.
+- Only correct a word that is clearly a misheard customer or product name from the lists below, or a number written oddly
+  ("to thousand" -> 2000, "tri hundred" -> 300, "liones" -> Leones).
+- Keep every other word exactly as it is, in the same language. Never translate, summarise, add or remove information.
+- If nothing is clearly wrong, return the sentence unchanged.
+Reply with the sentence only.
+Customers: ${names}
+Products: ${items}`;
+  try {
+    const out = await Promise.race([
+      complete([{ role: 'system', content: sys }, { role: 'user', content: text }], { json: true }),
+      new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
+    ]);
+    const fixed = out.trim().replace(/^["'`]+|["'`]+$/g, '').split('\n')[0].trim();
+    return keepsMeaning(text, fixed, book) ? fixed : text;
+  } catch { return text; }
+}
+
+/**
+ * Accept the AI's correction only if it is the same record: same amount (or an amount where the original had a number
+ * in words), roughly the same length, and mostly the same words. Otherwise the original is kept.
+ */
+export function keepsMeaning(original: string, fixed: string, book: Pick<Book, 'contacts' | 'products'>): boolean {
+  if (!fixed || fixed === original) return !!fixed;
+  const known = { contacts: book.contacts.map((c) => c.name), products: book.products.map((p) => p.name) };
+  const a = parseLocal(original, known), b = parseLocal(fixed, known);
+  if (a.amount > 0 && b.amount !== a.amount) return false;          // never change an amount that was heard clearly
+  if (a.action !== 'unknown' && b.action !== 'unknown' && a.action !== b.action) return false;
+  const words = (s: string) => s.toLowerCase().normalize('NFC').match(/[\p{L}\p{N}]+/gu) ?? [];
+  const wa = words(original), wb = words(fixed);
+  if (wb.length < wa.length * 0.6 || wb.length > wa.length * 1.5 + 2) return false;
+  const shared = wb.filter((w) => wa.includes(w)).length;
+  return shared >= Math.min(wa.length, wb.length) * 0.5;            // at least half the words unchanged
+}
 /** Structured record from free text (English/Krio). Amount returned in minor units. */
 export async function aiParse(text: string, book: Book): Promise<Parsed> {
   const sys = `You turn a shopkeeper's message (English or Sierra Leone Krio) into ONE bookkeeping record.
