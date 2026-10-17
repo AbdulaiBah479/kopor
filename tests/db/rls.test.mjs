@@ -153,6 +153,34 @@ await test('public invoice link reveals one invoice by secret token only', async
   assert.equal((await q(`select * from public_invoice('short')`)).rows.length, 0);
 });
 
+await test('statement link shows one customer\'s balance by secret token only, never phone numbers', async () => {
+  await as('owner');
+  const C1 = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', C2 = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+  await q(`insert into contacts (id, org_id, created_at, updated_at, created_by, name, phone, public_token) values
+           ($1, $3, 1, 1, $4, 'Aminata', '+23276111111', 'stmt_abcdefghijklmnop'), ($2, $3, 1, 1, $4, 'Other', '+23276222222', null)`, [C1, C2, ORG, OWNER_M]);
+  await q(`insert into ledger (id, org_id, created_at, updated_at, created_by, contact_id, type, amount, date) values
+           (gen_random_uuid(), $1, 1, 1, $2, $3, 'gave', 50000, current_date), (gen_random_uuid(), $1, 2, 2, $2, $3, 'got', 20000, current_date),
+           (gen_random_uuid(), $1, 3, 3, $2, $4, 'gave', 99900, current_date)`, [ORG, OWNER_M, C1, C2]);
+  await as(null);
+  const s = (await q(`select public_statement('stmt_abcdefghijklmnop') as s`)).rows[0].s;
+  assert.equal(s.name, 'Aminata');
+  assert.equal(Number(s.balance), 30000);
+  assert.equal(s.entries.length, 2);
+  assert.ok(!JSON.stringify(s).includes('+232'), 'no phone numbers');
+  assert.equal((await q(`select public_statement('stmt_wrong_token_00000') as s`)).rows[0].s, null);
+  assert.equal((await q(`select public_statement('short') as s`)).rows[0].s, null);
+  const none = await q('select * from contacts').then((r) => r.rows.length === 0, (e) => /permission denied/.test(e.message));
+  assert.ok(none, 'signed-out users must not read contacts');
+});
+
+await test('quotations can be saved as invoices with their own status', async () => {
+  await as('owner');
+  await q(`insert into invoices (id, org_id, created_at, updated_at, created_by, number, customer, items, date, status, public_token)
+           values (gen_random_uuid(), $1, 1, 1, $2, 'QUO-0001', 'Hotel', '[]', current_date, 'quote', 'quo_abcdefghijklmnop')`, [ORG, OWNER_M]);
+  await rejects(q(`insert into invoices (id, org_id, created_at, updated_at, created_by, number, customer, items, date, status, public_token)
+           values (gen_random_uuid(), $1, 1, 1, $2, 'X-1', 'Hotel', '[]', current_date, 'bogus', 'bad_abcdefghijklmnop')`, [ORG, OWNER_M]), /check constraint/);
+});
+
 await test('audit log is append-only for everyone but the server', async () => {
   await as('owner');
   const id = (await q(`insert into audit (id, org_id, created_at, updated_at, created_by, member_name, action, entity, entity_id, summary, at) values (gen_random_uuid(), $1, 1, 1, null, 'X', 'create', 'transactions', gen_random_uuid(), 'hi', 1) returning id`, [ORG])).rows[0].id;

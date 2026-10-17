@@ -79,6 +79,7 @@ const extra = {
     deleted: 'Account deleted',
   },
   errx: {
+    quoteUsed: 'This quotation was already turned into an invoice or cancelled.', 
     reportBusy: 'Many reports are arriving right now. Please try again in a minute.',
     pinLocked: 'Too many wrong PINs, so this account is locked for a while to keep it safe. Try again later, or use "Forgot your PIN?" with your recovery code.', signupLimit: 'Too many new accounts from this network today. Please try again tomorrow.',
     inviteBad: 'This invite code is wrong, used or expired, or this account uses a different phone number than the one invited.', inviteRole: 'Only the business owner can invite staff.', inviteMember: 'Add a phone number for this person first, and save.', inviteSignIn: 'Sign in to your Kopor cloud account first (More → Cloud & account).',

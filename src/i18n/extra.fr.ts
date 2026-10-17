@@ -81,6 +81,7 @@ const extra: ExtraDict = {
     deleted: 'Compte supprimé',
   },
   errx: {
+    quoteUsed: 'Ce devis a déjà été transformé en facture ou annulé.', 
     reportBusy: 'Beaucoup de signalements arrivent en ce moment. Réessayez dans une minute.',
     pinLocked: 'Trop de PIN incorrects : ce compte est bloqué un moment pour le protéger. Réessayez plus tard ou utilisez « Code oublié ? » avec votre code de récupération.', signupLimit: 'Trop de nouveaux comptes depuis ce réseau aujourd’hui. Réessayez demain.',
     inviteBad: 'Ce code est incorrect, déjà utilisé ou expiré, ou ce compte utilise un autre numéro que celui invité.', inviteRole: 'Seul le propriétaire peut inviter du personnel.', inviteMember: 'Ajoutez d’abord un numéro pour cette personne, puis enregistrez.', inviteSignIn: 'Connectez-vous d’abord à votre compte cloud Kopor (Plus → Cloud et compte).',

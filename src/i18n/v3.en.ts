@@ -96,6 +96,21 @@ const v3 = {
     update: 'A new version of Kopor is ready.', reload: 'Update now', share: 'Share Kopor',
     shareMsg: 'I use Kopor to keep my business books, credit and mobile money in one place. It is free and works offline: {{link}}',
   },
+  quote: {
+    new: 'New quotation', kind: 'Type', invoiceKind: 'Invoice', quoteKind: 'Quotation (price offer)', create: 'Create quotation',
+    help: 'A quotation records nothing yet: no sale, stock or debt. When the customer agrees, turn it into an invoice with one tap.',
+    title: 'QUOTATION', badge: 'Quotation', accepted: 'Accepted', validUntil: 'Valid until', extra: 'Valid until: {{date}}',
+    accept: 'Turn into invoice', paidNow: 'Customer pays now (receipt)', payLater: 'Customer pays later (add to credit book)', done: 'Invoice created from the quotation',
+    cancel: 'Cancel quotation', cancelled: 'Quotation cancelled', notice: 'This is a price offer, not a bill.',
+  },
+  stmt: {
+    link: 'Statement link', title: 'Account statement', help: 'Your customer opens this link to see their balance and every entry, always up to date. It shows nothing else from your book.',
+    share: 'Send on WhatsApp', copy: 'Copy link', renew: 'Make a new link', renewHelp: 'Use this if the link was sent to the wrong person. The old link stops working.',
+    renewed: 'New link made. The old one no longer works.', needCloud: 'This link works once your book is backed up online (More → Cloud & account).',
+    msg: 'Hello {{name}}, here is your account with {{business}}.\nBalance: {{balance}}\nSee every entry here: {{link}}',
+    notFound: 'This statement link is not valid. Ask the business for a new one.', youOwe: 'You owe', theyOwe: '{{business}} owes you', settled: 'All settled. Thank you!',
+    took: 'You took / borrowed', paid: 'You paid', entries: 'Entries', live: 'Always up to date', payTo: 'Pay by mobile money',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

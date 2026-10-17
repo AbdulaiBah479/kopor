@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
@@ -11,7 +11,7 @@ import { today, addDays } from '@/lib/dates';
 import { waLink, smsLink, telLink } from '@/lib/phone';
 import { update, remove, atomic } from '@/db/repo';
 import type { Contact, LedgerEntry } from '@/db/schema';
-import { balances, creditTotals, overdueSince, ensureContact, addEntry, removeEntry } from '@/domain/credit';
+import { balances, creditTotals, overdueSince, ensureContact, addEntry, removeEntry, statementToken } from '@/domain/credit';
 import { isOwnRecent } from '@/domain/cash';
 
 /** Oldest first (like a chat), with the running balance after each entry and a date marker on each new day. */
@@ -151,7 +151,7 @@ export function ContactDetail() {
         <a href={waLink(c.phone, remind(c), cc)} target="_blank" rel="noopener noreferrer"><Icon name="chat" />{t('credit.remind')}</a>
         <a href={smsLink(c.phone, remind(c), cc)}><Icon name="sms" />{t('common.sms')}</a>
         <a href={c.phone ? telLink(c.phone, cc) : undefined} aria-disabled={!c.phone}><Icon name="phone" />{t('common.call')}</a>
-        <a href={waLink(c.phone, statement, cc)} target="_blank" rel="noopener noreferrer"><Icon name="share" />{t('credit.statement')}</a>
+        <button type="button" data-testid="statement" onClick={() => openSheet(t('stmt.title'), <StatementSheet contact={c} balance={b} text={statement} />)}><Icon name="share" />{t('credit.statement')}</button>
       </div>
       {b > 0 && can('payments') && <button className="btn block ghost" onClick={requestPay}><Icon name="phone" size={18} /> {t('credit.requestPay')} (USSD)</button>}
       {/* Chat-style ledger: credit given on the right, payments received on the left, running balance under each. */}
@@ -179,6 +179,35 @@ export function ContactDetail() {
       </div>
       <div style={{ height: 64 }} />
     </Page>
+  );
+}
+
+/** Share a customer's statement: a live link (their balance and entries, always up to date) and the same as plain text. */
+function StatementSheet({ contact, balance, text }: { contact: Contact; balance: number; text: string }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx, can, sync, requestSync } = useApp();
+  const { toast, fail } = useOverlay();
+  const [token, setToken] = useState<string | null>(contact.public_token ?? null);
+  const started = useRef(false);
+  useEffect(() => {
+    if (token || started.current) return;
+    started.current = true; // once per opening, even if it fails
+    statementToken(ctx, contact.id).then((tk) => { setToken(tk); requestSync(); }).catch(fail);
+  }, [ctx, contact.id, token, fail, requestSync]);
+  const link = token ? `${location.origin}${location.pathname}#/s/${token}` : '';
+  const msg = t('stmt.msg', { name: contact.name, business: book.org.name, balance: formatMoney(balance), link });
+  return (
+    <div className="stack" data-testid="statement-sheet">
+      <div className="small muted">{t('stmt.help')}</div>
+      {sync.status === 'off' && <div className="alert small"><Icon name="alert" /><div>{t('stmt.needCloud')}</div></div>}
+      <input className="input" readOnly value={link} aria-label={t('stmt.link')} data-testid="statement-link" onFocus={(e) => e.target.select()} />
+      <a className="btn get block" aria-disabled={!token} target="_blank" rel="noopener noreferrer" href={waLink(contact.phone, `${msg}\n\n${text}`, book.org.country_code)}><Icon name="chat" size={18} /> {t('stmt.share')}</a>
+      <button type="button" className="btn block" disabled={!token} onClick={() => navigator.clipboard?.writeText(link).then(() => toast(t('common.copied'))).catch(() => {})}><Icon name="link" size={18} /> {t('stmt.copy')}</button>
+      {can('edit') && token && (
+        <button type="button" className="btn ghost block" onClick={() => confirm(t('stmt.renewHelp')) && statementToken(ctx, contact.id, true).then((tk) => { setToken(tk); requestSync(); toast(t('stmt.renewed')); }).catch(fail)}>{t('stmt.renew')}</button>
+      )}
+    </div>
   );
 }
 

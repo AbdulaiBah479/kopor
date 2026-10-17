@@ -98,5 +98,20 @@ const v3: V3Dict = {
     update: 'Une nouvelle version de Kopor est prête.', reload: 'Mettre à jour', share: 'Partager Kopor',
     shareMsg: 'J’utilise Kopor pour tenir mes comptes, mon crédit et mon mobile money au même endroit. C’est gratuit et ça marche hors ligne : {{link}}',
   },
+  quote: {
+    new: 'Nouveau devis', kind: 'Type', invoiceKind: 'Facture', quoteKind: 'Devis (offre de prix)', create: 'Créer le devis',
+    help: 'Un devis n’enregistre rien : ni vente, ni stock, ni dette. Quand le client accepte, transformez-le en facture en un geste.',
+    title: 'DEVIS', badge: 'Devis', accepted: 'Accepté', validUntil: 'Valable jusqu’au', extra: 'Valable jusqu’au : {{date}}',
+    accept: 'Transformer en facture', paidNow: 'Le client paie maintenant (reçu)', payLater: 'Le client paie plus tard (carnet de crédit)', done: 'Facture créée à partir du devis',
+    cancel: 'Annuler le devis', cancelled: 'Devis annulé', notice: 'Ceci est une offre de prix, pas une facture.',
+  },
+  stmt: {
+    link: 'Lien du relevé', title: 'Relevé de compte', help: 'Votre client ouvre ce lien pour voir son solde et chaque opération, toujours à jour. Rien d’autre de votre carnet n’est visible.',
+    share: 'Envoyer sur WhatsApp', copy: 'Copier le lien', renew: 'Créer un nouveau lien', renewHelp: 'Utilisez ceci si le lien a été envoyé à la mauvaise personne. L’ancien lien ne marchera plus.',
+    renewed: 'Nouveau lien créé. L’ancien ne marche plus.', needCloud: 'Ce lien marche une fois votre carnet sauvegardé en ligne (Plus → Cloud et compte).',
+    msg: 'Bonjour {{name}}, voici votre compte chez {{business}}.\nSolde : {{balance}}\nToutes les opérations ici : {{link}}',
+    notFound: 'Ce lien de relevé n’est pas valide. Demandez-en un nouveau à l’entreprise.', youOwe: 'Vous devez', theyOwe: '{{business}} vous doit', settled: 'Tout est réglé. Merci !',
+    took: 'Vous avez pris / emprunté', paid: 'Vous avez payé', entries: 'Opérations', live: 'Toujours à jour', payTo: 'Payer par mobile money',
+  },
 };
 export default v3;

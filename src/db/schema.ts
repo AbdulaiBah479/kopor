@@ -31,7 +31,7 @@ export interface Member extends Base {
   user_id: string | null; name: string; phone: string; role: Role;
   branch_id: string | null; active: 0 | 1; // PIN hashes are device-local (meta 'pins'), never synced
 }
-export interface Contact extends Base { name: string; phone: string; kind: 'customer' | 'supplier'; notes: string }
+export interface Contact extends Base { name: string; phone: string; kind: 'customer' | 'supplier'; notes: string; public_token?: string | null }
 export interface LedgerEntry extends Base {
   branch_id: string | null; contact_id: string; type: 'gave' | 'got'; amount: number;
   note: string; date: string; due_date: string | null; ref_type: string | null; ref_id: string | null;
@@ -61,7 +61,8 @@ export interface Contribution extends Base {
 export interface Invoice extends Base {
   branch_id: string | null; number: string; contact_id: string | null; customer: string; phone: string;
   items: LineItem[]; date: string; due_date: string | null; notes: string;
-  status: 'unpaid' | 'paid' | 'void'; paid_date: string | null; public_token: string; txn_id: string | null; ledger_id: string | null;
+  // 'quote' = a quotation (records nothing yet); 'accepted' = a quotation that was turned into an invoice.
+  status: 'unpaid' | 'paid' | 'void' | 'quote' | 'accepted'; paid_date: string | null; public_token: string; txn_id: string | null; ledger_id: string | null;
   discount?: number; tax?: number; total?: number; // total = what the customer pays (after discount, with tax)
 }
 /** End-of-day cash count: what the drawer should hold vs what was counted. */

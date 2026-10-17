@@ -98,5 +98,20 @@ const v3: V3Dict = {
     update: 'Nyu Kopor dɔn rɛdi.', reload: 'Ɔpdet naw', share: 'Sheb Kopor',
     shareMsg: 'A de yuz Kopor fɔ kip mi biznɛs buk, kredit ɛn mobayl mɔni na wan ples. I fri ɛn i de wok widawt nɛt: {{link}}',
   },
+  quote: {
+    new: 'Nyu kwotɛshɔn', kind: 'Wetin na', invoiceKind: 'Invɔys', quoteKind: 'Kwotɛshɔn (prayz ɔfa)', create: 'Mek kwotɛshɔn',
+    help: 'Kwotɛshɔn nɔ de rayt natin yet: nɔ sɛl, stɔk ɔ dɛt. We di kɔstoma gri, tɔn am to invɔys wit wan tap.',
+    title: 'KWOTƐSHƆN', badge: 'Kwotɛshɔn', accepted: 'Dɛn gri', validUntil: 'I gud te', extra: 'I gud te: {{date}}',
+    accept: 'Tɔn am to invɔys', paidNow: 'Kɔstoma de pe naw (risit)', payLater: 'Kɔstoma go pe leta (put am na kredit buk)', done: 'Invɔys dɔn mek frɔm di kwotɛshɔn',
+    cancel: 'Kansul kwotɛshɔn', cancelled: 'Kwotɛshɔn dɔn kansul', notice: 'Dis na prayz ɔfa, nɔto bil.',
+  },
+  stmt: {
+    link: 'Stetmɛnt link', title: 'Akawnt stetmɛnt', help: 'Yu kɔstoma kin opin dis link fɔ si wetin i ɔw ɛn ɔl di tin dɛn we yu rayt, ɔltɛm nyu. I nɔ de sho ɛnitin ɔda frɔm yu buk.',
+    share: 'Sɛn am na WhatsApp', copy: 'Kɔpi link', renew: 'Mek nyu link', renewHelp: 'Yuz dis if yu sɛn di link to di rɔng pɔsin. Di ol link nɔ go wok igen.',
+    renewed: 'Nyu link dɔn mek. Di ol wan nɔ de wok igen.', needCloud: 'Dis link go wok we yu buk dɔn bakɔp ɔnlayn (Mɔ → Klawd ɛn akawnt).',
+    msg: 'Kushɛ {{name}}, na yu akawnt wit {{business}} dis.\nBalans: {{balance}}\nSi ɔl di tin dɛn ya: {{link}}',
+    notFound: 'Dis stetmɛnt link nɔ gud. Aks di biznɛs fɔ nyu wan.', youOwe: 'Yu ɔw', theyOwe: '{{business}} ɔw yu', settled: 'Ɔl dɔn klia. Tɛnki!',
+    took: 'Yu tek / lɛnt', paid: 'Yu pe', entries: 'Tin dɛn we rayt', live: 'Ɔltɛm nyu', payTo: 'Pe wit mobayl mɔni',
+  },
 };
 export default v3;

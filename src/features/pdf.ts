@@ -8,7 +8,7 @@ import { fmtDate, fmtMonth, today, addDays } from '@/lib/dates';
 import { refCode } from '@/lib/crypto';
 import { latinSafe } from '@/lib/text';
 import { itemsTotal, summary, topProducts } from '@/domain/cash';
-import { invoiceCode, invoiceTotal } from '@/domain/invoices';
+import { invoiceCode, invoiceTotal, docKind, isQuote } from '@/domain/invoices';
 import { health, monthlySeries } from '@/domain/health';
 import { creditTotals } from '@/domain/credit';
 import { stockValue } from '@/domain/stock';
@@ -34,12 +34,13 @@ function header(doc: jsPDF, book: Book, title: string, sub: string) {
 export function invoicePdf(book: Book, inv: Invoice, t: T, loc: string): Blob {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const paid = inv.status === 'paid';
-  header(doc, book, t(paid ? 'inv.receipt' : 'inv.invoice'), inv.number);
+  const quote = isQuote(inv);
+  header(doc, book, t(docKind(inv)), inv.number);
   doc.setFontSize(9).setTextColor(90).text(pdfSafe(t('inv.billTo')), 14, 44);
   doc.setFontSize(11).setTextColor(20).setFont('helvetica', 'bold').text(pdfSafe(inv.customer), 14, 50);
   doc.setFont('helvetica', 'normal').setFontSize(9);
   const dates = [`${t('common.date')}: ${fmtDate(inv.date, loc)}`];
-  if (paid) dates.push(`${t('inv.paidOn')}: ${fmtDate(inv.paid_date, loc)}`); else if (inv.due_date) dates.push(`${t('inv.due')}: ${fmtDate(inv.due_date, loc)}`);
+  if (paid) dates.push(`${t('inv.paidOn')}: ${fmtDate(inv.paid_date, loc)}`); else if (inv.due_date) dates.push(`${t(quote ? 'quote.validUntil' : 'inv.due')}: ${fmtDate(inv.due_date, loc)}`);
   doc.text(dates.map(pdfSafe), 196, 44, { align: 'right' });
 
   const sub = itemsTotal(inv.items), total = invoiceTotal(inv);
@@ -61,7 +62,8 @@ export function invoicePdf(book: Book, inv: Invoice, t: T, loc: string): Blob {
   let y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
   doc.setFontSize(9).setTextColor(60);
   if (inv.notes) { doc.text(pdfSafe(inv.notes), 14, y); y += 6; }
-  if (!paid && book.org.momo_number) { doc.text(pdfSafe(`${t('inv.payMomo')}: ${book.org.momo_number}`), 14, y); y += 6; }
+  if (quote) { doc.text(pdfSafe(t('quote.notice')), 14, y); y += 6; }
+  if (inv.status === 'unpaid' && book.org.momo_number) { doc.text(pdfSafe(`${t('inv.payMomo')}: ${book.org.momo_number}`), 14, y); y += 6; }
   if (book.org.receipt_footer) { doc.text(pdfSafe(book.org.receipt_footer), 14, y); y += 6; }
   doc.setDrawColor(200).line(14, y + 2, 196, y + 2);
   doc.setFontSize(8).text(pdfSafe(`${t('inv.verify')}: ${invoiceCode(book.org.name, inv)} · ${t('inv.generated')}`), 14, y + 8);

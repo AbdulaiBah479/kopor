@@ -2,7 +2,19 @@ import { db, type Contact, type LedgerEntry } from '@/db/schema';
 import { insert, update, type Ctx } from '@/db/repo';
 import { assertCan } from '@/db/permissions';
 import { today } from '@/lib/dates';
+import { randomToken } from '@/lib/crypto';
 import { AppError, findByName, type Book } from './book';
+
+/** The secret token behind a customer's statement link. Made on first share; renewing it stops the old link working. */
+export async function statementToken(ctx: Ctx, contactId: string, renew = false): Promise<string> {
+  assertCan(ctx.role, 'record');
+  const c = await db.contacts.get(contactId);
+  if (!c || c.deleted) throw new AppError('err.notFound');
+  if (c.public_token && !renew) return c.public_token;
+  const public_token = randomToken();
+  await update(ctx, 'contacts', contactId, { public_token }, `${renew ? 'New statement link' : 'Statement link'} for ${c.name}`);
+  return public_token;
+}
 
 /** Positive = they owe you. Negative = you owe them. */
 export function balances(ledger: LedgerEntry[]): Map<string, number> {

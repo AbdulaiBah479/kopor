@@ -11,7 +11,7 @@ import { today, addDays } from '@/lib/dates';
 import { waLink } from '@/lib/phone';
 import type { Invoice, LineItem, Method } from '@/db/schema';
 import { itemsTotal, METHODS } from '@/domain/cash';
-import { createInvoice, markInvoicePaid, voidInvoice, invoiceCode, invoiceTotal } from '@/domain/invoices';
+import { createInvoice, createQuote, acceptQuote, markInvoicePaid, voidInvoice, invoiceCode, invoiceTotal, docKind } from '@/domain/invoices';
 import { computeTotals, taxSettings } from '@/domain/tax';
 import { ActionButton, ScanToggle, TotalsBlock } from '@/ui/extras';
 import { MoneyInput } from '@/ui/widgets';
@@ -19,6 +19,9 @@ import { shareFile } from '@/lib/share';
 import { createCheckout, createUssdCode } from '@/cloud/payments';
 
 const isOverdue = (i: Invoice) => i.status === 'unpaid' && !!i.due_date && i.due_date < today();
+const badgeOf = (i: Invoice): [string, string] =>
+  i.status === 'paid' ? ['good', 'inv.paid'] : i.status === 'void' ? ['', 'inv.void'] : i.status === 'quote' ? ['', 'quote.badge']
+    : i.status === 'accepted' ? ['good', 'quote.accepted'] : isOverdue(i) ? ['bad', 'inv.overdue'] : ['warn', 'inv.unpaid'];
 
 export function InvoiceList() {
   const { t } = useTranslation();
@@ -32,13 +35,14 @@ export function InvoiceList() {
   return (
     <Page guide="invoices" title={t('inv.title')} sub={t('inv.sub', { count: unpaid.length, amount: formatMoney(unpaid.reduce((s, i) => s + invoiceTotal(i), 0)) })} back="/more"
       fab={can('record') && <button className="fab" onClick={() => openSheet(t('inv.new'), <NewInvoiceSheet />)}><Icon name="plus" /> {t('inv.new')}</button>}>
+      {can('record') && <button className="btn ghost block" data-testid="new-quote" onClick={() => openSheet(t('quote.new'), <NewInvoiceSheet kind="quote" />)}><Icon name="file" size={18} /> {t('quote.new')}</button>}
       {book.invoices.length > 4 && <Search value={q} onChange={setQ} placeholder={t('common.search')} />}
       <div className="list">
         {list.length ? list.map((inv) => (
           <Link key={inv.id} className="item" to={`/invoices/${inv.id}`}>
             <div className="avatar"><Icon name="file" size={18} /></div>
             <div className="main">
-              <div className="t">{inv.customer} <span className={`badge ${inv.status === 'paid' ? 'good' : isOverdue(inv) ? 'bad' : inv.status === 'void' ? '' : 'warn'}`}>{t(inv.status === 'paid' ? 'inv.paid' : inv.status === 'void' ? 'inv.void' : isOverdue(inv) ? 'inv.overdue' : 'inv.unpaid')}</span></div>
+              <div className="t">{inv.customer} <span className={`badge ${badgeOf(inv)[0]}`}>{t(badgeOf(inv)[1])}</span></div>
               <div className="s">{inv.number} · {fmt(inv.date)}</div>
             </div>
             <div className="amt num">{formatMoney(invoiceTotal(inv))}</div>
@@ -62,11 +66,13 @@ export function InvoiceDetail() {
   const total = invoiceTotal(inv);
   const code = invoiceCode(org.name, inv);
   const paid = inv.status === 'paid';
+  const quote = inv.status === 'quote' || inv.status === 'accepted';
   const publicUrl = `${location.origin}${location.pathname}#/i/${inv.public_token}`;
   const share = t('inv.shareMsg', {
-    kind: t(paid ? 'inv.receipt' : 'inv.invoice'), number: inv.number, business: org.name, date: fmt(inv.date),
+    kind: t(docKind(inv)), number: inv.number, business: org.name, date: fmt(inv.date),
     lines: inv.items.map((i) => `• ${i.qty} × ${i.name}: ${formatMoney(i.qty * i.price)}`).join('\n'), total: formatMoney(total),
-    extra: paid ? '\n✅ ' + t('inv.paid') : `${inv.due_date ? `\n${t('inv.due')}: ${fmt(inv.due_date)}` : ''}${org.momo_number ? `\n${t('inv.payMomo')}: ${org.momo_number}` : ''}`, code,
+    extra: quote ? `${inv.due_date ? `\n${t('quote.extra', { date: fmt(inv.due_date) })}` : ''}\n${t('quote.notice')}\n${publicUrl}`
+      : paid ? '\n✅ ' + t('inv.paid') : `${inv.due_date ? `\n${t('inv.due')}: ${fmt(inv.due_date)}` : ''}${org.momo_number ? `\n${t('inv.payMomo')}: ${org.momo_number}` : ''}`, code,
   });
 
   const payLink = async () => {
@@ -85,20 +91,20 @@ export function InvoiceDetail() {
   };
 
   return (
-    <Page title={inv.number} sub={t(paid ? 'inv.paid' : inv.status === 'void' ? 'inv.void' : 'inv.unpaid')} back="/invoices">
+    <Page title={inv.number} sub={t(badgeOf(inv)[1])} back="/invoices">
       <div className="doc">
         <div className="row between" style={{ alignItems: 'flex-start' }}>
           <div><h2>{org.name}</h2><div className="small">{org.address}{org.phone && <><br />{org.phone}</>}</div></div>
           <div style={{ textAlign: 'right' }}>
-            <b style={{ fontSize: 18 }}>{t(paid ? 'inv.receipt' : 'inv.invoice')}</b><div className="small">{inv.number}</div>
-            <div className="stamp" style={{ color: paid ? '#0b7a3b' : '#a8650a', marginTop: 6 }}>{t(paid ? 'inv.paid' : inv.status === 'void' ? 'inv.void' : 'inv.due').toUpperCase()}</div>
+            <b style={{ fontSize: 18 }}>{t(docKind(inv))}</b><div className="small">{inv.number}</div>
+            <div className="stamp" style={{ color: paid || inv.status === 'accepted' ? '#0b7a3b' : quote ? '#1d4ed8' : '#a8650a', marginTop: 6 }}>{t(quote || paid || inv.status === 'void' ? badgeOf(inv)[1] : 'inv.due').toUpperCase()}</div>
           </div>
         </div>
         <div className="meta" style={{ marginTop: 16 }}>
           <div><div className="small">{t('inv.billTo')}</div><b>{inv.customer}</b>{inv.phone && <><br />{inv.phone}</>}</div>
           <div style={{ textAlign: 'right' }} className="small">
             <div>{t('common.date')}: {fmt(inv.date)}</div>
-            {!paid && inv.due_date && <div>{t('inv.due')}: {fmt(inv.due_date)}</div>}
+            {!paid && inv.due_date && <div>{t(quote ? 'quote.validUntil' : 'inv.due')}: {fmt(inv.due_date)}</div>}
             {paid && <div>{t('inv.paidOn')}: {fmt(inv.paid_date)}</div>}
           </div>
         </div>
@@ -113,7 +119,8 @@ export function InvoiceDetail() {
           </tbody>
         </table>
         {inv.notes && <div className="small">{inv.notes}</div>}
-        {!paid && org.momo_number && <div className="small" style={{ marginTop: 8 }}><b>{t('inv.payMomo')}:</b> {org.momo_number}</div>}
+        {inv.status === 'unpaid' && org.momo_number && <div className="small" style={{ marginTop: 8 }}><b>{t('inv.payMomo')}:</b> {org.momo_number}</div>}
+        {quote && <div className="small" style={{ marginTop: 8 }}>{t('quote.notice')}</div>}
         <div className="foot">{t('inv.verify')}: <b>{code}</b> · {t('inv.generated')}</div>
       </div>
       <div className="btn-row no-print">
@@ -135,6 +142,13 @@ export function InvoiceDetail() {
           } catch (e) { fail(e); }
         }} />
       </div>
+      {inv.status === 'quote' && (
+        <>
+          <button className="btn ghost block no-print" onClick={() => navigator.clipboard?.writeText(publicUrl).then(() => toast(t('common.copied')))}><Icon name="link" size={18} /> {t('inv.publicLink')}</button>
+          {can('record') && <button className="btn primary block no-print" data-testid="accept-quote" onClick={() => openSheet(t('quote.accept'), <AcceptQuoteSheet quote={inv} />)}><Icon name="check" size={18} /> {t('quote.accept')}</button>}
+          {can('edit') && <button className="btn danger block no-print" onClick={() => confirm(t('common.confirm')) && voidInvoice(ctx, inv.id).then(() => toast(t('quote.cancelled'))).catch(fail)}>{t('quote.cancel')}</button>}
+        </>
+      )}
       {inv.status === 'unpaid' && (
         <>
           {can('payments') && (
@@ -154,14 +168,43 @@ export function InvoiceDetail() {
   );
 }
 
-function NewInvoiceSheet() {
+/** The customer accepted: choose paid now or later, then the real invoice is created. */
+function AcceptQuoteSheet({ quote }: { quote: Invoice }) {
+  const { t } = useTranslation();
+  const { ctx } = useApp();
+  const { closeSheet, toast, fail } = useOverlay();
+  const nav = useNavigate();
+  const [paid, setPaid] = useState(false);
+  const [method, setMethod] = useState<Method>('cash');
+  const [dueDate, setDueDate] = useState(addDays(today(), 7));
+  return (
+    <form className="form" data-testid="accept-form" onSubmit={async (e) => {
+      e.preventDefault();
+      try { const inv = await acceptQuote(ctx, quote.id, { paid, method, dueDate }); closeSheet(); toast(t('quote.done')); nav(`/invoices/${inv.id}`); } catch (err) { fail(err); }
+    }}>
+      <div className="card flat row between"><span>{quote.customer} · {quote.number}</span><b className="num">{formatMoney(invoiceTotal(quote))}</b></div>
+      <Field label={t('inv.status')}>
+        <select value={paid ? 'paid' : 'unpaid'} onChange={(e) => setPaid(e.target.value === 'paid')}>
+          <option value="unpaid">{t('quote.payLater')}</option><option value="paid">{t('quote.paidNow')}</option>
+        </select>
+      </Field>
+      {paid
+        ? <Field label={t('cash.paidWith')}><select value={method} onChange={(e) => setMethod(e.target.value as Method)}>{METHODS.filter((m) => m !== 'credit').map((m) => <option key={m} value={m}>{t(`methods.${m}`)}</option>)}</select></Field>
+        : <Field label={t('common.dueDate')}><input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></Field>}
+      <button className="btn primary block">{t('quote.accept')}</button>
+    </form>
+  );
+}
+
+function NewInvoiceSheet({ kind = 'invoice' }: { kind?: 'invoice' | 'quote' }) {
   const { t } = useTranslation();
   const book = useBook();
   const { ctx } = useApp();
   const { closeSheet, fail } = useOverlay();
   const nav = useNavigate();
+  const isQuote = kind === 'quote';
   const [items, setItems] = useState<Partial<LineItem>[]>([]);
-  const [f, setF] = useState({ customer: '', phone: '', date: today(), dueDate: addDays(today(), 7), notes: '', paid: false, method: 'cash' as Method, discount: 0 });
+  const [f, setF] = useState({ customer: '', phone: '', date: today(), dueDate: addDays(today(), isQuote ? 14 : 7), notes: '', paid: false, method: 'cash' as Method, discount: 0 });
   const real = items.filter((i) => i.name?.trim());
   const totals = computeTotals(itemsTotal(real.map((i) => ({ product_id: null, name: '', cost: 0, qty: i.qty ?? 0, price: i.price ?? 0 }))), f.discount, taxSettings(book.org));
   const addScanned = (code: string) => {
@@ -171,8 +214,9 @@ function NewInvoiceSheet() {
   return (
     <form className="form" data-testid="invoice-form" onSubmit={async (e) => {
       e.preventDefault();
-      try { const inv = await createInvoice(ctx, { ...f, items }); closeSheet(); nav(`/invoices/${inv.id}`); } catch (err) { fail(err); }
+      try { const inv = await (isQuote ? createQuote(ctx, { ...f, items }) : createInvoice(ctx, { ...f, items })); closeSheet(); nav(`/invoices/${inv.id}`); } catch (err) { fail(err); }
     }}>
+      {isQuote && <div className="small muted">{t('quote.help')}</div>}
       <Field label={t('inv.customer')}><input name="customer" list="dl-contacts" required autoFocus autoComplete="off" value={f.customer} onChange={(e) => setF({ ...f, customer: e.target.value })} /></Field>
       <datalist id="dl-contacts">{book.contacts.map((c) => <option key={c.id} value={c.name} />)}</datalist>
       <Field label={t('inv.customerPhone')}><input type="tel" value={f.phone} placeholder={t('common.optional')} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
@@ -182,9 +226,10 @@ function NewInvoiceSheet() {
       <TotalsBlock totals={totals} book={book} />
       <div className="grid2">
         <Field label={t('common.date')}><input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
-        <Field label={t('common.dueDate')}><input type="date" value={f.dueDate} onChange={(e) => setF({ ...f, dueDate: e.target.value })} /></Field>
+        <Field label={t(isQuote ? 'quote.validUntil' : 'common.dueDate')}><input type="date" value={f.dueDate} onChange={(e) => setF({ ...f, dueDate: e.target.value })} /></Field>
       </div>
       <Field label={t('inv.notes')}><input value={f.notes} placeholder={t('inv.notesPh')} onChange={(e) => setF({ ...f, notes: e.target.value })} /></Field>
+      {isQuote ? <button className="btn primary block">{t('quote.create')}</button> : <>
       <Field label={t('inv.status')}>
         <select value={f.paid ? 'paid' : 'unpaid'} onChange={(e) => setF({ ...f, paid: e.target.value === 'paid' })}>
           <option value="unpaid">{t('inv.unpaidHelp')}</option><option value="paid">{t('inv.paidHelp')}</option>
@@ -192,6 +237,7 @@ function NewInvoiceSheet() {
       </Field>
       {f.paid && <Field label={t('cash.paidWith')}><select value={f.method} onChange={(e) => setF({ ...f, method: e.target.value as Method })}>{METHODS.filter((m) => m !== 'credit').map((m) => <option key={m} value={m}>{t(`methods.${m}`)}</option>)}</select></Field>}
       <button className="btn primary block">{t('inv.create')}</button>
+      </>}
     </form>
   );
 }

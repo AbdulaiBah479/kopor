@@ -11,7 +11,7 @@ import { getMeta, setMeta } from '@/db/repo';
 import { formatMoney } from '@/lib/money';
 import { fmtDate } from '@/lib/dates';
 import { itemsTotal } from '@/domain/cash';
-import { invoiceCode, invoiceTotal } from '@/domain/invoices';
+import { invoiceCode, invoiceTotal, docKind } from '@/domain/invoices';
 import { latinSafe as pdfSafe } from '@/lib/text';
 
 export interface PrinterSettings { width: 58 | 80; mode: 'ble' | 'rawbt'; deviceId?: string; deviceName?: string }
@@ -42,7 +42,7 @@ export function receiptBytes(book: Book, doc: { txn?: Txn; invoice?: Invoice }, 
   e.initialize().codepage('cp437').align('center')
     .bold(true).size(2, 2).line(pdfSafe(o.name).slice(0, columns / 2)).size(1, 1).bold(false);
   for (const l of [o.address, o.phone, o.tax_id ? `TIN ${o.tax_id}` : ''].filter(Boolean)) e.line(pdfSafe(l!));
-  e.newline().bold(true).line(pdfSafe(refund ? t('returns.refund').toUpperCase() : doc.invoice ? `${t(doc.invoice.status === 'paid' ? 'inv.receipt' : 'inv.invoice')} ${doc.invoice.number}` : t('inv.receipt'))).bold(false)
+  e.newline().bold(true).line(pdfSafe(refund ? t('returns.refund').toUpperCase() : doc.invoice ? `${t(docKind(doc.invoice))} ${doc.invoice.number}` : t('inv.receipt'))).bold(false)
     .line(pdfSafe(fmtDate(date))).align('left').rule();
   const amountW = 11;
   e.table(

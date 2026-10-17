@@ -32,17 +32,19 @@ export function PublicInvoice() {
   if (!inv) return <div className="shell"><div className="content"><div className="empty"><b>{t('public.notFound')}</b></div></div></div>;
   const total = Number(inv.total);
   const paid = inv.status === 'paid';
+  const quote = inv.status === 'quote' || inv.status === 'accepted';
+  const unpaid = inv.status === 'unpaid';
   return (
     <div className="shell" style={{ paddingBottom: 24 }}>
       <div className="content" style={{ paddingTop: 20 }}>
         <div className="doc">
           <div className="row between" style={{ alignItems: 'flex-start' }}>
             <div><h2>{inv.org_name}</h2><div className="small">{inv.org_address}<br />{inv.org_phone}</div></div>
-            <div style={{ textAlign: 'right' }}><b>{t(paid ? 'inv.receipt' : 'inv.invoice')}</b><div className="small">{inv.number}</div></div>
+            <div style={{ textAlign: 'right' }}><b>{t(quote ? 'quote.title' : paid ? 'inv.receipt' : 'inv.invoice')}</b><div className="small">{inv.number}</div></div>
           </div>
           <div className="meta" style={{ marginTop: 16 }}>
             <div><div className="small">{t('inv.billTo')}</div><b>{inv.customer}</b></div>
-            <div className="small" style={{ textAlign: 'right' }}>{t('common.date')}: {fmt(inv.date)}{!paid && inv.due_date && <><br />{t('inv.due')}: {fmt(inv.due_date)}</>}</div>
+            <div className="small" style={{ textAlign: 'right' }}>{t('common.date')}: {fmt(inv.date)}{!paid && inv.due_date && <><br />{t(quote ? 'quote.validUntil' : 'inv.due')}: {fmt(inv.due_date)}</>}</div>
           </div>
           <table>
             <tbody>
@@ -53,10 +55,11 @@ export function PublicInvoice() {
             </tbody>
           </table>
           {inv.notes && <div className="small">{inv.notes}</div>}
-          {!paid && inv.momo_number && <div className="small"><b>{t('inv.payMomo')}:</b> {inv.momo_number}</div>}
+          {quote && <div className="small">{t('quote.notice')}</div>}
+          {unpaid && inv.momo_number && <div className="small"><b>{t('inv.payMomo')}:</b> {inv.momo_number}</div>}
           <div className="foot">{t('inv.generated')}</div>
         </div>
-        {!paid && inv.pay_url && /^https:\/\//.test(inv.pay_url) && <a className="btn primary block" href={inv.pay_url} rel="noopener noreferrer">{t('public.pay')}</a>}
+        {unpaid && inv.pay_url && /^https:\/\//.test(inv.pay_url) && <a className="btn primary block" href={inv.pay_url} rel="noopener noreferrer">{t('public.pay')}</a>}
         <ReportBusinessLink business={inv.org_name} />
       </div>
     </div>

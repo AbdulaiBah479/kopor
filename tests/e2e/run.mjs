@@ -200,6 +200,38 @@ await step('invoice PDF downloads', async () => {
   if (!dl.suggestedFilename().endsWith('.pdf')) throw new Error(dl.suggestedFilename());
 });
 
+await step('quotation: create, then turn into an invoice', async () => {
+  await go('/invoices');
+  await page.getByTestId('new-quote').click();
+  const f = page.getByTestId('invoice-form');
+  await f.locator('[name=customer]').fill('Bo Builders');
+  await f.locator('[name=item_name]').fill('Rice 50kg bag');
+  await f.locator('[name=item_qty]').fill('2');
+  await f.getByRole('button', { name: 'Create quotation' }).click();
+  await page.getByText('QUOTATION').first().waitFor();
+  await page.getByText('This is a price offer, not a bill.').first().waitFor();
+  await shot('07b-quotation');
+  await page.getByTestId('accept-quote').click();
+  await page.getByTestId('accept-form').getByRole('button', { name: 'Turn into invoice' }).click();
+  await page.getByText('INVOICE').first().waitFor();
+  await go('/invoices');
+  await page.locator('.item', { hasText: 'Bo Builders' }).filter({ hasText: 'Accepted' }).waitFor();
+});
+
+await step('customer statement link', async () => {
+  await go('/credit');
+  await page.locator('.item', { hasText: 'Test Customer' }).first().click();
+  await page.getByTestId('statement').click();
+  const link = page.getByTestId('statement-link');
+  await page.waitForFunction(() => /#\/s\/[\w-]{16,}$/.test(document.querySelector('[data-testid=statement-link]')?.value ?? ''));
+  const url = await link.inputValue();
+  await shot('04b-statement');
+  await page.keyboard.press('Escape');
+  // The demo business is not backed up online, so its link is not on the server: the page must say so clearly.
+  await page.goto(BASE + url.slice(url.indexOf('#')));
+  await page.getByTestId('statement-missing').waitFor({ timeout: 20000 });
+});
+
 await step('tax settings: 15% GST added on top', async () => {
   await go('/settings');
   const f = page.getByTestId('tax-form');
