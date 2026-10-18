@@ -66,6 +66,13 @@ jobs:
         run: |
           ./gradlew assembleDebug
           mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/kopor-test-${{ github.run_number }}.apk"
+      - name: Check the APK is signed with the shared test key (so it updates earlier installs)
+        run: |
+          SIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          FP=$("$SIGNER" verify --print-certs android/app/build/outputs/apk/debug/kopor-test-*.apk | grep -i 'SHA-256 digest' | head -1 | awk '{print $NF}')
+          echo "APK signing key: $FP"
+          # Fingerprint of the key kept in C:UsersUSERkopor-signing (public information, not a secret).
+          [ "$FP" = "7c3196e30c34659d6eaeddeaa2b4f89ae4d9b584a6319ffd7cdc4f4a0c900144" ] || { echo "::error::APK is not signed with the shared test key"; exit 1; }
       - name: Build release bundle (unsigned unless signing secrets are set)
         working-directory: android
         run: ./gradlew bundleRelease
