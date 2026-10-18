@@ -1,5 +1,5 @@
 // Businesses, branches, staff, device session and PIN lock.
-import { db, type Member, type Org, type Role } from '@/db/schema';
+import { db, SYNC_TABLES, type Member, type Org, type Role } from '@/db/schema';
 import { insert, update, atomic, getMeta, setMeta, type Ctx } from '@/db/repo';
 import { assertCan } from '@/db/permissions';
 import { uuid, hashPin, verifyPin } from '@/lib/crypto';
@@ -98,4 +98,26 @@ export async function checkPin(memberId: string, pin: string): Promise<boolean> 
   const fails = state.fails + 1;
   await setMeta('pinLock', { fails, until: fails >= 5 ? Date.now() + Math.min(15 * 60_000, 30_000 * 2 ** (fails - 5)) : 0 });
   return false;
+}
+
+/**
+ * Remove a business from this phone only: its records, and the PINs of its people (so no lock screen is left
+ * behind). Nothing changes online; a business that is backed up comes back by signing in again.
+ */
+export async function removeOrgFromDevice(orgId: string) {
+  const memberIds = (await db.members.where('org_id').equals(orgId).toArray()).map((m) => m.id);
+  await db.transaction('rw', db.tables, async () => {
+    for (const tb of SYNC_TABLES) await db.t(tb).where(tb === 'orgs' ? 'id' : 'org_id').equals(orgId).delete();
+  });
+  const pins = await getPins();
+  for (const id of memberIds) delete pins[id];
+  await setMeta('pins', pins);
+  await setMeta('pinLock', { fails: 0, until: 0 });
+}
+
+/** Changes made on this phone that have not reached the online backup yet. */
+export async function unsyncedCount(orgId: string): Promise<number> {
+  let n = 0;
+  for (const tb of SYNC_TABLES) n += (await db.t(tb).where(tb === 'orgs' ? 'id' : 'org_id').equals(orgId).filter((r) => r.dirty === 1).count());
+  return n;
 }

@@ -8,8 +8,8 @@ import { AppearancePanel } from '@/ui/Appearance';
 import { Icon } from '@/ui/Icon';
 import { Field } from '@/ui/widgets';
 import { LANGUAGES } from '@/i18n';
-import { db, SYNC_TABLES } from '@/db/schema';
-import { updateOrg, setPin, hasPin, getSession, createOrg } from '@/domain/org';
+import { db } from '@/db/schema';
+import { updateOrg, setPin, hasPin, getSession, createOrg, removeOrgFromDevice } from '@/domain/org';
 import { exportOrg, importOrg, isEncrypted } from '@/domain/backup';
 import { createDemo } from '@/domain/demo';
 import { getCloudConfig, setCloudConfig } from '@/cloud/supabase';
@@ -304,9 +304,7 @@ function BusinessesCard() {
   };
   const wipe = async () => {
     if (!confirm(t('settings.resetConfirm'))) return;
-    await db.transaction('rw', db.tables, async () => {
-      for (const tb of SYNC_TABLES) await db.t(tb).where(tb === 'orgs' ? 'id' : 'org_id').equals(ctx.orgId).delete();
-    });
+    await removeOrgFromDevice(ctx.orgId);
     const other = orgs.find((o) => o.id !== ctx.orgId);
     if (other) await open(other.id); else await switchSession(null);
   };

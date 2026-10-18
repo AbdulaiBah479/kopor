@@ -166,5 +166,14 @@ const v3: V3Dict = {
       'report:resolved': 'Ripɔt dɔn fiks',
     },
   },
+  lockx: {
+    ownerForgot: 'Na mi na di ɔna ɛn a fɔgɛt mi PIN',
+    title: 'Rimuv dis biznɛs frɔm dis fon',
+    backed: 'Dis biznɛs dɔn bakɔp ɔnlayn. Afta yu rimuv am, opin Mɔ → Klawd ɛn akawnt ɛn sayn in wit yu fon nɔmba ɛn akawnt PIN: yu tin dɛn go kam bak.',
+    notBacked: 'Dis biznɛs NƆ bakɔp ɔnlayn. If yu rimuv am, ɔl in tin dɛn na dis fon go lɔs fɔ ɔltɛm.',
+    pending: '{{n}} nyu chenj nɔ rich di bakɔp yet ɛn dɛn go lɔs.',
+    type: 'Fɔ shɔ, tayp di biznɛs nem: {{name}}',
+    remove: 'Rimuv frɔm dis fon',
+  },
 };
 export default v3;

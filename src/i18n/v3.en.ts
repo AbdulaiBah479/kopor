@@ -164,6 +164,15 @@ const v3 = {
       'report:resolved': 'Report resolved',
     },
   },
+  lockx: {
+    ownerForgot: 'I am the owner and forgot my PIN',
+    title: 'Remove this business from this phone',
+    backed: 'This business is backed up online. After removing it, open More → Cloud & account and sign in with your phone number and account PIN: your records come back.',
+    notBacked: 'This business is NOT backed up online. Removing it deletes all its records on this phone for good.',
+    pending: '{{n}} recent changes have not reached the backup yet and will be lost.',
+    type: 'To confirm, type the business name: {{name}}',
+    remove: 'Remove from this phone',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

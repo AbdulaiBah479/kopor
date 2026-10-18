@@ -430,6 +430,21 @@ await step('works offline after first visit', async () => {
   await ctx.setOffline(false);
 });
 
+// Last, because it removes the demo business: an owner who forgot the lock-screen PIN can start again.
+await step('owner forgot the lock PIN: remove the business from this phone', async () => {
+  await page.reload();
+  await page.locator('#pin').waitFor();
+  await page.getByTestId('owner-forgot').click();
+  const f = page.getByTestId('owner-forgot-form');
+  const remove = f.getByRole('button', { name: 'Remove from this phone' });
+  if (!(await remove.isDisabled())) throw new Error('remove must wait for the business name');
+  await f.locator('#confirm-name').fill("fatu's provisions");
+  await remove.click();
+  await page.getByTestId('demo').waitFor();             // back to the welcome screen, no lock
+  await page.reload();
+  await page.getByTestId('demo').waitFor();             // and it stays unlocked after a reload
+});
+
 await browser.close();
 server?.kill();
 if (errors.length) { console.log('\nJS errors:\n' + errors.join('\n')); failed++; }

@@ -166,5 +166,14 @@ const v3: V3Dict = {
       'report:resolved': 'Signalement résolu',
     },
   },
+  lockx: {
+    ownerForgot: 'Je suis le propriétaire et j’ai oublié mon PIN',
+    title: 'Retirer cette entreprise de ce téléphone',
+    backed: 'Cette entreprise est sauvegardée en ligne. Après l’avoir retirée, ouvrez Plus → Cloud et compte et connectez-vous avec votre numéro et le PIN du compte : vos données reviennent.',
+    notBacked: 'Cette entreprise n’est PAS sauvegardée en ligne. La retirer efface définitivement toutes ses données sur ce téléphone.',
+    pending: '{{n}} modifications récentes n’ont pas encore atteint la sauvegarde et seront perdues.',
+    type: 'Pour confirmer, tapez le nom de l’entreprise : {{name}}',
+    remove: 'Retirer de ce téléphone',
+  },
 };
 export default v3;
