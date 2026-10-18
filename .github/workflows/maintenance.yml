@@ -14,8 +14,9 @@ on:
           - remove-test-accounts
           - issue-recovery-code
           - check-setup
+          - set-owner-phone
       phone:
-        description: Phone number (only for issue-recovery-code), e.g. 072082348 or +23272082348
+        description: Phone number (for issue-recovery-code or set-owner-phone), e.g. 072082348 or +23272082348
         required: false
         type: string
 
@@ -72,6 +73,12 @@ jobs:
               echo "Recovery code issued for +$d (shown in the run summary)."
               { echo "### Recovery code for +$d"; echo; echo "\`${code:0:5}-${code:5}\`"; echo;
                 echo "In Kopor: Sign in → **Forgot your PIN?** → phone number, this code, and a new 6-digit PIN. It works once."; } >> "$GITHUB_STEP_SUMMARY";;
+            # Who may open the Owner dashboard and reports inbox (KOPOR_ADMIN_PHONES). Replaces the list with this number.
+            set-owner-phone)
+              d=$(printf '%s' "$PHONE" | tr -cd '0-9+')
+              case "$d" in +*) d=${d#+};; 00*) d=${d#00};; 232*) [ ${#d} -gt 9 ] || d=232$d;; 0*) d=232${d#0};; *) d=232$d;; esac
+              [[ "$d" =~ ^[0-9]{10,15}$ ]] || { echo "::error::Give a valid phone number"; exit 1; }
+              jq -n --arg v "$d" '[{name: "KOPOR_ADMIN_PHONES", value: $v}]' | curl -fsS -X POST "https://api.supabase.com/v1/projects/$PROJECT/secrets"                 -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' --data-binary @- && echo "Owner dashboard phone set to +$d";;
             # Read-only: which server settings exist (names only, never their values).
             check-setup)
               names=$(curl -fsS "https://api.supabase.com/v1/projects/$PROJECT/secrets" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | jq -r '.[].name')
