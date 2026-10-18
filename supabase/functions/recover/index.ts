@@ -4,19 +4,9 @@
 import { admin, cors, json, HttpError, env } from '../_shared/util.ts';
 import { pinPassword } from '../_shared/pin.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1';
+import { hashCode as hash, normalize, issueCode, lockKey } from '../_shared/recovery.ts';
 
-const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I, easy to read and type
 const MAX_TRIES = 5;
-
-const hex = (b: ArrayBuffer) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
-const hash = async (salt: string, code: string) => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}:${code}`)));
-const normalize = (code: string) => code.toUpperCase().replace(/[^A-Z0-9]/g, '');
-function newCode() {
-  const r = crypto.getRandomValues(new Uint8Array(10));
-  // 32 symbols = exactly 5 bits, so masking a random byte picks each symbol with equal probability (no modulo bias).
-  const s = [...r].map((x) => ALPHABET[x & 31]).join('');
-  return `${s.slice(0, 5)}-${s.slice(5)}`;
-}
 const equal = (a: string, b: string) => a.length === b.length && [...a].reduce((x, c, i) => x | (c.charCodeAt(0) ^ b.charCodeAt(i)), 0) === 0;
 
 Deno.serve(async (req) => {
@@ -29,9 +19,7 @@ Deno.serve(async (req) => {
       const user = createClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'), { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } }, auth: { persistSession: false } });
       const { data: u } = await user.auth.getUser();
       if (!u.user) throw new HttpError(401, 'Not signed in');
-      const code = newCode(), salt = crypto.randomUUID();
-      await db.from('recovery_codes').upsert({ user_id: u.user.id, code_hash: await hash(salt, normalize(code)), salt, attempts: 0, locked_until: null, updated_at: new Date().toISOString() });
-      return json({ code });
+      return json({ code: await issueCode(db, u.user.id) });
     }
 
     if (body.action === 'reset') {
@@ -54,7 +42,7 @@ Deno.serve(async (req) => {
       // One-time use: the app creates and shows a fresh code right after signing in.
       await db.from('recovery_codes').delete().eq('user_id', userId);
       // A successful reset also lifts any wrong-PIN lock on the account.
-      await db.from('pin_attempts').delete().eq('key', 'acct:' + [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(email)))].map((b) => b.toString(16).padStart(2, '0')).join(''));
+      await db.from('pin_attempts').delete().eq('key', await lockKey(email));
       return json({ ok: true });
     }
     throw new HttpError(400, 'Unknown action');

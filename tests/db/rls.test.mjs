@@ -17,7 +17,7 @@ const rejects = async (p, re) => { try { await p; } catch (e) { if (re && !re.te
 // --- Supabase-compatible auth stub ---
 await db.exec(`
   create schema auth;
-  create table auth.users (id uuid primary key, email text, created_at timestamptz not null default now());
+  create table auth.users (id uuid primary key, email text, created_at timestamptz not null default now(), last_sign_in_at timestamptz, raw_user_meta_data jsonb);
   create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   create function auth.role() returns text language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claim.role', true), ''), 'anon') $$;
   create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
@@ -243,6 +243,22 @@ await test('anyone can send a problem report or complaint, nobody but the server
   assert.equal((await q('select count(*)::int as n from reports')).rows[0].n, 2);
   assert.equal((await q('select kopor_admin_reports_new() as n')).rows[0].n, 2);
 });
+await test('back-office tools are for the server only, and every lookup is exact', async () => {
+  for (const who of ['owner', null]) {
+    await as(who);
+    await rejects(q(`select kopor_admin_account('p23276000000@phone.kopor.app')`), /permission denied/);
+    await rejects(q('select kopor_admin_activity()'), /permission denied/);
+    const none = await q('select * from admin_log').then((r) => r.rows.length === 0, (e) => /permission denied/.test(e.message));
+    assert.ok(none, 'admin log must be hidden');
+  }
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  const a = (await q(`select kopor_admin_account('P23276000000@phone.kopor.app') as a`)).rows[0].a;
+  assert.equal(a.businesses[0].name, 'Fatu Shop');
+  assert.equal(a.businesses[0].role, 'owner');
+  assert.equal((await q(`select kopor_admin_account('p00000000000@phone.kopor.app') as a`)).rows[0]?.a ?? null, null);
+  assert.equal((await q('select kopor_admin_activity() as a')).rows[0].a.length, 14);
+});
+
 await test('account deletion removes the user from businesses', async () => {
   await as('cashier');
   await rejects(q(`select kopor_forget_user($1)`, [U.cashier]), /permission denied/);
