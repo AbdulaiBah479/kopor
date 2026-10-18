@@ -109,6 +109,8 @@ export function VoiceSheet() {
     if (voice === 'browser') { browserRec.current?.stop(); return; }
     if (voice === 'stt') return;
     setVoiceErr(''); setResult(null);
+    // Browsers only allow the microphone on secure pages (https, localhost or the app); explain that plainly.
+    if (!window.isSecureContext) { setVoiceErr(t('voice.needHttps')); return; }
     if (!canRecord()) { if (!browserListen()) setVoiceErr(t('voice.unsupported')); return; }
     try {
       rec.current = await startRecording(setLevel, 45, () => finishRef.current());

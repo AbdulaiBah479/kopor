@@ -55,7 +55,7 @@ const v3 = {
     orType: 'Or type it', denied: 'The microphone is blocked. Tap the lock icon next to the web address (or open phone Settings → Apps → Kopor → Permissions), allow the microphone, then try again.',
     noMic: 'No microphone was found on this device.', busyMic: 'Another app is using the microphone. Close it and try again.',
     tooShort: 'That was too short. Tap the microphone, speak, then tap again.', needNet: 'Voice needs internet. You can type it instead; Kopor still understands it offline.',
-    needCloud: 'Voice needs the Kopor cloud or an AI key. You can type instead.', unsupported: 'This browser cannot record audio. Open Kopor in Chrome, or type instead.',
+    needCloud: 'Voice needs an internet connection. You can type instead.', needHttps: 'The microphone only works when Kopor is opened from its secure (https) link or the Kopor app. You can type instead.', unsupported: 'This browser cannot record audio. Open Kopor in Chrome, or type instead.',
     failed: 'Kopor could not hear that clearly. Please try again or type it.', busy: 'Voice is busy right now. Please type it, or try again in a minute.',
   },
   look: {

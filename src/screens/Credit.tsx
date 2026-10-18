@@ -9,6 +9,7 @@ import { Avatar, ContactPick, Empty, Field, Money, MoneyInput, Search, Seg, useD
 import { formatMoney } from '@/lib/money';
 import { today, addDays } from '@/lib/dates';
 import { waLink, smsLink, telLink } from '@/lib/phone';
+import { publicLink } from '@/lib/links';
 import { update, remove, atomic } from '@/db/repo';
 import type { Contact, LedgerEntry } from '@/db/schema';
 import { balances, creditTotals, overdueSince, ensureContact, addEntry, removeEntry, statementToken } from '@/domain/credit';
@@ -195,7 +196,7 @@ function StatementSheet({ contact, balance, text }: { contact: Contact; balance:
     started.current = true; // once per opening, even if it fails
     statementToken(ctx, contact.id).then((tk) => { setToken(tk); requestSync(); }).catch(fail);
   }, [ctx, contact.id, token, fail, requestSync]);
-  const link = token ? `${location.origin}${location.pathname}#/s/${token}` : '';
+  const link = token ? publicLink(`/s/${token}`) : '';
   const msg = t('stmt.msg', { name: contact.name, business: book.org.name, balance: formatMoney(balance), link });
   return (
     <div className="stack" data-testid="statement-sheet">

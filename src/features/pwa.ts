@@ -23,4 +23,4 @@ export function useInstall() {
   return { canInstall, install };
 }
 
-export const APP_URL = (import.meta.env.VITE_PUBLIC_APP_URL as string | undefined) || 'https://abdulaibah479.github.io/kopor/';
+export { APP_URL } from '@/lib/links';

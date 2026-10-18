@@ -1,10 +1,18 @@
 # Builds the Android app (APK for testing, AAB for Google Play) in the cloud, so no local
-# Android SDK is needed. Download the result from the workflow run's "Artifacts".
+# Android SDK is needed. Runs after every change to main; download "kopor-android" from the run's Artifacts.
+# Test APKs are all signed with the same key (secret ANDROID_TEST_KEYSTORE), so phones install updates over the
+# previous version and keep their records. Each build gets a higher version number.
 name: Android
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags: ['v*']
+    paths-ignore: ['docs/**', '**.md']
+
+concurrency:
+  group: android
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -30,6 +38,7 @@ jobs:
           VITE_PUBLIC_APP_URL: ${{ vars.VITE_PUBLIC_APP_URL }}
           VITE_SUPPORT_WHATSAPP: ${{ vars.VITE_SUPPORT_WHATSAPP }}
           VITE_SUPPORT_EMAIL: ${{ vars.VITE_SUPPORT_EMAIL }}
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
       - name: Create Android project if missing
         run: test -d android || npx cap add android
       - name: Declare microphone and camera permissions (voice entry, receipt photos, barcode scanning)
@@ -41,9 +50,22 @@ jobs:
           grep -q 'android.hardware.camera' "$M" || sed -i 's#</manifest>#    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>#' "$M"
           grep -n "uses-permission\|uses-feature" "$M"
       - run: npx cap sync android
-      - name: Build debug APK
+      - name: Version number (higher on every build, so phones accept the update)
+        run: |
+          V=$(node -p "require('./package.json').version")
+          sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/; s/versionName \"[^\"]*\"/versionName \"$V.${{ github.run_number }}\"/" android/app/build.gradle
+          grep -nE "versionCode|versionName" android/app/build.gradle
+      - name: Use the shared test signing key
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_TEST_KEYSTORE }}
+        run: |
+          [ -n "$KEYSTORE" ] || { echo "::warning::ANDROID_TEST_KEYSTORE is not set: this APK cannot update earlier test installs"; exit 0; }
+          mkdir -p ~/.android && printf '%s' "$KEYSTORE" | base64 -d > ~/.android/debug.keystore
+      - name: Build test APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: |
+          ./gradlew assembleDebug
+          mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/kopor-test-${{ github.run_number }}.apk"
       - name: Build release bundle (unsigned unless signing secrets are set)
         working-directory: android
         run: ./gradlew bundleRelease

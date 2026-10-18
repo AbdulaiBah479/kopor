@@ -57,7 +57,7 @@ const v3: V3Dict = {
     orType: 'Ɔ tayp am', denied: 'Di maykrofon dɔn blɔk. Tap di lɔk na di say we di wɛbsayt adrɛs de (ɔ opin fon Sɛtin → Ap → Kopor → Pamishɔn), gri fɔ di maykrofon, dɔn tray bak.',
     noMic: 'No maykrofon nɔ de na dis fon.', busyMic: 'Ɔda ap de yuz di maykrofon. Klos am ɛn tray bak.',
     tooShort: 'I shɔt tumɔs. Tap di maykrofon, tɔk, dɔn tap bak.', needNet: 'Fɔ tɔk, yu nid nɛt. Yu kin tayp am; Kopor stil ɔndastand am widawt nɛt.',
-    needCloud: 'Fɔ tɔk, yu nid Kopor klawd ɔ AI ki. Yu kin tayp am.', unsupported: 'Dis brawza nɔ kin rɛkɔd sawnd. Opin Kopor na Chrome, ɔ tayp am.',
+    needCloud: 'Fɔ tɔk, yu nid intanɛt. Yu kin tayp am.', needHttps: 'Di maykrofon de wok ɔnli we yu opin Kopor frɔm in sef (https) link ɔ di Kopor ap. Yu kin tayp am.', unsupported: 'Dis brawza nɔ kin rɛkɔd sawnd. Opin Kopor na Chrome, ɔ tayp am.',
     failed: 'Kopor nɔ yɛri dat klia. Duya tray bak ɔ tayp am.', busy: 'Di vɔys savis bizi naw. Duya tayp am, ɔ tray bak afta wan minit.',
   },
   look: {

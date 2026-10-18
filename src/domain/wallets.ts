@@ -1,6 +1,7 @@
 // Mobile money numbers and pay-me links. Kopor never moves money itself without a licensed partner (Monime):
 // it shows customers where to pay, opens the network's own menu for sending, and records what happened.
 import type { Org } from '@/db/schema';
+import { publicBase } from '@/lib/links';
 
 export type Network = 'orange' | 'afrimoney' | 'qmoney';
 export const NETWORKS: Network[] = ['orange', 'afrimoney', 'qmoney'];
@@ -52,6 +53,6 @@ export function decodePayRequest(data: string): PayRequest | null {
 
 /** Public link to the pay page (works from the published web app). */
 export function payLink(p: PayRequest) {
-  const base = (import.meta.env.VITE_PUBLIC_APP_URL as string | undefined) || `${location.origin}${location.pathname}`;
+  const base = publicBase();
   return `${base.replace(/#.*$/, '')}#/pay/${encodePayRequest(p)}`;
 }

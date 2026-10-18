@@ -57,7 +57,7 @@ const v3: V3Dict = {
     orType: 'Ou tapez-le', denied: 'Le micro est bloqué. Touchez le cadenas à côté de l’adresse (ou Réglages du téléphone → Applications → Kopor → Autorisations), autorisez le micro, puis réessayez.',
     noMic: 'Aucun micro trouvé sur cet appareil.', busyMic: 'Une autre application utilise le micro. Fermez-la et réessayez.',
     tooShort: 'C’était trop court. Touchez le micro, parlez, puis touchez à nouveau.', needNet: 'La voix a besoin d’internet. Vous pouvez taper ; Kopor comprend aussi hors ligne.',
-    needCloud: 'La voix a besoin du cloud Kopor ou d’une clé IA. Vous pouvez taper.', unsupported: 'Ce navigateur ne peut pas enregistrer. Ouvrez Kopor dans Chrome, ou tapez.',
+    needCloud: 'La voix a besoin d’une connexion Internet. Vous pouvez taper.', needHttps: 'Le micro ne marche que si Kopor est ouvert par son lien sécurisé (https) ou l’application Kopor. Vous pouvez taper.', unsupported: 'Ce navigateur ne peut pas enregistrer. Ouvrez Kopor dans Chrome, ou tapez.',
     failed: 'Kopor n’a pas bien entendu. Réessayez ou tapez-le.', busy: 'Le service vocal est occupé. Tapez-le, ou réessayez dans une minute.',
   },
   look: {

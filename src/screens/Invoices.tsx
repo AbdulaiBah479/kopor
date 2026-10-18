@@ -9,6 +9,7 @@ import { Empty, Field, ItemsEditor, Search, useDate } from '@/ui/widgets';
 import { formatMoney } from '@/lib/money';
 import { today, addDays } from '@/lib/dates';
 import { waLink } from '@/lib/phone';
+import { publicLink } from '@/lib/links';
 import type { Invoice, LineItem, Method } from '@/db/schema';
 import { itemsTotal, METHODS } from '@/domain/cash';
 import { createInvoice, createQuote, acceptQuote, markInvoicePaid, voidInvoice, invoiceCode, invoiceTotal, docKind } from '@/domain/invoices';
@@ -67,7 +68,7 @@ export function InvoiceDetail() {
   const code = invoiceCode(org.name, inv);
   const paid = inv.status === 'paid';
   const quote = inv.status === 'quote' || inv.status === 'accepted';
-  const publicUrl = `${location.origin}${location.pathname}#/i/${inv.public_token}`;
+  const publicUrl = publicLink(`/i/${inv.public_token}`);
   const share = t('inv.shareMsg', {
     kind: t(docKind(inv)), number: inv.number, business: org.name, date: fmt(inv.date),
     lines: inv.items.map((i) => `• ${i.qty} × ${i.name}: ${formatMoney(i.qty * i.price)}`).join('\n'), total: formatMoney(total),
