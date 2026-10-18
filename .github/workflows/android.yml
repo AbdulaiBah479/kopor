@@ -55,20 +55,22 @@ jobs:
           V=$(node -p "require('./package.json').version")
           sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/; s/versionName \"[^\"]*\"/versionName \"$V.${{ github.run_number }}\"/" android/app/build.gradle
           grep -nE "versionCode|versionName" android/app/build.gradle
-      - name: Use the shared test signing key
-        env:
-          KEYSTORE: ${{ secrets.ANDROID_TEST_KEYSTORE }}
-        run: |
-          [ -n "$KEYSTORE" ] || { echo "::warning::ANDROID_TEST_KEYSTORE is not set: this APK cannot update earlier test installs"; exit 0; }
-          mkdir -p ~/.android && printf '%s' "$KEYSTORE" | base64 -d > ~/.android/debug.keystore
       - name: Build test APK
         working-directory: android
         run: |
           ./gradlew assembleDebug
           mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/kopor-test-${{ github.run_number }}.apk"
-      - name: Check the APK is signed with the shared test key (so it updates earlier installs)
+      - name: Sign with the shared test key and check it (so the APK updates earlier installs)
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_TEST_KEYSTORE }}
         run: |
+          [ -n "$KEYSTORE" ] || { echo "::error::The ANDROID_TEST_KEYSTORE secret is missing"; exit 1; }
           SIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          printf '%s' "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/test.p12"
+          for apk in android/app/build/outputs/apk/debug/kopor-test-*.apk; do
+            "$SIGNER" sign --ks "$RUNNER_TEMP/test.p12" --ks-type PKCS12 --ks-pass pass:android --ks-key-alias androiddebugkey --key-pass pass:android "$apk"
+          done
+          rm -f "$RUNNER_TEMP/test.p12" android/app/build/outputs/apk/debug/*.idsig
           FP=$("$SIGNER" verify --print-certs android/app/build/outputs/apk/debug/kopor-test-*.apk | grep -i 'SHA-256 digest' | head -1 | awk '{print $NF}')
           echo "APK signing key: $FP"
           # Fingerprint of the key kept in C:UsersUSERkopor-signing (public information, not a secret).
