@@ -8,6 +8,7 @@ import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
+import { txnIcon } from '@/ui/txnIcon';
 import { Avatar, ContactPick, Empty, Field, MoneyInput, Seg, useDate } from '@/ui/widgets';
 import { formatMoney, currencySymbol } from '@/lib/money';
 import { shareText } from '@/lib/share';
@@ -99,7 +100,7 @@ export function Money() {
       <div className="list">
         {history.length ? history.map((x) => (
           <div key={x.id} className="item">
-            <span className={`icon-dot ${x.type === 'in' ? 'bg-primary-soft text-positive' : 'bg-warning-soft text-warning'}`}><Icon name={x.type === 'in' ? 'down' : 'up'} size={20} /></span>
+            <span className={`icon-dot ${x.type === 'in' ? 'bg-primary-soft text-positive' : 'bg-warning-soft text-warning'}`}><Icon name={txnIcon(x)} size={20} /></span>
             <div className="main">
               <div className="t">{itemsLabel(x.items) || x.note || (x.contact_id && contacts.get(x.contact_id)) || t(`categories.${x.category}`)}</div>
               <div className="s">{t(`methods.${x.method}`)} · {fmt(x.date)}</div>

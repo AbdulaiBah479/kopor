@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
-import { useOverlay } from '@/ui/overlay';
+import { haptic, useOverlay } from '@/ui/overlay';
+import { ProductTiles, MethodChips, addToCart } from '@/ui/Pos';
+import { txnIcon } from '@/ui/txnIcon';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
 import { Empty, Field, ItemsEditor, Money, MoneyInput, Seg, useDate } from '@/ui/widgets';
@@ -86,7 +88,7 @@ export function CashBook() {
             <div className="day-head"><span>{rel(date)}</span><span className="num">{formatMoney(rows.reduce((a, e) => a + (e.type === 'in' ? e.amount : -e.amount), 0), { sign: true })}</span></div>
             {rows.map((e) => (
               <button key={e.id} type="button" className="item" style={{ width: '100%', border: 0, textAlign: 'left', font: 'inherit' }} onClick={() => openSheet(label(e), <TxnSheet txn={e} />)}>
-                <div className="avatar" style={{ background: e.type === 'in' ? 'var(--good-soft)' : 'var(--warn-soft)', color: e.type === 'in' ? 'var(--good)' : 'var(--warn)' }}><Icon name={e.type === 'in' ? 'plus' : e.category === 'refund' ? 'back' : 'minus'} size={18} /></div>
+                <div className="avatar" style={{ background: e.type === 'in' ? 'var(--good-soft)' : 'var(--warn-soft)', color: e.type === 'in' ? 'var(--good)' : 'var(--warn)' }}><Icon name={txnIcon(e)} size={18} /></div>
                 <div className="main">
                   <div className="t">{label(e)}</div>
                   <div className="s">{t(`methods.${e.method}`)}{e.contact_id && ` · ${contactName(e.contact_id) ?? ''}`}{e.type === 'out' && e.category !== 'refund' && e.note && ` · ${e.note}`}</div>
@@ -141,21 +143,26 @@ export function SaleSheet({ prefill = {} }: { prefill?: { items?: Partial<LineIt
         closeSheet(); toast(t(method === 'credit' ? 'cash.creditSaved' : 'cash.saleSaved'), { undo: () => deleteTxn(ctx, txn.id), share });
       } catch (err) { fail(err); }
     }}>
+      <ProductTiles book={book} items={items} onAdd={(p) => { setItems(addToCart(items, p)); haptic(8); }} />
       <ScanToggle onCode={addScanned} />
       <ItemsEditor items={items} onChange={setItems} products={book.products} subtotal={!!(totals.discount || totals.tax)} />
       {!hasItems && <Field label={t('cash.amountAuto')}><MoneyInput big value={amount} onChange={setAmount} name="amount" /></Field>}
-      <Field label={t('tax.discount')}><MoneyInput value={discount} onChange={setDiscount} name="discount" /></Field>
       <TotalsBlock totals={totals} book={book} />
-      <Field label={t('cash.method')}>
-        <select name="method" value={method} onChange={(e) => setMethod(e.target.value as Method)}>{METHODS.map((m) => <option key={m} value={m}>{t(`methods.${m}`)}</option>)}</select>
-      </Field>
-      <Field label={t('cash.customer')}><input name="customer" list="dl-contacts" autoComplete="off" value={customer} placeholder={t('common.optional')} onChange={(e) => setCustomer(e.target.value)} required={method === 'credit'} /></Field>
+      <Field label={t('cash.method')}><MethodChips value={method} onChange={setMethod} methods={METHODS} /></Field>
+      {(method === 'credit' || customer) && (
+        <Field label={t('cash.customer')}><input name="customer" list="dl-contacts" autoComplete="off" value={customer} placeholder={method === 'credit' ? '' : t('common.optional')} onChange={(e) => setCustomer(e.target.value)} required={method === 'credit'} /></Field>
+      )}
       <datalist id="dl-contacts">{book.contacts.map((c) => <option key={c.id} value={c.name} />)}</datalist>
-      <div className="grid2">
-        <Field label={t('common.date')}><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
-        <Field label={t('common.note')}><input name="note" value={note} placeholder={t('common.optional')} onChange={(e) => setNote(e.target.value)} /></Field>
-      </div>
-      <button className="btn get block"><Icon name="check" size={18} /> {t('cash.saveSale')}{totals.total > 0 ? ` · ${formatMoney(totals.total)}` : ''}</button>
+      <details className="more-details" open={!!(discount || note || date !== today())}>
+        <summary>{t('pos.more')}</summary>
+        <Field label={t('tax.discount')}><MoneyInput value={discount} onChange={setDiscount} name="discount" /></Field>
+        {method !== 'credit' && !customer && <Field label={t('cash.customer')}><input name="customer" list="dl-contacts" autoComplete="off" value={customer} placeholder={t('common.optional')} onChange={(e) => setCustomer(e.target.value)} /></Field>}
+        <div className="grid2">
+          <Field label={t('common.date')}><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+          <Field label={t('common.note')}><input name="note" value={note} placeholder={t('common.optional')} onChange={(e) => setNote(e.target.value)} /></Field>
+        </div>
+      </details>
+      <button className="btn get block sticky-submit" disabled={!(totals.total > 0)}><Icon name="check" size={18} /> {t('cash.saveSale')}{totals.total > 0 ? ` · ${formatMoney(totals.total)}` : ''}</button>
     </form>
   );
 }

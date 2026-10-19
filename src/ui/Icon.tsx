@@ -6,6 +6,7 @@ import {
   Pencil, ArrowUpRight, ArrowDownLeft, Sparkles, Lock, Download, Upload, Landmark, X, Camera, Bell, Send, Globe, Cloud,
   ShieldCheck, List, Store, Link, CircleHelp, Crown, ScanBarcode, Contact, Delete, RefreshCw, Undo2, Wallet, TrendingUp, TrendingDown,
   Copy, QrCode, Info, Smartphone, WifiOff, KeyRound, ArrowLeftRight, Square, Palette, Sun, Moon, SunMoon, Type,
+  Bus, Building2, Zap, Fuel, UtensilsCrossed, Wrench, Receipt, HandCoins, ShoppingBag, Tag,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -18,6 +19,7 @@ const ICONS: Record<string, LucideIcon> = {
   list: List, store: Store, link: Link, help: CircleHelp, crown: Crown, barcode: ScanBarcode, contact: Contact, backspace: Delete,
   refresh: RefreshCw, undo: Undo2, wallet: Wallet, trendUp: TrendingUp, trendDown: TrendingDown,
   copy: Copy, qr: QrCode, info: Info, install: Smartphone, offline: WifiOff, key: KeyRound, swap: ArrowLeftRight, stop: Square, palette: Palette, sun: Sun, moon: Moon, auto: SunMoon, text: Type,
+  bus: Bus, building: Building2, zap: Zap, fuel: Fuel, food: UtensilsCrossed, wrench: Wrench, receipt: Receipt, coins: HandCoins, bag: ShoppingBag, tag: Tag,
 };
 
 export function Icon({ name, size = 20, className = '', strokeWidth = 2 }: { name: string; size?: number; className?: string; strokeWidth?: number }) {

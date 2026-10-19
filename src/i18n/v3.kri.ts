@@ -199,5 +199,12 @@ const v3: V3Dict = {
     managerOnly: 'Na ɔnli manija ɔ ɔna kin ad stɔk.',
     newCount: '{{n}} nyu tin go ad to yu stɔk list',
   },
+  pos: {
+    search: 'Fɛn wan tin',
+    inCart: '{{n}} na di sɛl',
+    left: '{{n}} lɛf',
+    none: 'Nɔ tin nɔ gɛt da nem de.',
+    more: 'Mɔ tin (diskawnt, kɔstoma, de, nɔt)',
+  },
 };
 export default v3;

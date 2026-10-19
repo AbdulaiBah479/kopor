@@ -197,6 +197,13 @@ const v3 = {
     managerOnly: 'Only a manager or owner can add stock.',
     newCount: '{{n}} new products will be added to your stock list',
   },
+  pos: {
+    search: 'Find a product',
+    inCart: '{{n}} in the sale',
+    left: '{{n}} left',
+    none: 'No product with that name.',
+    more: 'More details (discount, customer, date, note)',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

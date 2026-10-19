@@ -199,5 +199,12 @@ const v3: V3Dict = {
     managerOnly: 'Seul un gérant ou le propriétaire peut ajouter du stock.',
     newCount: '{{n}} nouveaux produits seront ajoutés à votre liste',
   },
+  pos: {
+    search: 'Chercher un produit',
+    inCart: '{{n}} dans la vente',
+    left: '{{n}} restants',
+    none: 'Aucun produit de ce nom.',
+    more: 'Plus de détails (remise, client, date, note)',
+  },
 };
 export default v3;

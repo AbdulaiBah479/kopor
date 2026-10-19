@@ -27,7 +27,8 @@ export const Money = ({ v, className = '', sign, compact }: { v: number; classNa
   const full = formatMoney(v, { sign });
   if (!compact) return <span className={`num ${className}`}>{full}</span>;
   const short = Math.abs(v) >= 100_000_00 ? `${currencySymbol()} ${formatShort(v)}` : formatMoney(Math.round(v / 100) * 100, { sign });
-  return <span className={`num nowrap ${className}`} title={full} aria-label={full}>{short}</span>;
+  // Long amounts get a slightly smaller size so narrow tiles show them in full instead of cutting them off.
+  return <span className={`num nowrap${short.length > 8 ? ' tight' : ''} ${className}`} title={full} aria-label={full}>{short}</span>;
 };
 
 export function useDate() {

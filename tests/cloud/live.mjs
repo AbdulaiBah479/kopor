@@ -75,6 +75,7 @@ try {
     await b.goto(BASE + '#/cash');
     await b.getByTestId('new-sale').click();
     await b.getByTestId('sale-form').locator('[name=amount]').fill('777');
+    await b.getByTestId('sale-form').locator('summary').click();
     await b.getByTestId('sale-form').locator('[name=note]').fill('Cloud test sale');
     await b.getByTestId('sale-form').getByRole('button', { name: /Save sale/ }).click();
     await b.goto(BASE + '#/account');

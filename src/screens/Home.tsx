@@ -6,6 +6,7 @@ import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
+import { txnIcon } from '@/ui/txnIcon';
 import { Avatar, BarChart, Money, ScoreRing, Seg, useDate } from '@/ui/widgets';
 import { formatMoney } from '@/lib/money';
 import { today, monthStart, addDays } from '@/lib/dates';
@@ -97,22 +98,24 @@ export function Home() {
       {/* Balance, Wallet/Cash style */}
       <section className="flex flex-col gap-4" data-tour="hero" aria-label={t('home.todayProfit')}>
         <Seg value={period} onChange={setPeriod} options={[['today', t('ux.periodToday')], ['week', t('ux.periodWeek')], ['month', t('ux.periodMonth')]]} />
-        <div className="balance-head">
-          <span className="label">{period === 'today' ? t('home.todayProfit') : t('ux.profitFor', { period: periodLabel })}</span>
-          <span className={`amount ${s.profit < 0 ? 'bad' : ''}`}>{formatMoney(s.profit)}</span>
-          <span className="split">
-            <span><Icon name="down" size={14} className="mr-0.5 inline text-positive" />{t('ux.salesFor')} <b className="text-foreground">{formatMoney(s.sales)}</b></span>
-            <span><Icon name="up" size={14} className="mr-0.5 inline text-danger" />{t('ux.expensesFor')} <b className="text-foreground">{formatMoney(s.expenses)}</b></span>
-          </span>
+        {/* One money card (Revolut / Monzo style): the number that matters, its two parts, and the money buttons. */}
+        <div className="hero balance-card">
+          <div className="balance-head">
+            <span className="label">{period === 'today' ? t('home.todayProfit') : t('ux.profitFor', { period: periodLabel })}</span>
+            <span className="amount">{formatMoney(s.profit)}</span>
+            <span className="split">
+              <span><Icon name="down" size={14} className="mr-0.5 inline" />{t('ux.salesFor')} <b>{formatMoney(s.sales)}</b></span>
+              <span><Icon name="up" size={14} className="mr-0.5 inline" />{t('ux.expensesFor')} <b>{formatMoney(s.expenses)}</b></span>
+            </span>
+          </div>
+          {can('record') && (
+            <div className="money-actions" data-tour="money">
+              <button className="btn on-hero" onClick={() => nav('/money', { state: { open: 'receive' } })} data-testid="home-receive"><Icon name="down" size={20} /> {t('money.receive')}</button>
+              <button className="btn on-hero ghost-hero" onClick={() => nav('/money', { state: { open: 'send' } })} data-testid="home-send"><Icon name="up" size={20} /> {t('money.send')}</button>
+            </div>
+          )}
         </div>
       </section>
-
-      {can('record') && (
-        <div className="money-actions" data-tour="money">
-          <button className="btn primary" onClick={() => nav('/money', { state: { open: 'receive' } })} data-testid="home-receive"><Icon name="down" size={20} /> {t('money.receive')}</button>
-          <button className="btn tinted" onClick={() => nav('/money', { state: { open: 'send' } })} data-testid="home-send"><Icon name="up" size={20} /> {t('money.send')}</button>
-        </div>
-      )}
 
       {can('record') && (
         <div className="actions" data-tour="quick">
@@ -186,7 +189,7 @@ export function Home() {
             {recent.map((x) => (
               <Link key={x.id} to="/cash" className="item">
                 <span className={`icon-dot ${x.type === 'in' ? 'bg-primary-soft text-positive' : 'bg-warning-soft text-warning'}`}>
-                  <Icon name={x.type === 'in' ? 'down' : 'up'} size={20} />
+                  <Icon name={txnIcon(x)} size={20} />
                 </span>
                 <div className="main">
                   <div className="t">{x.type === 'in' ? itemsLabel(x.items) || x.note || t('categories.sale') : t(`categories.${x.category}`)}</div>

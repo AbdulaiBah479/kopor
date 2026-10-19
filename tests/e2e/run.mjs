@@ -104,6 +104,22 @@ await step('sale with a product reduces stock', async () => {
     .catch(async () => { throw new Error(`stock ${before} -> ${await qty()}`); });
 });
 
+await step('tap-to-sell: product tiles fill the sale, payment by tap', async () => {
+  await go('/cash');
+  await page.getByTestId('new-sale').click();
+  const form = page.getByTestId('sale-form');
+  const tile = form.locator('.pos-tile[data-product="Soap bar"]');
+  await tile.click();
+  await tile.click();
+  await tile.locator('.pos-badge', { hasText: '2' }).waitFor();
+  await form.getByTestId('method-chips').getByRole('radio', { name: 'Orange Money' }).click();
+  await shot('03b-tap-to-sell');
+  const save = form.getByRole('button', { name: /Save sale · Le 24/ });   // 2 × Le 12
+  await tapInSheet(save);
+  await page.getByText('Sale saved').waitFor();
+  await page.locator('.list .item', { hasText: '2 Soap bar' }).filter({ hasText: 'Orange Money' }).first().waitFor();
+});
+
 await step('scan a supplier receipt (no barcode): stock goes up, new product created', async () => {
   // Stand-in for the AI reading the photo, so this runs offline and gives the same answer every time.
   const reading = { kind: 'purchase', vendor: 'Kissy Wholesale', date: '', total: 1700 + 300, category: 'stock',
@@ -280,6 +296,7 @@ await step('sale with discount shows subtotal, tax and total', async () => {
   const form = page.getByTestId('sale-form');
   await form.locator('[name=item_name]').fill('Bread');
   await form.locator('[name=item_qty]').fill('10');
+  await form.locator('summary').click();
   await form.locator('[name=discount]').fill('10');
   await page.getByTestId('totals').getByText('Le 80.50').waitFor(); // (80 − 10) × 1.15
   await shot('10-sale-tax');
