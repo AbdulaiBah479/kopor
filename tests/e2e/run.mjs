@@ -116,6 +116,11 @@ await step('scan a supplier receipt (no barcode): stock goes up, new product cre
   before = await rice();
   await go('/');
   await page.getByRole('button', { name: 'Scan', exact: true }).click();
+  // Builds without the Kopor cloud (e.g. CI) cannot read photos and say so; the live test (tests/cloud/scan-live.mjs)
+  // covers the real reading. Here: check the message, then stop.
+  const noCloud = page.getByText('Reading photos needs an internet connection');
+  await Promise.race([page.getByTestId('scan-file').waitFor({ state: 'attached' }), noCloud.waitFor()]);
+  if (await noCloud.count()) { console.log('   (no cloud in this build: checked the message instead)'); return; }
   // A tiny white PNG stands in for the camera photo.
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
   await page.getByTestId('scan-file').setInputFiles({ name: 'receipt.png', mimeType: 'image/png', buffer: png });
