@@ -24,7 +24,7 @@ const EXAMPLES = ['Sold 3 bags rice 2550 cash', 'A sɛl tu bag rɛs 1700', 'Amin
 export function VoiceSheet() {
   const { t, i18n } = useTranslation();
   const book = useBook();
-  const { ctx } = useApp();
+  const { ctx, can } = useApp();
   const { closeSheet, openSheet, toast, fail } = useOverlay();
   const [text, setText] = useState('');
   const [voice, setVoice] = useState<'idle' | 'rec' | 'stt' | 'browser'>('idle');
@@ -133,21 +133,29 @@ export function VoiceSheet() {
     if (!result) return;
     const r = result;
     try {
+      let view = '/cash';
       if (r.action === 'sale') await recordSale(ctx, { items: saleItems(r), amount: r.amount, method: r.method, customer: r.name, note: saleItems(r).length ? '' : r.item || r.note });
-      else if (r.action === 'expense') await recordExpense(ctx, { amount: r.amount, category: EXPENSE_CATEGORIES.includes(r.category as never) ? r.category : 'other', note: r.note || r.item });
+      else if (r.action === 'purchase' && can('stock') && r.item) {
+        // Goods bought to sell again: stock goes up and the cost is recorded as one stock expense.
+        await recordPurchase(ctx, { total: r.amount, lines: [{ productId: findByName(book.products, r.item)?.id ?? null, name: r.item, qty: r.qty || 1, unitCost: Math.round(r.amount / (r.qty || 1)) }] });
+        view = '/stock';
+      } else if (r.action === 'expense' || r.action === 'purchase') await recordExpense(ctx, { amount: r.amount, category: r.action === 'purchase' ? 'stock' : EXPENSE_CATEGORIES.includes(r.category as never) ? r.category : 'other', note: r.note || r.item });
       else {
         if (!r.name) { openSheet(t('credit.addEntry'), <NewCreditSheet type={r.action === 'payment_received' ? 'got' : 'gave'} amount={r.amount} />); return; }
         await atomic(async () => {
           const c = await ensureContact(ctx, r.name);
           await addEntry(ctx, { contactId: c.id, type: r.action === 'credit_given' ? 'gave' : 'got', amount: r.amount, note: r.note || (r.item ? `${r.qty} ${r.item}` : '') });
         });
+        view = '/credit';
       }
-      closeSheet(); toast(t('common.saved'));
+      closeSheet(); toast(t('common.saved'), { view });
     } catch (e) { fail(e); }
   };
   const edit = () => {
     const r = result!;
     if (r.action === 'sale') openSheet(t('cash.newSale'), <SaleSheet prefill={{ items: saleItems(r), amount: r.amount, method: r.method, customer: r.name, note: r.item }} />);
+    else if (r.action === 'purchase') openSheet(t('ai.scanTitle'), <ScanSheet prefill={{ kind: 'purchase', vendor: '', date: '', category: 'stock', total: r.amount,
+      items: [{ name: r.item || r.note, qty: r.qty || 1, price: Math.round(r.amount / (r.qty || 1)) }] }} />);
     else if (r.action === 'expense') openSheet(t('cash.newExpense'), <ExpenseSheet prefill={{ amount: r.amount, category: r.category, note: r.note }} />);
     else openSheet(t('credit.addEntry'), <NewCreditSheet name={r.name} type={r.action === 'payment_received' ? 'got' : 'gave'} amount={r.amount} note={r.note} />);
   };
@@ -181,6 +189,7 @@ export function VoiceSheet() {
             result.name && [t('ai.person'), result.name], result.item && [t('common.item'), `${result.qty} × ${result.item}`],
             result.action === 'sale' && [t('cash.method'), t(`methods.${result.method}`)], result.action === 'expense' && [t('cash.category'), t(`categories.${result.category}`)],
           ].filter(Boolean) as [string, string][]).map(([k, v]) => <div key={k} className="row between"><span className="muted">{k}</span><b>{v}</b></div>)}
+          {result.action === 'purchase' && <div className="small muted">{t(can('stock') ? 'aix.purchaseHelp' : 'aix.purchaseCashier')}</div>}
           {fromPrice && <div className="small muted" data-testid="from-price">{t('ai.fromPrice')}</div>}
           <div className="btn-row">
             <button type="button" className="btn" onClick={edit}><Icon name="edit" size={18} /> {t('common.edit')}</button>
@@ -208,17 +217,17 @@ type ScanMode = 'purchase' | 'sale' | 'expense';
  * Photo of a receipt, supplier bill or handwritten page (no barcode needed) → checked lines → saved in one step as
  * goods bought (stock in + one expense), a sale (stock out) or an expense.
  */
-export function ScanSheet() {
+export function ScanSheet({ prefill, prefer }: { prefill?: ScanResult; prefer?: 'purchase' | 'sale' } = {}) {
   const { t } = useTranslation();
   const book = useBook();
   const { ctx, can } = useApp();
   const { closeSheet, toast, fail } = useOverlay();
   const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState<ScanResult | null>(null);
-  const [rows, setRows] = useState<ScanRow[]>([]);
-  const [mode, setMode] = useState<ScanMode>('purchase');
-  const [total, setTotal] = useState(0);
+  const [res, setRes] = useState<ScanResult | null>(prefill ?? null);
+  const [rows, setRows] = useState<ScanRow[]>(() => (prefill?.items ?? []).map((i) => ({ name: i.name, productId: findByName(book.products, i.name)?.id ?? '', qty: i.qty, price: i.price, sellPrice: i.price })));
+  const [mode, setMode] = useState<ScanMode>(prefill?.kind ?? 'purchase');
+  const [total, setTotal] = useState(prefill?.total ?? 0);
   const [supplier, setSupplier] = useState('');
   const [method, setMethod] = useState<Method>('cash');
   const [category, setCategory] = useState('other');
@@ -240,7 +249,8 @@ export function ScanSheet() {
       setTotal(r.total);
       setSupplier(r.vendor);
       setCategory(EXPENSE_CATEGORIES.includes(r.category as never) ? r.category : 'other');
-      setMode(!r.items.length || (r.kind === 'purchase' && !can('stock')) ? 'expense' : r.kind);
+      const kind = prefer && r.items.length && (prefer !== 'purchase' || can('stock')) ? prefer : r.kind;
+      setMode(!r.items.length || (kind === 'purchase' && !can('stock')) ? 'expense' : kind);
     } catch (e) { fail(e); } finally { setBusy(false); }
   };
   const set = (k: number, patch: Partial<ScanRow>) => setRows(rows.map((r, i) => (i === k ? { ...r, ...patch } : r)));
@@ -253,13 +263,13 @@ export function ScanSheet() {
       if (mode === 'purchase') {
         await recordPurchase(ctx, { supplier, total: total || lineSum, method, date,
           lines: rows.map((r) => ({ productId: r.productId || null, name: r.name, qty: r.qty, unitCost: r.price, sellPrice: r.sellPrice })) });
-        toast(t('rscan.savedPurchase'));
+        toast(t('rscan.savedPurchase'), { view: '/stock' });
       } else if (mode === 'sale') {
         await recordSale(ctx, { items: rows.filter((r) => r.name.trim()).map((r) => ({ product_id: r.productId || null, name: r.name, qty: r.qty, price: r.price })), method, date, note: supplier });
-        toast(t('rscan.savedSale'));
+        toast(t('rscan.savedSale'), { view: '/cash' });
       } else {
         await recordExpense(ctx, { amount: total || lineSum, category, method, date, note: supplier || rows.map((r) => r.name).join(', ') });
-        toast(t('rscan.savedExpense'));
+        toast(t('rscan.savedExpense'), { view: '/cash' });
       }
       haptic(15);
       closeSheet();

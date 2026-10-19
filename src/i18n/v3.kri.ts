@@ -206,5 +206,9 @@ const v3: V3Dict = {
     none: 'Nɔ tin nɔ gɛt da nem de.',
     more: 'Mɔ tin (diskawnt, kɔstoma, de, nɔt)',
   },
+  aix: {
+    purchaseHelp: 'If yu sev, dɛn tin ya go ad to yu stɔk ɛn wetin yu pe go rayt as stɔk spɛn.',
+    purchaseCashier: 'Na ɔnli manija ɔ ɔna kin ad stɔk, so dis go sev as stɔk spɛn.',
+  },
 };
 export default v3;

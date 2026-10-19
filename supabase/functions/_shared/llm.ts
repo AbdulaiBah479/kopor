@@ -2,7 +2,7 @@
 // down or retired, the next one answers. Providers are enabled simply by adding their key as a secret.
 // (Free tiers listed in github.com/cheahjs/free-llm-api-resources.)
 
-import { hasAmount } from './amount.ts';
+import { hasAmount, krioWords } from './amount.ts';
 
 type Msg = { role: string; content: unknown };
 interface Provider { name: string; base: string; key?: string; text: string[]; vision: string[]; extra?: (model: string) => Record<string, unknown> }
@@ -97,6 +97,7 @@ async function geminiListen(file: File, lang: string, hints: string): Promise<st
   const data = b64(new Uint8Array(await file.arrayBuffer()));
   const text = `Write down exactly what is said in this short recording from a small shop in Sierra Leone (spoken in English or Krio${lang === 'fr' ? ', or French' : ''}). ` +
     'Write every word you hear, in the same language, including every quantity and amount of money (write numbers as digits). ' +
+    'If Krio is spoken, write it in Krio the way people type it on phones (for example "Fatu tek 2 tin ɔyl pan trɔs", "A dɔn sɛl tu bag rɛs fɔ 1700", "Mohamed dɔn pe 300"); never translate Krio into English. ' +
     'Do not translate, summarise, correct, add or explain anything. Reply with the words only. If nothing is said, reply with nothing.' +
     (hints ? ` Customer and product names that may be said: ${hints}.` : '');
   for (const model of list(Deno.env.get('GEMINI_STT_MODELS'), ['gemini-flash-latest', 'gemini-flash-lite-latest'])) {
@@ -115,11 +116,15 @@ async function geminiListen(file: File, lang: string, hints: string): Promise<st
   return null;
 }
 
+
 /** Whisper (with the amount retry) and Gemini listen at the same time. alt = Gemini's version, for the app to combine. */
 export async function transcribe(file: File, lang: string, hints = ''): Promise<{ text: string; provider: string; alt?: string }> {
   const second = geminiListen(file, lang, hints).catch(() => null);
   const first = whisper(file, lang).catch((e) => { console.error('STT whisper', e); return null; });
   const [w, alt] = await Promise.all([first, second]);
+  // Krio: Whisper only knows English and guesses English words; Gemini writes Krio well. So when the speech is Krio
+  // (the app is in Krio, or Gemini's version is clearly Krio) Gemini's version leads and Whisper's is the backup.
+  if (alt && w?.text && (lang === 'kri' || krioWords(alt) >= 2)) return { text: alt, provider: 'gemini', alt: w.text };
   if (w?.text) return { ...w, ...(alt && alt !== w.text ? { alt } : {}) };
   if (alt) return { text: alt, provider: 'gemini' };
   throw new Error('Voice service is busy. Please type instead.');

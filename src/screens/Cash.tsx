@@ -4,6 +4,7 @@ import { useApp, useBook } from '@/state/app';
 import { haptic, useOverlay } from '@/ui/overlay';
 import { ProductTiles, MethodChips, addToCart } from '@/ui/Pos';
 import { txnIcon } from '@/ui/txnIcon';
+import { ScanButton } from '@/ui/ScanButton';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
 import { Empty, Field, ItemsEditor, Money, MoneyInput, Seg, useDate } from '@/ui/widgets';
@@ -44,7 +45,7 @@ export function CashBook() {
   const label = (e: Txn) => e.type === 'in' ? itemsLabel(e.items) || e.note || t('categories.sale') : e.category === 'refund' ? `${t('returns.refund')}: ${itemsLabel(e.items)}` : t(`categories.${e.category}`);
 
   return (
-    <Page guide="cash" title={t('cash.title')} sub={t('cash.sub')}
+    <Page guide="cash" title={t('cash.title')} sub={t('cash.sub')} right={can('record') && <ScanButton />}
       after={can('record') && (
         <div className="sticky-actions"><div className="btn-row">
           <button className="btn get" data-testid="new-sale" onClick={() => openSheet(t('cash.newSale'), <SaleSheet />)}><Icon name="plus" size={18} /> {t('home.sale')}</button>

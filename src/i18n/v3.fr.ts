@@ -206,5 +206,9 @@ const v3: V3Dict = {
     none: 'Aucun produit de ce nom.',
     more: 'Plus de détails (remise, client, date, note)',
   },
+  aix: {
+    purchaseHelp: 'L’enregistrement ajoute ces articles à votre stock et note le montant payé comme dépense de stock.',
+    purchaseCashier: 'Seul un gérant ou le propriétaire peut ajouter du stock : ceci sera enregistré comme dépense de stock.',
+  },
 };
 export default v3;

@@ -60,7 +60,7 @@ async function assertWithinPlan(orgId: string, what: 'staff' | 'branches') {
   const count = what === 'staff'
     ? (await db.members.where('org_id').equals(orgId).toArray()).filter((m) => !m.deleted && m.active).length
     : (await db.branches.where('org_id').equals(orgId).toArray()).filter((b) => !b.deleted).length;
-  if (count >= FREE_LIMITS[what]) throw new AppError('errx.proLimit', { limit: FREE_LIMITS[what] });
+  if (count >= FREE_LIMITS[what]) throw new AppError(what === 'staff' ? 'errx.proStaff' : 'errx.proBranches', { limit: FREE_LIMITS[what] });
 }
 export async function deactivateMember(ctx: Ctx, id: string) {
   assertCan(ctx.role, 'team');

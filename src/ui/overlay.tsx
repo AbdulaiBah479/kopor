@@ -1,7 +1,7 @@
 // Bottom sheets (vaul: draggable, swipe down to close) and toasts (sonner: stackable, with Undo).
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Drawer } from 'vaul';
 import { Toaster, toast as sonner } from 'sonner';
 import { Icon } from './Icon';
@@ -10,7 +10,8 @@ import { PermissionError } from '@/db/permissions';
 import { reportError } from '@/features/monitoring';
 
 interface SheetState { title: string; body: ReactNode; key: number }
-export interface ToastOpts { undo?: () => Promise<unknown> | unknown; tone?: 'success' | 'error' | 'info'; share?: { label: string; href: string } }
+// view = where the record went (e.g. '/stock'): a "View" button that opens that tab (skipped when already there).
+export interface ToastOpts { undo?: () => Promise<unknown> | unknown; tone?: 'success' | 'error' | 'info'; share?: { label: string; href: string }; view?: string }
 interface Overlay {
   openSheet: (title: string, body: ReactNode) => void;
   closeSheet: () => void;
@@ -44,18 +45,21 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
 
   const closeSheet = useCallback(() => setOpen(false), []);
   const openSheet = useCallback((title: string, body: ReactNode) => { setSheet({ title, body, key: Date.now() }); setOpen(true); }, []);
+  const navigate = useNavigate();
   const toast = useCallback((m: string, opts: ToastOpts = {}) => {
     if (opts.tone !== 'error') haptic();
     const undo = opts.undo ? { label: t('common.undo'), onClick: () => { Promise.resolve(opts.undo!()).then(() => sonner(t('common.undone'))); } } : undefined;
     // A share action (e.g. "Send to customer" on WhatsApp) goes first; Undo then moves to the secondary button.
     const share = opts.share ? { label: opts.share.label, onClick: () => { window.open(opts.share!.href, '_blank', 'noopener'); } } : undefined;
+    const view = opts.view && !window.location.hash.startsWith(`#${opts.view}`) ? { label: t('common.view'), onClick: () => navigate(opts.view!) } : undefined;
+    const first = share ?? view ?? undo;
     if (opts.tone === 'error') sonner.error(m);
-    else sonner.success(m, { action: share ?? undo, cancel: share ? undo : undefined, duration: share ? 9000 : opts.undo ? 6000 : 2800 });
-  }, [t]);
+    else sonner.success(m, { action: first, cancel: first !== undo ? undo : undefined, duration: share ? 9000 : view || opts.undo ? 6000 : 2800 });
+  }, [t, navigate]);
   const fail = useCallback((e: unknown) => {
-    console.error(e);
-    // Expected problems (validation, permissions) are not bugs; report only unexpected errors.
-    if (!(e instanceof AppError) && !(e instanceof PermissionError) && !(e instanceof Error && /^errx?\./.test(e.message))) reportError(e);
+    // Expected problems (validation, permissions, plan limits) are not bugs: show them, but log and report only
+    // unexpected errors.
+    if (!(e instanceof AppError) && !(e instanceof PermissionError) && !(e instanceof Error && /^errx?\./.test(e.message))) { console.error(e); reportError(e); }
     haptic(40);
     toast(errText(e), { tone: 'error' });
   }, [toast, errText]);

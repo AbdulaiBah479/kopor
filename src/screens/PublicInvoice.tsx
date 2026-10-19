@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ReportBusinessLink } from './Report';
+import { LoadFailed } from './PublicStatement';
 import { getSupabase } from '@/cloud/supabase';
 import { formatMoney, setCurrencySymbol } from '@/lib/money';
 import { useDate } from '@/ui/widgets';
@@ -18,17 +19,20 @@ export function PublicInvoice() {
   const { token } = useParams();
   const { t } = useTranslation();
   const { fmt } = useDate();
-  const [inv, setInv] = useState<PublicInv | null | undefined>(undefined);
+  const [inv, setInv] = useState<PublicInv | null | undefined | 'error'>(undefined);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     getSupabase().then(async (sb) => {
       if (!sb) return setInv(null);
-      const { data } = await sb.rpc('public_invoice', { token });
+      const { data, error } = await sb.rpc('public_invoice', { token }).abortSignal(AbortSignal.timeout(15_000));
+      if (error) return setInv('error');
       const row = (Array.isArray(data) ? data[0] : data) as PublicInv | undefined;
       if (row) setCurrencySymbol(row.currency);
       setInv(row ?? null);
-    }).catch(() => setInv(null));
-  }, [token]);
+    }).catch(() => setInv('error'));
+  }, [token, attempt]);
   if (inv === undefined) return <div className="boot"><div className="boot-logo">K</div></div>;
+  if (inv === 'error') return <LoadFailed onRetry={() => { setInv(undefined); setAttempt(attempt + 1); }} />;
   if (!inv) return <div className="shell"><div className="content"><div className="empty"><b>{t('public.notFound')}</b></div></div></div>;
   const total = Number(inv.total);
   const paid = inv.status === 'paid';

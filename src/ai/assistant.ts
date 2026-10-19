@@ -25,7 +25,7 @@ export async function aiAvailable() { return !!(await getSupabase()); }
 const extractJson = (s: string) => { const m = s.match(/\{[\s\S]*\}/); if (!m) throw new Error('AI gave no JSON'); return JSON.parse(m[0]); };
 
 const ParsedSchema = z.object({
-  action: z.enum(['sale', 'expense', 'credit_given', 'payment_received', 'unknown']).catch('unknown'),
+  action: z.enum(['sale', 'purchase', 'expense', 'credit_given', 'payment_received', 'unknown']).catch('unknown'),
   amount: z.coerce.number().nonnegative().catch(0),
   name: z.string().catch(''), item: z.string().catch(''), qty: z.coerce.number().positive().catch(1),
   method: z.enum(['cash', 'orange', 'afrimoney', 'qmoney', 'bank', 'credit']).catch('cash'),
@@ -87,9 +87,11 @@ export function keepsMeaning(original: string, fixed: string, book: Pick<Book, '
 /** Structured record from free text (English/Krio). Amount returned in minor units. */
 export async function aiParse(text: string, book: Book): Promise<Parsed> {
   const sys = `You turn a shopkeeper's message (English or Sierra Leone Krio) into ONE bookkeeping record.
-Reply ONLY with JSON: {"action":"sale|expense|credit_given|payment_received|unknown","amount":number,"name":string,"item":string,"qty":number,"method":"cash|orange|afrimoney|qmoney|bank|credit","category":string,"note":string}
+Reply ONLY with JSON: {"action":"sale|purchase|expense|credit_given|payment_received|unknown","amount":number,"name":string,"item":string,"qty":number,"method":"cash|orange|afrimoney|qmoney|bank|credit","category":string,"note":string}
 - amount = total money in major units (Leones). sale bought on credit => method "credit" and name = buyer.
 - credit_given: someone took goods/money and owes. payment_received: someone paid a debt.
+- purchase: the shop BOUGHT goods to sell again (restock), e.g. "bought 5 bags rice 3500", "a bay 5 bag res" (item = the goods, qty, amount = total paid).
+  expense: other costs (transport, rent, food, airtime...).
 - expense category one of: ${EXPENSE_CATEGORIES.join(', ')}.
 - Krio (standard spelling, often typed without ɛ/ɔ): "dɔn pe"/"don pay"=has paid, "pe bak"=paid back, "tek"=took, "sɛl"/"sel"=sold, "bay"=bought,
   "spɛn"=spent, "trɔs"/"trust"=credit, "ɔw"=owes, "dɛt"=debt, "lɛnt"=lent, "kopor"/"mɔni"=money, "tide"=today, "yɛstade"=yesterday,

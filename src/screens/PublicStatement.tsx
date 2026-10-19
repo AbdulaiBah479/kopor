@@ -13,21 +13,36 @@ interface Statement {
   entries: { date: string; type: 'gave' | 'got'; amount: number; note: string; due_date: string | null }[];
 }
 
+/** Shown when a public page could not reach the server in time: say so and offer to try again. */
+export function LoadFailed({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="shell"><div className="content" style={{ paddingTop: 40 }}>
+      <div className="empty" data-testid="load-failed"><b>{t('public.loadFail')}</b>
+        <button type="button" className="btn primary" style={{ marginTop: 16 }} onClick={onRetry}>{t('public.retry')}</button></div>
+    </div></div>
+  );
+}
+
 export function PublicStatement() {
   const { token } = useParams();
   const { t } = useTranslation();
   const { fmt } = useDate();
-  const [s, setS] = useState<Statement | null | undefined>(undefined);
+  // undefined = loading, null = no such link, 'error' = could not reach the server (slow or no internet).
+  const [s, setS] = useState<Statement | null | undefined | 'error'>(undefined);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     getSupabase().then(async (sb) => {
       if (!sb) return setS(null);
-      const { data } = await sb.rpc('public_statement', { token });
+      const { data, error } = await sb.rpc('public_statement', { token }).abortSignal(AbortSignal.timeout(15_000));
+      if (error) return setS('error');
       const row = data as Statement | null;
       if (row) setCurrencySymbol(row.currency);
       setS(row ?? null);
-    }).catch(() => setS(null));
-  }, [token]);
+    }).catch(() => setS('error'));
+  }, [token, attempt]);
   if (s === undefined) return <div className="boot"><div className="boot-logo">K</div></div>;
+  if (s === 'error') return <LoadFailed onRetry={() => { setS(undefined); setAttempt(attempt + 1); }} />;
   if (!s) return <div className="shell"><div className="content"><div className="empty" data-testid="statement-missing"><b>{t('stmt.notFound')}</b></div></div></div>;
   const bal = Number(s.balance);
   return (

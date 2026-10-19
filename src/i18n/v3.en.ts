@@ -204,6 +204,10 @@ const v3 = {
     none: 'No product with that name.',
     more: 'More details (discount, customer, date, note)',
   },
+  aix: {
+    purchaseHelp: 'Saving adds these goods to your stock and records what you paid as a stock expense.',
+    purchaseCashier: 'Only a manager or owner can add stock, so this will be saved as a stock expense.',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

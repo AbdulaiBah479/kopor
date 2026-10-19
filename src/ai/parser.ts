@@ -5,7 +5,8 @@
 import { parseMoney } from '@/lib/money';
 import { bestMatch } from '@/lib/fuzzy';
 
-export type ParsedAction = 'sale' | 'expense' | 'credit_given' | 'payment_received' | 'unknown';
+// purchase = goods bought to sell again (adds stock and records the cost as one stock expense).
+export type ParsedAction = 'sale' | 'purchase' | 'expense' | 'credit_given' | 'payment_received' | 'unknown';
 export interface Parsed {
   action: ParsedAction; amount: number; name: string; item: string; qty: number;
   method: 'cash' | 'orange' | 'afrimoney' | 'qmoney' | 'bank' | 'credit'; category: string; note: string;
@@ -83,9 +84,11 @@ export function parseLocal(text: string, known: { contacts: string[]; products: 
     .find((p) => { const fp = foldKrio(p); return t.includes(fp) || fp.split(/\s+/).some((w) => w.length > 3 && t.includes(' ' + w)); })
     ?? bestMatch(raw, known.products);
   const category = CATEGORY_WORDS.find(([, re]) => re.test(t))?.[0] ?? 'other';
+  // "Bought 5 bags rice 3500" / "A bay 5 bag res": buying one of the shop's own products = new stock, not just a cost.
+  if (action === 'expense' && product && /(bought|\bbuy\b|\bbay\b|restock|\bstock\b|supplier)/.test(t)) action = 'purchase';
 
   return {
     action, amount: parseMoney(amountMajor), name, item: product ?? '', qty: product && qtyNum ? qtyNum.v : 1,
-    method: action === 'sale' ? method : 'cash', category, note: '',
+    method: action === 'sale' ? method : 'cash', category: action === 'purchase' ? 'stock' : category, note: '',
   };
 }

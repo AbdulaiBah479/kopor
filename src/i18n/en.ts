@@ -6,7 +6,7 @@ const base = {
   app: { name: 'Kopor', tagline: 'Your business book, payments and advisor, in your pocket.' },
   common: {
     undo: 'Undo', undone: 'Undone',
-    save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', add: 'Add', close: 'Close', back: 'Back', search: 'Search',
+    view: 'View', save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', add: 'Add', close: 'Close', back: 'Back', search: 'Search',
     all: 'All', today: 'Today', yesterday: 'Yesterday', date: 'Date', dueDate: 'Due date', amount: 'Amount', note: 'Note',
     optional: 'Optional', name: 'Name', phone: 'Phone', total: 'Total', confirm: 'Are you sure?', done: 'Done', saved: 'Saved',
     deleted: 'Deleted', more: 'More', loading: 'Loading…', yes: 'Yes', no: 'No', share: 'Share', print: 'Print / PDF',
@@ -123,7 +123,7 @@ const base = {
     speakTitle: 'Speak or type', speakHelp: 'Say what happened in your own words, in English or Krio. Kopor turns it into a record for you to check.',
     placeholder: 'e.g. Sold 3 bags rice 1500 to Fatmata on credit', listen: 'Tap to speak', listening: 'Listening… tap to stop', understand: 'Understand',
     offlineMode: 'Offline mode: simple entries still work. Connect to the internet for smarter understanding.', smartMode: 'Smart AI is on.', fromPrice: 'Amount not heard: worked out from your price list. Check it before saving.', notSure: 'I could not find a clear amount and action. Try: "Sold 2 bags rice 900".',
-    actions: { sale: 'Sale', expense: 'Expense', credit_given: 'Credit given (they owe you)', payment_received: 'Payment received', unknown: 'Not sure' },
+    actions: { sale: 'Sale', purchase: 'Bought stock', expense: 'Expense', credit_given: 'Credit given (they owe you)', payment_received: 'Payment received', unknown: 'Not sure' },
     person: 'Person', micDenied: 'Allow microphone access to speak', heard: 'Could not hear clearly, please try again', fallback: 'AI not reachable, using offline mode',
     askTitle: 'Ask Kopor', askHelp: 'Ask anything about your business. Answers use your own records.', askPh: 'e.g. Who owes me the most?', thinking: 'Thinking…',
     q1: 'How is my business doing this month?', q2: 'Who should I collect money from first?', q3: 'What should I restock this week?', q4: 'How can I increase my profit?',
@@ -169,7 +169,7 @@ const base = {
   more: { payments: 'Payments', paymentsSub: 'Mobile money, cards, payouts', groupsSub: '{{count}} groups · savings, dues', invoicesSub: '{{count}} created',
     healthSub: 'Score {{score}}/100', teamSub: '{{count}} people · roles & branches', settingsSub: 'Language, security, AI, cloud, backup', assistant: 'AI Advisor', assistantSub: 'Ask questions about your business',
     remindersSub: 'Who to remind today', offlineNote: 'Kopor works offline. Records are saved on this phone. Make backups or connect the cloud so you never lose them.' },
-  public: { title: 'Invoice', notFound: 'This invoice link is not valid.', pay: 'Pay now', from: 'From' },
+  public: { title: 'Invoice', notFound: 'This invoice link is not valid.', pay: 'Pay now', from: 'From', loadFail: 'Could not load this page. Check your internet connection.', retry: 'Try again' },
   err: {
     amount: 'Enter an amount', amountOrItems: 'Enter an amount or add items', creditCustomer: 'Enter the customer who is buying on credit', nameRequired: 'Enter a name',
     productExists: 'A product with this name already exists', contactExists: 'Another contact already has this name', qty: 'Enter a quantity', notFound: 'Not found', lastOwner: 'A business must keep at least one owner',

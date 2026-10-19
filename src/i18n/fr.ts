@@ -9,7 +9,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   app: { name: 'Kopor', tagline: 'Votre cahier de commerce, vos paiements et votre conseiller, dans la poche.' },
   common: {
     undo: 'Annuler', undone: 'Annulé',
-    save: 'Enregistrer', cancel: 'Annuler', delete: 'Supprimer', edit: 'Modifier', add: 'Ajouter', close: 'Fermer', back: 'Retour', search: 'Rechercher',
+    view: 'Voir', save: 'Enregistrer', cancel: 'Annuler', delete: 'Supprimer', edit: 'Modifier', add: 'Ajouter', close: 'Fermer', back: 'Retour', search: 'Rechercher',
     all: 'Tout', today: "Aujourd'hui", yesterday: 'Hier', date: 'Date', dueDate: 'Échéance', amount: 'Montant', note: 'Note',
     optional: 'Facultatif', name: 'Nom', phone: 'Téléphone', total: 'Total', confirm: 'Êtes-vous sûr ?', done: 'Terminé', saved: 'Enregistré',
     deleted: 'Supprimé', more: 'Plus', loading: 'Chargement…', yes: 'Oui', no: 'Non', share: 'Partager', print: 'Imprimer / PDF',
@@ -122,7 +122,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     speakTitle: 'Parler ou écrire', speakHelp: 'Dites ce qui s’est passé avec vos mots. Kopor le transforme en écriture à vérifier.',
     placeholder: 'ex. Vendu 3 sacs de riz 1500 à Fatou à crédit', listen: 'Appuyer pour parler', listening: 'Écoute… appuyez pour arrêter', understand: 'Comprendre',
     offlineMode: 'Mode hors ligne : les saisies simples marchent. Connectez-vous à Internet pour une meilleure compréhension.', smartMode: 'IA intelligente activée.', fromPrice: 'Montant non entendu : calculé avec votre liste de prix. Vérifiez avant d’enregistrer.', notSure: 'Montant ou action introuvable. Essayez : « Vendu 2 sacs de riz 900 ».',
-    actions: { sale: 'Vente', expense: 'Dépense', credit_given: 'Crédit accordé (on vous doit)', payment_received: 'Paiement reçu', unknown: 'Incertain' },
+    actions: { sale: 'Vente', purchase: 'Achat de stock', expense: 'Dépense', credit_given: 'Crédit accordé (on vous doit)', payment_received: 'Paiement reçu', unknown: 'Incertain' },
     person: 'Personne', micDenied: 'Autorisez le micro pour parler', heard: 'Je n’ai pas bien entendu, réessayez', fallback: 'IA indisponible, mode hors ligne',
     askTitle: 'Demander à Kopor', askHelp: 'Posez une question sur votre commerce. Les réponses utilisent vos propres données.', askPh: 'ex. Qui me doit le plus ?', thinking: 'Réflexion…',
     q1: 'Comment va mon commerce ce mois-ci ?', q2: 'Auprès de qui dois-je encaisser en premier ?', q3: 'Que dois-je réapprovisionner cette semaine ?', q4: 'Comment augmenter mon bénéfice ?',
@@ -168,7 +168,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   more: { payments: 'Paiements', paymentsSub: 'Mobile money, cartes, envois', groupsSub: '{{count}} groupes · épargne, cotisations', invoicesSub: '{{count}} créées',
     healthSub: 'Score {{score}}/100', teamSub: '{{count}} personnes · rôles et succursales', settingsSub: 'Langue, sécurité, IA, cloud, sauvegarde', assistant: 'Conseiller IA', assistantSub: 'Questions sur votre commerce',
     remindersSub: 'Qui relancer aujourd’hui', offlineNote: 'Kopor fonctionne hors ligne. Les données sont sur ce téléphone. Faites des sauvegardes ou connectez le cloud pour ne rien perdre.' },
-  public: { title: 'Facture', notFound: 'Ce lien de facture n’est pas valide.', pay: 'Payer maintenant', from: 'De' },
+  public: { title: 'Facture', notFound: 'Ce lien de facture n’est pas valide.', pay: 'Payer maintenant', from: 'De', loadFail: 'Impossible de charger cette page. Vérifiez votre connexion Internet.', retry: 'Réessayer' },
   err: {
     amount: 'Saisissez un montant', amountOrItems: 'Saisissez un montant ou ajoutez des articles', creditCustomer: 'Indiquez le client qui achète à crédit', nameRequired: 'Saisissez un nom',
     productExists: 'Un produit porte déjà ce nom', contactExists: 'Un autre contact porte déjà ce nom', qty: 'Saisissez une quantité', notFound: 'Introuvable', lastOwner: 'Un commerce doit garder au moins un propriétaire',

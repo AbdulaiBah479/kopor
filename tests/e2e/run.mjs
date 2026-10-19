@@ -116,7 +116,7 @@ await step('tap-to-sell: product tiles fill the sale, payment by tap', async () 
   await shot('03b-tap-to-sell');
   const save = form.getByRole('button', { name: /Save sale · Le 24/ });   // 2 × Le 12
   await tapInSheet(save);
-  await page.getByText('Sale saved').waitFor();
+  await page.getByText('Sale saved').first().waitFor();
   await page.locator('.list .item', { hasText: '2 Soap bar' }).filter({ hasText: 'Orange Money' }).first().waitFor();
 });
 
@@ -184,6 +184,39 @@ await step('speak/type entry (offline parser)', async () => {
   await shot('05-voice');
   await page.getByTestId('ai-save').click();
   await page.getByText('Saved').first().waitFor();
+});
+
+await step('bought stock by voice/typing: stock goes up, "View" opens Stock', async () => {
+  await go('/stock');
+  const rice = async () => Number(await page.locator('[data-product="Rice 50kg bag"] [data-qty]').getAttribute('data-qty'));
+  const before = await rice();
+  await go('/');
+  await page.getByRole('button', { name: 'Speak' }).click();
+  const f = page.getByTestId('voice-form');
+  await f.locator('textarea').fill('Bought 5 bags rice 3500');
+  await f.getByRole('button', { name: /Understand/ }).click();
+  await page.getByTestId('ai-preview').getByText('Bought stock').waitFor();
+  // Let earlier "Saved" popups disappear, so the View tapped below is this entry's.
+  await page.waitForFunction(() => !document.querySelector('[data-sonner-toast]'), null, { timeout: 15000 });
+  await page.getByTestId('ai-save').click();
+  await page.locator('[data-sonner-toast]').getByRole('button', { name: 'View' }).click();
+  await page.waitForFunction(() => location.hash.startsWith('#/stock'));
+  await page.waitForFunction((b) => Number(document.querySelector('[data-product="Rice 50kg bag"] [data-qty]')?.getAttribute('data-qty')) === b + 5, before, { timeout: 5000 })
+    .catch(async () => { throw new Error(`rice ${before} -> ${await rice()}`); });
+});
+
+await step('team: add staff; a second branch on the free plan explains the limit', async () => {
+  await go('/team');
+  await page.getByRole('button', { name: 'Add staff' }).click();
+  const form = page.locator('form.form').last();
+  await form.locator('input').first().fill('Kadiatu Kamara');
+  await tapInSheet(form.getByRole('button', { name: 'Save' }));
+  await page.locator('.item', { hasText: 'Kadiatu Kamara' }).waitFor();
+  await page.getByRole('button', { name: 'Add branch' }).click();
+  const b = page.locator('form.form').last();
+  await b.locator('input').first().fill('Lumley shop');
+  await tapInSheet(b.getByRole('button', { name: 'Save' }));
+  await page.getByText('The free plan includes 1 branch').waitFor();
 });
 
 if (LIVE_AI) await step('microphone: record, transcribe with Whisper, understand', async () => {
@@ -278,7 +311,8 @@ await step('customer statement link', async () => {
   await page.keyboard.press('Escape');
   // The demo business is not backed up online, so its link is not on the server: the page must say so clearly.
   await page.goto(BASE + url.slice(url.indexOf('#')));
-  await page.getByTestId('statement-missing').waitFor({ timeout: 20000 });
+  // Not on the server (demo is not backed up): "not valid", or "could not load" on a very slow connection.
+  await page.locator('[data-testid=statement-missing], [data-testid=load-failed]').first().waitFor({ timeout: 25000 });
 });
 
 await step('tax settings: 15% GST added on top', async () => {

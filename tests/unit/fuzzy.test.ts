@@ -43,3 +43,17 @@ describe('matchProduct (receipt lines to the stock list)', () => {
     expect(matchProduct('Soap dish', products)).toBeUndefined();
   });
 });
+
+describe('buying stock by voice (English and Krio) adds stock instead of only an expense', () => {
+  const known = { contacts: ['Aminata Sesay'], products: ['Rice 50kg bag', 'Sugar 1kg', 'Palm oil 4L'] };
+  it('recognises bought goods that the shop sells', () => {
+    const a = parseLocal('Bought 5 bags rice 3500', known);
+    expect([a.action, a.item, a.qty, a.amount]).toEqual(['purchase', 'Rice 50kg bag', 5, 350000]);
+    const b = parseLocal('A bay 10 shuga 250', known);
+    expect([b.action, b.item, b.qty]).toEqual(['purchase', 'Sugar 1kg', 10]);
+  });
+  it('keeps other spending as an expense', () => {
+    expect(parseLocal('Bought fuel 200', known).action).toBe('expense');
+    expect(parseLocal('Spent 120 on transport', known).action).toBe('expense');
+  });
+});

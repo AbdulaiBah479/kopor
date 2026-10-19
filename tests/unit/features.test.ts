@@ -110,10 +110,10 @@ describe('end-of-day close', () => {
 
 describe('plan limits', () => {
   it('free plan allows 1 branch and 3 staff', async () => {
-    await expect(addBranch(ctx, 'Second shop')).rejects.toThrow('errx.proLimit');
+    await expect(addBranch(ctx, 'Second shop')).rejects.toThrow('errx.proBranches');
     await saveMember(ctx, { name: 'A', phone: '', role: 'cashier', branch_id: null });
     await saveMember(ctx, { name: 'B', phone: '', role: 'cashier', branch_id: null });
-    await expect(saveMember(ctx, { name: 'C', phone: '', role: 'cashier', branch_id: null })).rejects.toThrow('errx.proLimit');
+    await expect(saveMember(ctx, { name: 'C', phone: '', role: 'cashier', branch_id: null })).rejects.toThrow('errx.proStaff');
   });
   it('pro is active only until it expires', () => {
     expect(isPro({ plan: 'pro', plan_until: Date.now() + 1000 })).toBe(true);

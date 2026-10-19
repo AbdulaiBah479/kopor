@@ -9,7 +9,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   app: { name: 'Kopor', tagline: 'Yu biznɛs buk, pement ɛn advayza, insay yu pɔkit.' },
   common: {
     undo: 'Pul am bak', undone: 'Dɔn pul am bak',
-    save: 'Sev', cancel: 'Lɛf am', delete: 'Dilit', edit: 'Chenj', add: 'Ad', close: 'Klos', back: 'Go bak', search: 'Luk fɔ',
+    view: 'Luk am', save: 'Sev', cancel: 'Lɛf am', delete: 'Dilit', edit: 'Chenj', add: 'Ad', close: 'Klos', back: 'Go bak', search: 'Luk fɔ',
     all: 'Ɔl', today: 'Tide', yesterday: 'Yɛstade', date: 'Det', dueDate: 'Di de fɔ pe', amount: 'Kopor', note: 'Nɔt',
     optional: 'If yu want', name: 'Nem', phone: 'Fon', total: 'Tɔtal', confirm: 'Yu shɔ?', done: 'Dɔn', saved: 'Dɔn sev',
     deleted: 'Dɔn dilit', more: 'Mɔ', loading: 'I de lod…', yes: 'Yɛs', no: 'Nɔ', share: 'Sheb', print: 'Print / PDF',
@@ -122,7 +122,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     speakTitle: 'Tɔk ɔ tayp', speakHelp: 'Se wetin apin wit yu yon wɔd, na Inglish ɔ Krio. Kopor go tɔn am to rɛkɔd fɔ yu chɛk.',
     placeholder: 'Lɛk: A sɛl 3 bag rɛs 1500 to Fatmata pan trɔst', listen: 'Tap fɔ tɔk', listening: 'A de lisin… tap fɔ stɔp', understand: 'Ɔndastand',
     offlineMode: 'Ɔflayn mod: simpul tin dɛn stil de wok. Kɔnɛkt to intanɛt fɔ i ɔndastand bɛtɛ.', smartMode: 'Smat AI de ɔn.', fromPrice: 'A nɔ yɛri di kopor: a kɔnt am frɔm yu prayz list. Chɛk am bifo yu sev.', notSure: 'A nɔ si klia kopor ɛn wetin apin. Tray: "A sɛl 2 bag rɛs 900".',
-    actions: { sale: 'Sɛl', expense: 'Ɛkspens', credit_given: 'Kredit (dɛn ɔw yu)', payment_received: 'Pement we yu get', unknown: 'A nɔ shɔ' },
+    actions: { sale: 'Sɛl', purchase: 'Bay stɔk', expense: 'Ɛkspens', credit_given: 'Kredit (dɛn ɔw yu)', payment_received: 'Pement we yu get', unknown: 'A nɔ shɔ' },
     person: 'Pɔsin', micDenied: 'Gri fɔ yuz maykrofon fɔ tɔk', heard: 'A nɔ yɛri klia, tray bak', fallback: 'AI nɔ de, a de yuz ɔflayn mod',
     askTitle: 'Aks Kopor', askHelp: 'Aks ɛnitin bɔt yu biznɛs. Di ansa kɔmɔt frɔm yu yon rɛkɔd.', askPh: 'Lɛk: Udat ɔw mi pas?', thinking: 'A de tink…',
     q1: 'Aw mi biznɛs de du dis mɔnt?', q2: 'Udat a fɔ kɔlɛkt mɔni frɔm fɔs?', q3: 'Wetin a fɔ bay bak dis wik?', q4: 'Aw a go mek mɔ prɔfit?',
@@ -168,7 +168,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   more: { payments: 'Pement', paymentsSub: 'Mobayl mɔni, kad, sɛn mɔni', groupsSub: '{{count}} grup · sev, dyuz', invoicesSub: '{{count}} dɔn mek',
     healthSub: 'Skɔ {{score}}/100', teamSub: '{{count}} pipul · wok ɛn branch', settingsSub: 'Langwej, sekyuriti, AI, klawd, bakɔp', assistant: 'AI Advayza', assistantSub: 'Aks kwɛstyɔn bɔt yu biznɛs',
     remindersSub: 'Udat fɔ rimayn tide', offlineNote: 'Kopor de wok widawt nɛt. Rɛkɔd de sev na dis fon. Mek bakɔp ɔ kɔnɛkt di klawd so yu nɔ go lɔs am.' },
-  public: { title: 'Invɔys', notFound: 'Dis invɔys link nɔ rayt.', pay: 'Pe naw', from: 'Frɔm' },
+  public: { title: 'Invɔys', notFound: 'Dis invɔys link nɔ rayt.', pay: 'Pe naw', from: 'Frɔm', loadFail: 'A nɔ ebul lod dis pej. Chɛk yu intanɛt.', retry: 'Tray bak' },
   err: {
     amount: 'Put kopor', amountOrItems: 'Put kopor ɔ ad tin', creditCustomer: 'Put di kɔstɔma we de bay pan trɔst', nameRequired: 'Put nem',
     productExists: 'Prɔdak wit dis nem dɔn de', contactExists: 'Ɔda kɔntak dɔn get dis nem', qty: 'Put ɔmɔs', notFound: 'A nɔ si am', lastOwner: 'Biznɛs fɔ get wan ɔna atlis',

@@ -5,6 +5,7 @@ import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
+import { ScanButton } from '@/ui/ScanButton';
 import { Empty, Field, Money, MoneyInput, Search, Seg } from '@/ui/widgets';
 import { formatMoney } from '@/lib/money';
 import { remove } from '@/db/repo';
@@ -38,9 +39,10 @@ export function StockList() {
 
   return (
     <Page guide="stock" title={t('stock.title')} sub={t('stock.sub', { count: book.products.length, value: formatMoney(stockValue(book)) })}
-      right={book.products.length > 0 && (
-        <button className="icon-btn" aria-label={t('catalog.share')} data-testid="share-catalog" onClick={() => shareText(catalogText())}><Icon name="share" size={22} /></button>
-      )}
+      right={<>
+        {can('record') && <ScanButton prefer="purchase" />}
+        {book.products.length > 0 && <button className="icon-btn" aria-label={t('catalog.share')} data-testid="share-catalog" onClick={() => shareText(catalogText())}><Icon name="share" size={22} /></button>}
+      </>}
       fab={can('stock') && <button className="fab" onClick={() => openSheet(t('stock.newProduct'), <ProductSheet />)}><Icon name="plus" /> {t('stock.product')}</button>}>
       <div className="grid2">
         <div className="stat"><div className="k">{t('stock.value')}</div><div className="v"><Money v={stockValue(book)} /></div></div>
