@@ -128,7 +128,7 @@ const base = {
     askTitle: 'Ask Kopor', askHelp: 'Ask anything about your business. Answers use your own records.', askPh: 'e.g. Who owes me the most?', thinking: 'Thinking…',
     q1: 'How is my business doing this month?', q2: 'Who should I collect money from first?', q3: 'What should I restock this week?', q4: 'How can I increase my profit?',
     scanTitle: 'Scan receipt or notebook', scanHelp: 'Take a clear photo of a receipt or a page of your notebook. Kopor reads it for you.', takePhoto: 'Take or choose photo',
-    reading: 'Reading the photo…', useAsExpense: 'Save as expense', useAsSale: 'Save as sale', needAi: 'This needs AI. Add a free key in Settings → AI, or connect the cloud.',
+    reading: 'Reading the photo…', useAsExpense: 'Save as expense', useAsSale: 'Save as sale', needAi: 'Reading photos needs an internet connection. Try again when you are online.',
   },
   health: {
     title: 'Business Health', sub: 'How strong your business looks to lenders', updated: 'Updated from your records. Record daily to raise your score.',

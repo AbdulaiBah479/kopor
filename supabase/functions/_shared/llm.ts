@@ -44,7 +44,9 @@ export interface LlmResult { content: string; provider: string; model: string }
 
 export async function complete(messages: Msg[], opts: { vision?: boolean; maxTokens?: number } = {}): Promise<LlmResult> {
   const errors: string[] = [];
-  const chain = providers().flatMap((p) => (opts.vision ? p.vision : p.text).map((model) => ({ p, model })));
+  // Photos (receipts, handwritten notes) go to Gemini first: it reads handwriting best. Others follow if it is busy.
+  const ordered = opts.vision ? [...providers()].sort((a, b) => Number(b.name === 'gemini') - Number(a.name === 'gemini')) : providers();
+  const chain = ordered.flatMap((p) => (opts.vision ? p.vision : p.text).map((model) => ({ p, model })));
   if (!chain.length) throw new Error('No AI provider configured (add GROQ_API_KEY or another free key)');
   // Models still cooling down go last rather than being dropped (better a retry than no answer).
   const now = Date.now();
@@ -83,10 +85,49 @@ export async function complete(messages: Msg[], opts: { vision?: boolean; maxTok
 const KRIO_PROMPT = 'Shop record in Sierra Leone, always with the amount in Leones. Sold 3 bags of rice for 2,500 Leones. ' +
   'Fatu took 2 tins of oil for 360 Leones on credit. Mohamed don pay 300 Leones. A sel tu bag res fo 1,700. Spent 200 Leones on transport.';
 
-export async function transcribe(file: File, lang: string, hints = ''): Promise<{ text: string; provider: string }> {
+const b64 = (bytes: Uint8Array) => { let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(bin); };
+
+/**
+ * A second listener: Gemini hears the same recording. Whisper sometimes skips words; Gemini copes well with accents
+ * and Krio. The app combines both versions (keeping only words that were really said). Null when not set up or busy.
+ */
+async function geminiListen(file: File, lang: string, hints: string): Promise<string | null> {
+  const key = Deno.env.get('GEMINI_API_KEY');
+  if (!key) return null;
+  const data = b64(new Uint8Array(await file.arrayBuffer()));
+  const text = `Write down exactly what is said in this short recording from a small shop in Sierra Leone (spoken in English or Krio${lang === 'fr' ? ', or French' : ''}). ` +
+    'Write every word you hear, in the same language, including every quantity and amount of money (write numbers as digits). ' +
+    'Do not translate, summarise, correct, add or explain anything. Reply with the words only. If nothing is said, reply with nothing.' +
+    (hints ? ` Customer and product names that may be said: ${hints}.` : '');
+  for (const model of list(Deno.env.get('GEMINI_STT_MODELS'), ['gemini-flash-latest', 'gemini-flash-lite-latest'])) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: (file.type || 'audio/wav').split(';')[0], data } }, { text }] }], generationConfig: { temperature: 0 } }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (!res.ok) { console.error('STT gemini', model, res.status, (await res.text().catch(() => '')).slice(0, 300)); continue; }
+      const j = await res.json();
+      const out = (j.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? '').join('').trim();
+      return out || null;
+    } catch (err) { console.error('STT gemini', model, err); }
+  }
+  return null;
+}
+
+/** Whisper (with the amount retry) and Gemini listen at the same time. alt = Gemini's version, for the app to combine. */
+export async function transcribe(file: File, lang: string, hints = ''): Promise<{ text: string; provider: string; alt?: string }> {
+  const second = geminiListen(file, lang, hints).catch(() => null);
+  const first = whisper(file, lang).catch((e) => { console.error('STT whisper', e); return null; });
+  const [w, alt] = await Promise.all([first, second]);
+  if (w?.text) return { ...w, ...(alt && alt !== w.text ? { alt } : {}) };
+  if (alt) return { text: alt, provider: 'gemini' };
+  throw new Error('Voice service is busy. Please type instead.');
+}
+
+async function whisper(file: File, lang: string): Promise<{ text: string; provider: string }> {
   // Customer/product names are NOT put in Whisper's prompt: tested live, they made it drop amounts ("360 Leones").
-  // Names are matched afterwards instead (fuzzy matching and the AI correction step in the app).
-  void hints;
+  // Names are matched afterwards instead (Gemini's version, fuzzy matching and the AI correction step in the app).
   const prompt = KRIO_PROMPT;
   const e = (k: string) => Deno.env.get(k) || undefined;
   const chain = [
@@ -127,10 +168,9 @@ export async function transcribe(file: File, lang: string, hints = ''): Promise<
   if (cfAccount && cfToken) {
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
       const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${cfAccount}/ai/run/@cf/openai/whisper-large-v3-turbo`, {
         method: 'POST', headers: { Authorization: `Bearer ${cfToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audio: btoa(bin), language: lang === 'fr' ? 'fr' : 'en', initial_prompt: lang === 'fr' ? undefined : prompt }),
+        body: JSON.stringify({ audio: b64(bytes), language: lang === 'fr' ? 'fr' : 'en', initial_prompt: lang === 'fr' ? undefined : prompt }),
         signal: AbortSignal.timeout(40_000),
       });
       if (res.ok) { const j = await res.json(); const text = String(j.result?.text ?? '').trim(); if (text) return { text, provider: 'cloudflare' }; }

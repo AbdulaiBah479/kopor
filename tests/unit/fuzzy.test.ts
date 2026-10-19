@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestMatch, distance, fold } from '@/lib/fuzzy';
+import { bestMatch, distance, fold, matchProduct } from '@/lib/fuzzy';
 import { parseLocal } from '@/ai/parser';
 
 const customers = ['Aminata Sesay', 'Mohamed Bangura', 'Isatu Conteh', 'Abu Kamara', 'Kroo Bay Wholesale'];
@@ -24,5 +24,22 @@ describe('fuzzy matching for voice mistakes', () => {
     expect(r.name).toBe('Aminata Sesay');
     expect(r.item).toBe('Palm oil 4L');
     expect(r.action).toBe('credit_given');
+  });
+});
+
+describe('matchProduct (receipt lines to the stock list)', () => {
+  const products = ['Rice 50kg bag', 'Maggi cubes (box)', 'Sugar 1kg', 'Palm oil 4L', 'Soap bar'];
+  it('finds the same product despite spelling, size and packaging words', () => {
+    expect(matchProduct('rice 50kg', products)).toBe('Rice 50kg bag');
+    expect(matchProduct('RICE BAG', products)).toBe('Rice 50kg bag');
+    expect(matchProduct('Shugar', products)).toBe('Sugar 1kg');
+    expect(matchProduct('palm oyl 4 litre', products)).toBe('Palm oil 4L');
+    expect(matchProduct('Maggi box', products)).toBe('Maggi cubes (box)');
+  });
+  it('does not match on packaging words or unrelated items (they become new products)', () => {
+    expect(matchProduct('Candles box', products)).toBeUndefined();
+    expect(matchProduct('Bag', products)).toBeUndefined();
+    expect(matchProduct('Washing powder', products)).toBeUndefined();
+    expect(matchProduct('Soap dish', products)).toBeUndefined();
   });
 });

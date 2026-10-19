@@ -1,4 +1,4 @@
-import { db, type Product } from '@/db/schema';
+import { db, type Method, type Product } from '@/db/schema';
 import { insert, update, atomic, type Ctx } from '@/db/repo';
 import { assertCan } from '@/db/permissions';
 import { today, addDays } from '@/lib/dates';
@@ -56,5 +56,40 @@ export async function adjustStock(ctx: Ctx, productId: string, qty: number, opts
     if (qty > 0 && opts.recordExpense && unit > 0) {
       await recordExpense(ctx, { amount: qty * unit, category: 'stock', note: `${qty} ${p.unit} ${p.name}`, method: 'cash' });
     }
+  });
+}
+
+export interface PurchaseLine { productId: string | null; name: string; qty: number; unitCost: number; sellPrice?: number }
+export interface PurchaseInput { lines: PurchaseLine[]; total?: number; supplier?: string; date?: string; method?: Method }
+
+/**
+ * Goods bought for the shop (e.g. from a photographed supplier receipt): each line adds stock to its product (new
+ * products are created, cost prices updated to what was paid) and the whole receipt is ONE stock expense.
+ */
+export async function recordPurchase(ctx: Ctx, input: PurchaseInput) {
+  assertCan(ctx.role, 'stock');
+  const lines = input.lines.filter((l) => l.name.trim() && l.qty > 0);
+  if (!lines.length) throw new AppError('err.amountOrItems');
+  const date = input.date || today();
+  const amount = Math.round(input.total || lines.reduce((s, l) => s + l.qty * l.unitCost, 0));
+  return atomic(async () => {
+    const products = (await db.products.where('org_id').equals(ctx.orgId).toArray()).filter((p) => !p.deleted);
+    const label = lines.map((l) => `${l.qty} ${l.name.trim()}`).join(', ');
+    const txn = amount > 0
+      ? await recordExpense(ctx, { amount, category: 'stock', method: input.method ?? 'cash', date, note: `${input.supplier?.trim() ? `${input.supplier.trim()}: ` : ''}${label}`.slice(0, 300) })
+      : null;
+    let created = 0;
+    for (const l of lines) {
+      let p = (l.productId && products.find((x) => x.id === l.productId)) || findByName(products, l.name);
+      const cost = Math.round(l.unitCost);
+      if (!p) {
+        p = await insert(ctx, 'products', { name: l.name.trim(), sku: '', unit: 'pcs', price: Math.round(l.sellPrice || cost), cost, low_at: 0 }, `New product ${l.name.trim()}`);
+        products.push(p); created++;
+      } else if (cost > 0 && cost !== p.cost) {
+        p = await update(ctx, 'products', p.id, { cost }, `Cost of ${p.name} now ${cost / 100}`);
+      }
+      await insert(ctx, 'stock_moves', { branch_id: ctx.branchId, product_id: p.id, qty: l.qty, reason: 'restock', ref_id: txn?.id ?? null, date }, `Bought ${l.qty} ${p.name}`);
+    }
+    return { txn, created };
   });
 }

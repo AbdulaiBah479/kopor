@@ -53,3 +53,29 @@ export function bestMatch(text: string, candidates: string[], minScore = 0.6): s
   }
   return best?.name;
 }
+
+// Packaging and size words say nothing about WHICH product it is ("Candles box" is not "Maggi cubes (box)").
+const PACKAGING = new Set(['box', 'boxes', 'bag', 'bags', 'tin', 'tins', 'pack', 'packs', 'packet', 'packets', 'carton', 'cartons', 'bottle', 'bottles',
+  'piece', 'pieces', 'pcs', 'small', 'big', 'large', 'medium', 'sachet', 'sachets', 'roll', 'rolls', 'dozen', 'crate', 'crates', 'cup', 'cups', 'gallon', 'litre', 'liter']);
+const productWords = (s: string) => fold(s).split(' ').filter((w) => w.length >= 3 && !/^\d/.test(w) && !PACKAGING.has(w));
+
+/**
+ * Stricter matching of one item name (e.g. a line read from a receipt) to a product list: the product's main word
+ * must match, and most of the item's words must too. Returns the product name or undefined (= new product).
+ */
+export function matchProduct(item: string, products: string[], minScore = 0.7): string | undefined {
+  const iw = productWords(item);
+  if (!iw.length) return undefined;
+  let best: { name: string; score: number } | undefined;
+  for (const name of products) {
+    const pw = productWords(name);
+    if (!pw.length) continue;
+    // Short words get one slip if the first letter agrees ("oyl" = "oil"), on top of the usual rules.
+    const near = (w: string, x: string) => wordScore(w, x) || (w.length === 3 && x.length === 3 && w[0] === x[0] && distance(w, x) === 1 ? 0.6 : 0);
+    const of = (w: string, ws: string[]) => Math.max(0, ...ws.map((x) => near(w, x)));
+    if (of(pw[0], iw) < 0.6) continue;                                // the product's main word must be there
+    const score = iw.reduce((s, w) => s + of(w, pw), 0) / iw.length;  // and most of the item's words
+    if (score >= minScore && (!best || score > best.score)) best = { name, score };
+  }
+  return best?.name;
+}

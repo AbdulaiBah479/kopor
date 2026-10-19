@@ -127,7 +127,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     askTitle: 'Demander à Kopor', askHelp: 'Posez une question sur votre commerce. Les réponses utilisent vos propres données.', askPh: 'ex. Qui me doit le plus ?', thinking: 'Réflexion…',
     q1: 'Comment va mon commerce ce mois-ci ?', q2: 'Auprès de qui dois-je encaisser en premier ?', q3: 'Que dois-je réapprovisionner cette semaine ?', q4: 'Comment augmenter mon bénéfice ?',
     scanTitle: 'Scanner un reçu ou un cahier', scanHelp: 'Prenez une photo nette d’un reçu ou d’une page de cahier. Kopor la lit pour vous.', takePhoto: 'Prendre ou choisir une photo',
-    reading: 'Lecture de la photo…', useAsExpense: 'Enregistrer comme dépense', useAsSale: 'Enregistrer comme vente', needAi: 'Nécessite l’IA. Ajoutez une clé gratuite dans Réglages → IA, ou connectez le cloud.',
+    reading: 'Lecture de la photo…', useAsExpense: 'Enregistrer comme dépense', useAsSale: 'Enregistrer comme vente', needAi: 'La lecture des photos a besoin d’Internet. Réessayez une fois en ligne.',
   },
   health: {
     title: 'Santé du commerce', sub: 'La solidité de votre commerce aux yeux des prêteurs', updated: 'Calculé à partir de vos données. Saisissez chaque jour pour améliorer votre score.',

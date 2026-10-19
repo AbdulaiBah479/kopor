@@ -127,7 +127,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     askTitle: 'Aks Kopor', askHelp: 'Aks ɛnitin bɔt yu biznɛs. Di ansa kɔmɔt frɔm yu yon rɛkɔd.', askPh: 'Lɛk: Udat ɔw mi pas?', thinking: 'A de tink…',
     q1: 'Aw mi biznɛs de du dis mɔnt?', q2: 'Udat a fɔ kɔlɛkt mɔni frɔm fɔs?', q3: 'Wetin a fɔ bay bak dis wik?', q4: 'Aw a go mek mɔ prɔfit?',
     scanTitle: 'Skan risit ɔ buk', scanHelp: 'Tek klia foto fɔ risit ɔ pej na yu buk. Kopor go rid am fɔ yu.', takePhoto: 'Tek ɔ pik foto',
-    reading: 'A de rid di foto…', useAsExpense: 'Sev as ɛkspens', useAsSale: 'Sev as sɛl', needAi: 'Dis nid AI. Ad fri ki na Sɛtin → AI, ɔ kɔnɛkt di klawd.',
+    reading: 'A de rid di foto…', useAsExpense: 'Sev as ɛkspens', useAsSale: 'Sev as sɛl', needAi: 'Fɔ rid foto, yu nid intanɛt. Tray bak we yu ɔnlayn.',
   },
   health: {
     title: 'Biznɛs Wɛlbɔdi', sub: 'Aw yu biznɛs tranga fɔ lon pipul dɛn', updated: 'I kɔmɔt frɔm yu rɛkɔd. Rayt ɛvride fɔ mek yu skɔ go ɔp.',

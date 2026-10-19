@@ -104,6 +104,34 @@ await step('sale with a product reduces stock', async () => {
     .catch(async () => { throw new Error(`stock ${before} -> ${await qty()}`); });
 });
 
+await step('scan a supplier receipt (no barcode): stock goes up, new product created', async () => {
+  // Stand-in for the AI reading the photo, so this runs offline and gives the same answer every time.
+  const reading = { kind: 'purchase', vendor: 'Kissy Wholesale', date: '', total: 1700 + 300, category: 'stock',
+    items: [{ name: 'Rice 50kg bag', qty: 2, price: 850 }, { name: 'Candles box', qty: 3, price: 100 }] };
+  await page.route('**/functions/v1/ai', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: JSON.stringify(reading), provider: 'test' }) }));
+  const rice = async () => Number(await page.locator('[data-product="Rice 50kg bag"] [data-qty]').getAttribute('data-qty'));
+  let before = 0;
+  try {
+  await go('/stock');
+  before = await rice();
+  await go('/');
+  await page.getByRole('button', { name: 'Scan', exact: true }).click();
+  // A tiny white PNG stands in for the camera photo.
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+  await page.getByTestId('scan-file').setInputFiles({ name: 'receipt.png', mimeType: 'image/png', buffer: png });
+  await page.getByTestId('scan-review').waitFor({ timeout: 20000 });
+  if ((await page.getByTestId('scan-row').count()) !== 2) throw new Error('expected 2 lines');
+  await page.getByText('1 new products will be added').waitFor();
+  await shot('05b-scan-receipt');
+  await tapInSheet(page.getByTestId('scan-save'));
+  await page.getByText('Stock added and expense recorded').waitFor();
+  } finally { await page.unroute('**/functions/v1/ai'); }
+  await go('/stock');
+  await page.waitForFunction((b) => Number(document.querySelector('[data-product="Rice 50kg bag"] [data-qty]')?.getAttribute('data-qty')) === b + 2, before, { timeout: 5000 })
+    .catch(async () => { throw new Error(`rice ${before} -> ${await rice()}`); });
+  await page.locator('[data-product="Candles box"]').waitFor();
+});
+
 await step('expense', async () => {
   await go('/cash');
   await page.getByTestId('new-expense').click();

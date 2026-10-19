@@ -7,9 +7,12 @@ import { Icon } from '@/ui/Icon';
 import { formatMoney } from '@/lib/money';
 import { parseLocal, type Parsed } from '@/ai/parser';
 import { aiAvailable, aiParse, fixTranscript, scanReceipt, type ScanResult } from '@/ai/assistant';
-import { bestMatch } from '@/lib/fuzzy';
+import { bestMatch, matchProduct } from '@/lib/fuzzy';
 import { BrowserSpeech, canRecord, startRecording, transcribe, voiceErrorKey, type Recording } from '@/ai/voice';
-import { recordSale, recordExpense, EXPENSE_CATEGORIES } from '@/domain/cash';
+import { recordSale, recordExpense, EXPENSE_CATEGORIES, METHODS } from '@/domain/cash';
+import { recordPurchase } from '@/domain/stock';
+import { Field, MoneyInput, Seg } from '@/ui/widgets';
+import type { Method } from '@/db/schema';
 import { ensureContact, addEntry } from '@/domain/credit';
 import { findByName } from '@/domain/book';
 import { atomic } from '@/db/repo';
@@ -88,8 +91,9 @@ export function VoiceSheet() {
     try {
       // Customer and product names help Whisper spell them right; the AI then fixes any remaining slips.
       const hints = [...book.contacts.map((c) => c.name), ...book.products.map((p) => p.name)].slice(0, 80).join(', ');
-      const heard = await transcribe(await current.stop(), i18n.language, hints);
-      const said = heard && smart && navigator.onLine ? await fixTranscript(heard, book) : heard;
+      const { text: first, alt } = await transcribe(await current.stop(), i18n.language, hints);
+      const heard = first || alt;
+      const said = heard && smart && navigator.onLine ? await fixTranscript(heard, book, 9000, first ? alt : '') : heard;
       if (!said) throw new Error('voice.tooShort');
       setText(said); setResult(null); setVoice('idle');
       haptic(15);
@@ -197,41 +201,112 @@ async function toDataUrl(file: File, max = 1280): Promise<string> {
   return canvas.toDataURL('image/jpeg', 0.8);
 }
 
+interface ScanRow { name: string; productId: string; qty: number; price: number; sellPrice: number }
+type ScanMode = 'purchase' | 'sale' | 'expense';
+
+/**
+ * Photo of a receipt, supplier bill or handwritten page (no barcode needed) → checked lines → saved in one step as
+ * goods bought (stock in + one expense), a sale (stock out) or an expense.
+ */
 export function ScanSheet() {
   const { t } = useTranslation();
-  const { openSheet, fail } = useOverlay();
+  const book = useBook();
+  const { ctx, can } = useApp();
+  const { closeSheet, toast, fail } = useOverlay();
   const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);
   const [res, setRes] = useState<ScanResult | null>(null);
+  const [rows, setRows] = useState<ScanRow[]>([]);
+  const [mode, setMode] = useState<ScanMode>('purchase');
+  const [total, setTotal] = useState(0);
+  const [supplier, setSupplier] = useState('');
+  const [method, setMethod] = useState<Method>('cash');
+  const [category, setCategory] = useState('other');
   const [ok, setOk] = useState<boolean | null>(null);
   useEffect(() => { aiAvailable().then(setOk); }, []);
+  const names = book.products.map((p) => p.name);
+  // Strict matching: a wrong match would add stock to the wrong product, so unsure lines become new products to check.
+  const matchId = (name: string) => (findByName(book.products, name) ?? book.products.find((x) => x.name === matchProduct(name, names)))?.id ?? '';
 
   const pick = async (file?: File) => {
     if (!file) return;
     try {
-      setBusy(true); setRes(null);
-      const url = await toDataUrl(file);
+      setBusy(true); setRes(null); setRows([]);
+      const url = await toDataUrl(file, 1600);
       setPreview(url);
-      setRes(await scanReceipt(url));
+      const r = await scanReceipt(url, names);
+      setRes(r);
+      setRows(r.items.map((i) => { const id = matchId(i.name); return { name: book.products.find((p) => p.id === id)?.name ?? i.name, productId: id, qty: i.qty || 1, price: i.price, sellPrice: i.price }; }));
+      setTotal(r.total);
+      setSupplier(r.vendor);
+      setCategory(EXPENSE_CATEGORIES.includes(r.category as never) ? r.category : 'other');
+      setMode(!r.items.length || (r.kind === 'purchase' && !can('stock')) ? 'expense' : r.kind);
     } catch (e) { fail(e); } finally { setBusy(false); }
   };
+  const set = (k: number, patch: Partial<ScanRow>) => setRows(rows.map((r, i) => (i === k ? { ...r, ...patch } : r)));
+  const lineSum = rows.reduce((s, r) => s + r.qty * r.price, 0);
+  const newCount = rows.filter((r) => r.name.trim() && !r.productId).length;
+  const date = res?.date && /^\d{4}-\d{2}-\d{2}$/.test(res.date) ? res.date : undefined;
+
+  const save = async () => {
+    try {
+      if (mode === 'purchase') {
+        await recordPurchase(ctx, { supplier, total: total || lineSum, method, date,
+          lines: rows.map((r) => ({ productId: r.productId || null, name: r.name, qty: r.qty, unitCost: r.price, sellPrice: r.sellPrice })) });
+        toast(t('rscan.savedPurchase'));
+      } else if (mode === 'sale') {
+        await recordSale(ctx, { items: rows.filter((r) => r.name.trim()).map((r) => ({ product_id: r.productId || null, name: r.name, qty: r.qty, price: r.price })), method, date, note: supplier });
+        toast(t('rscan.savedSale'));
+      } else {
+        await recordExpense(ctx, { amount: total || lineSum, category, method, date, note: supplier || rows.map((r) => r.name).join(', ') });
+        toast(t('rscan.savedExpense'));
+      }
+      haptic(15);
+      closeSheet();
+    } catch (e) { fail(e); }
+  };
+
   if (ok === false) return <div className="alert"><Icon name="alert" /><div>{t('ai.needAi')}</div></div>;
   return (
-    <div className="stack">
+    <div className="stack" data-testid="scan-sheet">
       <div className="small muted">{t('ai.scanHelp')}</div>
       <label className="btn primary block"><Icon name="camera" size={18} /> {t('ai.takePhoto')}
-        <input type="file" accept="image/*" capture="environment" hidden onChange={(e) => pick(e.target.files?.[0])} /></label>
+        <input type="file" accept="image/*" capture="environment" hidden data-testid="scan-file" onChange={(e) => pick(e.target.files?.[0])} /></label>
       {preview && <img className="scan-preview" src={preview} alt="" />}
-      {busy && <div className="muted small">{t('ai.reading')}</div>}
+      {busy && <div className="muted small" role="status">{t('ai.reading')}</div>}
+      {res && !rows.length && <div className="alert small"><Icon name="alert" /><div>{t('rscan.nothing')}</div></div>}
       {res && (
-        <div className="card flat stack">
-          {res.vendor && <b>{res.vendor}</b>}
-          {res.items.map((i, k) => <div key={k} className="row between small"><span>{i.qty} × {i.name}</span><span className="num">{formatMoney(i.qty * i.price)}</span></div>)}
-          <div className="row between"><b>{t('common.total')}</b><b className="num">{formatMoney(res.total)}</b></div>
-          <div className="btn-row">
-            <button className="btn give" onClick={() => openSheet(t('cash.newExpense'), <ExpenseSheet prefill={{ amount: res.total, category: res.category, note: res.vendor || res.items.map((i) => i.name).join(', ') }} />)}>{t('ai.useAsExpense')}</button>
-            <button className="btn get" onClick={() => openSheet(t('cash.newSale'), <SaleSheet prefill={{ items: res.items.map((i) => ({ name: i.name, qty: i.qty, price: i.price })), amount: res.total }} />)}>{t('ai.useAsSale')}</button>
-          </div>
+        <div className="stack" data-testid="scan-review">
+          <Seg<ScanMode> value={mode} onChange={setMode} options={[
+            ...(can('stock') ? [['purchase', t('rscan.bought')] as [ScanMode, string]] : []), ['sale', t('rscan.sold')], ['expense', t('rscan.expenseOnly')]]} />
+          {!can('stock') && <div className="small muted">{t('rscan.managerOnly')}</div>}
+          <div className="small muted">{t('rscan.check')}</div>
+          {mode !== 'expense' && rows.map((r, k) => (
+            <div key={k} className="card flat stack" data-testid="scan-row">
+              <div className="row between" style={{ gap: 8 }}>
+                <input className="input" aria-label={t('rscan.item')} value={r.name} onChange={(e) => set(k, { name: e.target.value, productId: matchId(e.target.value) })} />
+                <button type="button" className="icon-btn" aria-label={t('common.delete')} onClick={() => setRows(rows.filter((_, i) => i !== k))}><Icon name="trash" size={18} /></button>
+              </div>
+              <select aria-label={t('rscan.product')} value={r.productId} onChange={(e) => { const p = book.products.find((x) => x.id === e.target.value); set(k, { productId: e.target.value, ...(p ? { name: p.name } : {}) }); }}>
+                <option value="">{t('rscan.newProduct')}</option>
+                {book.products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <div className="grid2">
+                <Field label={t('rscan.qty')}><input type="number" inputMode="decimal" min="0" step="any" value={r.qty || ''} onChange={(e) => set(k, { qty: Number(e.target.value) || 0 })} /></Field>
+                <Field label={t(mode === 'purchase' ? 'rscan.unitCost' : 'rscan.unitPrice')}><MoneyInput value={r.price} onChange={(price) => set(k, { price })} /></Field>
+              </div>
+              {mode === 'purchase' && !r.productId && <Field label={t('rscan.sellPrice')}><MoneyInput value={r.sellPrice} onChange={(sellPrice) => set(k, { sellPrice })} /></Field>}
+            </div>
+          ))}
+          {mode !== 'expense' && <button type="button" className="btn ghost block" onClick={() => setRows([...rows, { name: '', productId: '', qty: 1, price: 0, sellPrice: 0 }])}><Icon name="plus" size={18} /> {t('rscan.addLine')}</button>}
+          {mode === 'purchase' && newCount > 0 && <div className="small muted">{t('rscan.newCount', { n: newCount })}</div>}
+          {mode !== 'sale' && <Field label={t(mode === 'purchase' ? 'rscan.supplier' : 'rscan.note')}><input value={supplier} onChange={(e) => setSupplier(e.target.value)} /></Field>}
+          {mode === 'expense' && <Field label={t('cash.category')}><select value={category} onChange={(e) => setCategory(e.target.value)}>{EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{t(`categories.${c}`)}</option>)}</select></Field>}
+          <Field label={t('cash.paidWith')}><select value={method} onChange={(e) => setMethod(e.target.value as Method)}>{METHODS.filter((m) => m !== 'credit').map((m) => <option key={m} value={m}>{t(`methods.${m}`)}</option>)}</select></Field>
+          {mode !== 'sale'
+            ? <Field label={t('rscan.total')}><MoneyInput value={total || lineSum} onChange={setTotal} /></Field>
+            : <div className="row between"><b>{t('common.total')}</b><b className="num">{formatMoney(lineSum)}</b></div>}
+          <button type="button" className="btn primary block" data-testid="scan-save" disabled={busy} onClick={save}><Icon name="check" size={18} /> {t('rscan.save')}</button>
         </div>
       )}
     </div>
