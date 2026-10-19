@@ -51,11 +51,12 @@ export async function adjustStock(ctx: Ctx, productId: string, qty: number, opts
   const p = await db.products.get(productId);
   if (!p) throw new AppError('err.notFound');
   return atomic(async () => {
-    await insert(ctx, 'stock_moves', { branch_id: ctx.branchId, product_id: productId, qty, reason: qty > 0 ? 'restock' : 'adjust', ref_id: null, date: today() }, `${qty > 0 ? 'Restock' : 'Adjust'} ${qty} ${p.name}`);
+    // A restock paid for is one expense, and its stock movement points to it: deleting the expense removes both.
     const unit = opts.unitCost ?? p.cost;
-    if (qty > 0 && opts.recordExpense && unit > 0) {
-      await recordExpense(ctx, { amount: qty * unit, category: 'stock', note: `${qty} ${p.unit} ${p.name}`, method: 'cash' });
-    }
+    const expense = qty > 0 && opts.recordExpense && unit > 0
+      ? await recordExpense(ctx, { amount: qty * unit, category: 'stock', note: `${qty} ${p.unit} ${p.name}`, method: 'cash' })
+      : null;
+    await insert(ctx, 'stock_moves', { branch_id: ctx.branchId, product_id: productId, qty, reason: qty > 0 ? 'restock' : 'adjust', ref_id: expense?.id ?? null, date: today() }, `${qty > 0 ? 'Restock' : 'Adjust'} ${qty} ${p.name}`);
   });
 }
 

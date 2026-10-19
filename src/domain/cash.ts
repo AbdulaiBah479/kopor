@@ -28,12 +28,15 @@ export async function saleTotals(orgId: string, items: LineItem[], amount = 0, d
 export async function recordSale(ctx: Ctx, input: SaleInput): Promise<Txn> {
   assertCan(ctx.role, 'record');
   const products = (await db.products.where('org_id').equals(ctx.orgId).toArray()).filter((p) => !p.deleted);
-  const items: LineItem[] = (input.items ?? [])
-    .filter((i) => i.name?.trim() && (i.qty ?? 0) > 0)
-    .map((i) => {
-      const p = (i.product_id && products.find((x) => x.id === i.product_id)) || findByName(products, i.name!);
-      return { product_id: p?.id ?? null, name: p?.name ?? i.name!.trim(), qty: i.qty!, price: Math.round(i.price ?? p?.price ?? 0), cost: p?.cost ?? 0 };
-    });
+  const items: LineItem[] = [];
+  for (const i of input.items ?? []) {
+    if (!i.name?.trim() || !((i.qty ?? 0) > 0)) continue;
+    const p = (i.product_id && products.find((x) => x.id === i.product_id)) || findByName(products, i.name);
+    const line = { product_id: p?.id ?? null, name: p?.name ?? i.name.trim(), qty: i.qty!, price: Math.round(i.price ?? p?.price ?? 0), cost: p?.cost ?? 0 };
+    // The same product at the same price on two lines becomes one line (clearer receipts, exact returns later).
+    const same = items.find((x) => x.name === line.name && x.product_id === line.product_id && x.price === line.price);
+    if (same) same.qty += line.qty; else items.push(line);
+  }
   const totals = await saleTotals(ctx.orgId, items, input.amount, input.discount);
   const total = totals.total;
   if (!(total > 0)) throw new AppError('err.amountOrItems');
@@ -79,15 +82,35 @@ export const UNDO_WINDOW_MS = 10 * 60_000;
 export const isOwnRecent = (ctx: Ctx, row: { created_by: string | null; created_at: number }) =>
   !!ctx.memberId && row.created_by === ctx.memberId && Date.now() - row.created_at < UNDO_WINDOW_MS;
 
-/** Undo a cash entry: stock comes back and the linked debt disappears. */
+/**
+ * Undo a cash entry and everything it caused, so no figure is left half-changed: its stock movements, its credit-book
+ * entry, returns made against it (with their stock and credit entries), and the invoice it came from (voided, with any
+ * payment recorded against that invoice).
+ */
 export async function deleteTxn(ctx: Ctx, id: string) {
   await atomic(async () => {
     const txn = await db.transactions.get(id);
     if (!txn) throw new AppError('err.notFound');
     if (!isOwnRecent(ctx, txn)) assertCan(ctx.role, 'edit');
-    const moves = await db.stock_moves.where('ref_id').equals(id).toArray();
-    for (const m of moves) await update(ctx, 'stock_moves', m.id, { deleted: 1 });
-    if (txn.ledger_id) await update(ctx, 'ledger', txn.ledger_id, { deleted: 1 });
+    const undoOne = async (t: Txn) => {
+      for (const m of await db.stock_moves.where('ref_id').equals(t.id).toArray()) if (!m.deleted) await update(ctx, 'stock_moves', m.id, { deleted: 1 });
+      if (t.ledger_id) await update(ctx, 'ledger', t.ledger_id, { deleted: 1 });
+      for (const e of (await db.ledger.where('org_id').equals(ctx.orgId).toArray()).filter((e) => !e.deleted && e.ref_type === 'transaction' && e.ref_id === t.id)) {
+        await update(ctx, 'ledger', e.id, { deleted: 1 });
+      }
+    };
+    await undoOne(txn);
+    const refunds = (await db.transactions.where('org_id').equals(ctx.orgId).toArray()).filter((t) => !t.deleted && t.refund_of === id);
+    for (const r of refunds) { await undoOne(r); await update(ctx, 'transactions', r.id, { deleted: 1 }, `Deleted refund ${r.amount / 100} with its sale`); }
+    if (txn.invoice_id && txn.type === 'in' && !txn.refund_of) {
+      const inv = await db.invoices.get(txn.invoice_id);
+      if (inv && !inv.deleted && inv.status !== 'void') {
+        for (const e of (await db.ledger.where('org_id').equals(ctx.orgId).toArray()).filter((e) => !e.deleted && e.ref_type === 'invoice' && e.ref_id === inv.id)) {
+          await update(ctx, 'ledger', e.id, { deleted: 1 });
+        }
+        await update(ctx, 'invoices', inv.id, { status: 'void' }, `Invoice ${inv.number} voided with its sale`);
+      }
+    }
     await update(ctx, 'transactions', id, { deleted: 1 }, `Deleted ${txn.type === 'in' ? 'sale' : 'expense'} ${txn.amount / 100}`);
   });
 }

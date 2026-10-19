@@ -67,7 +67,11 @@ export function GroupDetail() {
   const summaryText = `*${g.name}* · ${t('groups.round', { r })} (${fmt(roundDate(g, r))})\n${collector ? `${t('groups.collects')}: ${collector.name}\n` : ''}${t('groups.paidCount', { paid: s.paidIds.size, total: g.members.length })}\n\n${g.members.map((m) => `${s.paidIds.has(m.id) ? '✅' : '⏳'} ${m.name}`).join('\n')}\n\nKopor`;
 
   const tick = async (memberId: string) => {
-    try { toast(t((await toggleContribution(ctx, g, memberId, r)) ? 'groups.marked' : 'groups.unmarked')); } catch (e) { fail(e); }
+    // Every tap can be undone from the popup, so a slip of the finger never loses a payment.
+    try {
+      const paid = await toggleContribution(ctx, g, memberId, r);
+      toast(t(paid ? 'groups.marked' : 'groups.unmarked'), { undo: () => toggleContribution(ctx, g, memberId, r) });
+    } catch (e) { fail(e); }
   };
 
   return (
@@ -88,7 +92,7 @@ export function GroupDetail() {
               {g.payouts[r] ? <span className="small good">{t('groups.paidOut', { date: fmt(g.payouts[r]) })}</span> : can('groups') && (
                 <div className="btn-row">
                   <button className="btn sm primary" onClick={() => markPayout(ctx, g, r).catch(fail)}>{t('groups.markPayout')}</button>
-                  {can('payouts') && collector.phone && <button className="btn sm" onClick={() => openSheet(t('groups.sendPot'), <PayoutSheet amount={s.expected} phone={collector.phone} note={`${g.name} ${t('groups.round', { r })}`} onDone={() => markPayout(ctx, g, r)} />)}>{t('groups.sendPot')}</button>}
+                  {can('payouts') && collector.phone && <button className="btn sm" onClick={() => openSheet(t('groups.sendPot'), <PayoutSheet amount={s.collected || s.expected} phone={collector.phone} note={`${g.name} ${t('groups.round', { r })}`} onDone={() => markPayout(ctx, g, r)} />)}>{t('groups.sendPot')}</button>}
                 </div>
               )}
             </div>

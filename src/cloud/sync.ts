@@ -6,6 +6,7 @@ import { getMeta, setMeta } from '@/db/repo';
 import { getSupabase } from './supabase';
 
 const PAGE = 500;
+const REV_OVERLAP = 300;
 const SERVER_ONLY = ['rev', 'owner_user_id'];
 
 export type SyncState = { status: 'off' | 'idle' | 'syncing' | 'error' | 'offline'; lastSync: number | null; error?: string };
@@ -55,13 +56,17 @@ async function pull(orgId: string) {
   const cursors = await getMeta<Record<string, number>>(`cursor:${orgId}`, {});
   let pulled = 0;
   for (const t of SYNC_TABLES) {
+    // Revisions come from one server-wide counter, but a slow save can commit after a later revision was already
+    // read. Looking back a little each time catches such late rows (merging is idempotent, so re-reading is safe).
+    let from = Math.max(0, (cursors[t] ?? 0) - REV_OVERLAP);
     for (;;) {
-      const q = sb.from(t).select('*').gt('rev', cursors[t] ?? 0).order('rev').limit(PAGE);
+      const q = sb.from(t).select('*').gt('rev', from).order('rev').limit(PAGE);
       const { data, error } = await (t === 'orgs' ? q.eq('id', orgId) : q.eq('org_id', orgId));
       if (error) throw new Error(`${t}: ${error.message}`);
       if (!data?.length) break;
       await merge(t, data);
-      cursors[t] = Number(data[data.length - 1].rev);
+      from = Number(data[data.length - 1].rev);
+      cursors[t] = Math.max(cursors[t] ?? 0, from);
       pulled += data.length;
       if (data.length < PAGE) break;
     }

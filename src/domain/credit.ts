@@ -1,7 +1,7 @@
 import { db, type Contact, type LedgerEntry } from '@/db/schema';
 import { insert, update, type Ctx } from '@/db/repo';
 import { assertCan } from '@/db/permissions';
-import { today } from '@/lib/dates';
+import { today, addDays } from '@/lib/dates';
 import { randomToken } from '@/lib/crypto';
 import { AppError, findByName, type Book } from './book';
 
@@ -53,8 +53,7 @@ export function overdueContacts(book: Book, now = today()) {
 /** Debts due within `days` days (for proactive reminders). */
 export function dueSoon(book: Book, days: number, now = today()) {
   const bal = balances(book.ledger);
-  const limit = new Date(`${now}T12:00:00`); limit.setDate(limit.getDate() + days);
-  const lim = limit.toISOString().slice(0, 10);
+  const lim = addDays(now, days);
   const out = new Map<string, string>();
   for (const e of book.ledger) {
     if (e.type === 'gave' && e.due_date && e.due_date >= now && e.due_date <= lim && (bal.get(e.contact_id) ?? 0) > 0) {
