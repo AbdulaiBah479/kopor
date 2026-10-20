@@ -82,5 +82,10 @@
     "type": "git",
     "url": "https://github.com/AbdulaiBah479/kopor.git"
   },
-  "homepage": "https://abdulaibah479.github.io/kopor/"
+  "homepage": "https://abdulaibah479.github.io/kopor/",
+  "overrides": {
+    "xcode": {
+      "uuid": "^11.1.1"
+    }
+  }
 }
