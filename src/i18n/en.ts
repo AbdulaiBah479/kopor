@@ -177,7 +177,7 @@ const base = {
     backupFile: 'This is not a valid Kopor backup', backupPassword: 'Wrong backup password', phone: 'Enter a valid phone number', cloudPin: 'Account PIN must be exactly 6 digits',
     noCloud: 'Cloud is not set up yet. Add Supabase details in Settings.', phoneTaken: 'This phone already has an account. Sign in instead.',
     confirmDisabled: 'Turn off email confirmation in Supabase Auth settings (see README).', login: 'Wrong phone number or PIN', notMember: 'You are not a member of this business',
-    cloudUrl: 'Supabase URL should look like https://xxxx.supabase.co', noAi: 'AI is not set up. Add a free key in Settings → AI.', generic: 'Something went wrong',
+    cloudUrl: 'Supabase URL should look like https://xxxx.supabase.co', noAi: 'This needs an internet connection. Try again when you are online.', generic: 'Something went wrong',
     permission: 'Your role is not allowed to do this. Ask the owner.',
   },
 };

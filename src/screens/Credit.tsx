@@ -5,7 +5,7 @@ import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
-import { Avatar, ContactPick, Empty, Field, Money, MoneyInput, Search, Seg, useDate } from '@/ui/widgets';
+import { Avatar, ContactPick, Empty, Field, Money, MoneyInput, Search, Seg, useDate, Verified } from '@/ui/widgets';
 import { formatMoney } from '@/lib/money';
 import { today, addDays } from '@/lib/dates';
 import { waLink, smsLink, telLink } from '@/lib/phone';
@@ -169,7 +169,7 @@ export function ContactDetail() {
                 </div>
               ))}>
               <div className={`num text-xl font-extrabold ${e.type === 'gave' ? 'text-danger' : 'text-primary'}`}>{e.type === 'gave' ? '' : '+'}{formatMoney(e.amount)}</div>
-              <div className="text-[13px] font-semibold">{e.note || (e.type === 'gave' ? t('credit.creditGiven') : t('credit.paymentReceived'))}</div>
+              <div className="text-[13px] font-semibold">{e.note || (e.type === 'gave' ? t('credit.creditGiven') : t('credit.paymentReceived'))} <Verified id={e.verified_ref} /></div>
               <div className="mt-1 flex gap-2 text-[11.5px] text-muted-foreground">
                 <span>{t('credit.balance')}: <b className="num">{formatMoney(running)}</b></span>
                 {e.due_date && e.type === 'gave' && <span>· {t('credit.due', { date: fmt(e.due_date) })}</span>}

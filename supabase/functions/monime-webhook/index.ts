@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
           await db.from('ledger').insert({
             id: crypto.randomUUID(), org_id: orgId, created_at: now, updated_at: now, created_by: null, branch_id: inv.branch_id,
             contact_id: inv.contact_id, type: 'got', amount: pr.amount, note: `${inv.number} paid via Monime`, date: today(), ref_type: 'invoice', ref_id: inv.id,
+            verified_ref: String(pr.provider_ref ?? pr.id), // only the server can set this: the app shows "Confirmed by Monime"
           });
         }
         await db.from('audit').insert({
@@ -67,6 +68,7 @@ Deno.serve(async (req) => {
         id: crypto.randomUUID(), org_id: orgId, created_at: now, updated_at: now, created_by: null, branch_id: null, type: 'in', category: 'sale',
         amount: pr.amount, method: 'bank', contact_id: null, note: `${pr.note ?? ''} · Monime ${pr.kind === 'ussd' ? 'USSD' : 'link'}`.trim(), date: today(),
         items: [], ledger_id: null, invoice_id: null, discount: 0, tax: 0, refund_of: null,
+        verified_ref: String(pr.provider_ref ?? pr.id), // only the server can set this: the app shows "Confirmed by Monime"
       });
       await db.from('audit').insert({
         id: crypto.randomUUID(), org_id: orgId, created_at: now, updated_at: now, member_name: 'Monime', action: 'create', entity: 'transactions',

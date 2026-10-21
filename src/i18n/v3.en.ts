@@ -337,6 +337,29 @@ const v3 = {
     unsupported: 'This phone or app cannot show reminder notifications. Open Kopor in Chrome, or add it to your Home Screen (iPhone).',
     needCloud: 'Back up your business online (More → Cloud & account) to get daily reminders.',
   },
+  verified: {
+    short: 'Monime',
+    long: 'Confirmed by Monime: this money really arrived',
+  },
+  item: {
+    chooseTitle: 'What are you scanning?',
+    chooseItem: 'An item',
+    chooseItemSub: 'Point the camera at a product: add it to stock or sell it',
+    chooseReceipt: 'A receipt or notebook page',
+    chooseReceiptSub: 'Supplier receipts, bills, handwritten sales: many lines at once',
+    title: 'Scan an item',
+    help: 'Take a photo of the product (its label, bag, tin or barcode). Kopor recognises it and matches it to your stock.',
+    take: 'Take a photo of the item',
+    looking: 'Looking at the item…',
+    looksLike: 'Looks like',
+    unsure: 'Not sure about this one: check the product below.',
+    name: 'Product name',
+    cost: 'Cost each (what you paid)',
+    paid: 'I paid for these (record the cost as an expense)',
+    addStock: 'Add to stock',
+    sell: 'Sell',
+    stockAdded: '{{qty}} {{name}} added to stock',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

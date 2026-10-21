@@ -320,6 +320,18 @@ await test('reminder notifications: server only; the daily digest finds dues and
   assert.ok(rows[2].claims_pending >= 0 && rows[2].scope === 'org');
 });
 
+await test('"Confirmed by Monime" can only be set by the server, never by a phone', async () => {
+  await as('owner');
+  const id = (await q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date, items, verified_ref)
+                       values (gen_random_uuid(), $1, 1, 1, $2, 'in', 'sale', 500, 'cash', current_date, '[]', 'fake-ref') returning id, verified_ref`, [ORG, OWNER_M])).rows[0];
+  assert.equal(id.verified_ref, null);                                  // a phone cannot mark money as confirmed
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  await q(`update transactions set verified_ref = 'mon-123', updated_at = 2 where id = $1`, [id.id]);
+  await as('owner');
+  await q(`update transactions set verified_ref = null, note = 'edited', updated_at = 3 where id = $1`, [id.id]);
+  assert.equal((await q('select verified_ref, note from transactions where id = $1', [id.id])).rows[0].verified_ref, 'mon-123'); // and cannot remove it
+});
+
 await test('back-office tools are for the server only, and every lookup is exact', async () => {
   for (const who of ['owner', null]) {
     await as(who);

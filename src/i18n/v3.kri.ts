@@ -339,5 +339,28 @@ const v3: V3Dict = {
     unsupported: 'Dis fon ɔ ap nɔ kin sho rimayn nɔtifikeshɔn. Opin Kopor na Chrome, ɔ ad am to yu Hom Skrin (iPhone).',
     needCloud: 'Bakɔp yu biznɛs ɔnlayn (Mɔ → Klawd ɛn akawnt) fɔ gɛt ɛvri de rimayn.',
   },
+  verified: {
+    short: 'Monime',
+    long: 'Monime dɔn shɔ: dis mɔni kam fɔ tru',
+  },
+  item: {
+    chooseTitle: 'Wetin yu de skan?',
+    chooseItem: 'Wan tin',
+    chooseItemSub: 'Pɔynt di kamɛra pan wan tin: ad am to stɔk ɔ sɛl am',
+    chooseReceipt: 'Risit ɔ buk pej',
+    chooseReceiptSub: 'Risit frɔm saplaya, bil, sɛl we yu rayt wit an: bɔku lay wan tɛm',
+    title: 'Skan wan tin',
+    help: 'Tek foto fɔ di tin (in lebul, bag, tin ɔ ba-kod). Kopor go no am ɛn mach am wit yu stɔk.',
+    take: 'Tek foto fɔ di tin',
+    looking: 'A de luk di tin…',
+    looksLike: 'I tan lɛk',
+    unsure: 'A nɔ shɔ bɔt dis wan: chɛk di tin dɔŋ ya.',
+    name: 'Nem fɔ di tin',
+    cost: 'Aw yu bay wan',
+    paid: 'A pe fɔ dɛn (rayt am as spɛn)',
+    addStock: 'Ad to stɔk',
+    sell: 'Sɛl',
+    stockAdded: '{{qty}} {{name}} dɔn ad to stɔk',
+  },
 };
 export default v3;

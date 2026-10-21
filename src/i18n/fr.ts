@@ -176,7 +176,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     backupFile: 'Ce n’est pas une sauvegarde Kopor valide', backupPassword: 'Mot de passe de sauvegarde incorrect', phone: 'Numéro de téléphone invalide', cloudPin: 'Le PIN du compte doit comporter 6 chiffres',
     noCloud: 'Le cloud n’est pas configuré. Ajoutez Supabase dans Réglages.', phoneTaken: 'Ce numéro a déjà un compte. Connectez-vous.',
     confirmDisabled: 'Désactivez la confirmation e-mail dans Supabase Auth (voir README).', login: 'Numéro ou PIN incorrect', notMember: 'Vous n’êtes pas membre de ce commerce',
-    cloudUrl: 'L’URL Supabase doit ressembler à https://xxxx.supabase.co', noAi: 'IA non configurée. Ajoutez une clé gratuite dans Réglages → IA.', generic: 'Une erreur est survenue',
+    cloudUrl: 'L’URL Supabase doit ressembler à https://xxxx.supabase.co', noAi: 'Ceci a besoin d’une connexion Internet. Réessayez une fois en ligne.', generic: 'Une erreur est survenue',
     permission: 'Votre rôle ne permet pas cette action. Demandez au propriétaire.',
   },
 };

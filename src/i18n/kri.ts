@@ -176,7 +176,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     backupFile: 'Dis nɔto Kopor bakɔp', backupPassword: 'Bakɔp paswɔd nɔ rayt', phone: 'Put kɔrɛkt fon nɔmba', cloudPin: 'Akawnt PIN fɔ bi 6 nɔmba',
     noCloud: 'Klawd nɔ sɛt yet. Ad Supabase tin dɛn na Sɛtin.', phoneTaken: 'Dis fon dɔn get akawnt. Sayn in.',
     confirmDisabled: 'Ɔf imel kɔnfɔmeshɔn na Supabase Auth sɛtin (luk README).', login: 'Fon nɔmba ɔ PIN nɔ rayt', notMember: 'Yu nɔto mɛmba fɔ dis biznɛs',
-    cloudUrl: 'Supabase URL fɔ tan lɛk https://xxxx.supabase.co', noAi: 'AI nɔ sɛt. Ad fri ki na Sɛtin → AI.', generic: 'Sɔntin rɔng',
+    cloudUrl: 'Supabase URL fɔ tan lɛk https://xxxx.supabase.co', noAi: 'Dis nid intanɛt. Tray bak we yu ɔnlayn.', generic: 'Sɔntin rɔng',
     permission: 'Yu wok nɔ gri fɔ du dis. Aks di ɔna.',
   },
 };

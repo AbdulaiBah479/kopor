@@ -145,6 +145,30 @@ const ScanSchema = z.object({
 });
 export type ScanResult = z.infer<typeof ScanSchema>;
 
+const ItemSchema = z.object({
+  name: z.string().catch(''), brand: z.string().catch(''), size: z.string().catch(''),
+  barcode: z.string().catch(''), match: z.string().catch(''), confidence: z.coerce.number().min(0).max(1).catch(0),
+});
+export type ItemGuess = z.infer<typeof ItemSchema>;
+
+/**
+ * What product is in this photo (a tin, bag, packet, bottle…)? `match` is one of the shop's own product names when it
+ * is clearly the same product, otherwise empty (a new product).
+ */
+export async function identifyItem(dataUrl: string, products: string[] = []): Promise<ItemGuess> {
+  const sys = `You identify ONE product for sale in a small shop in Sierra Leone from a photo (packaging, label, bag, tin, bottle...).
+Reply ONLY with JSON: {"name":string,"brand":string,"size":string,"barcode":string,"match":string,"confidence":number}
+- name: a short shop name for it, e.g. "Peak Milk tin 400g", "Rice 50kg bag", "Coca-Cola 35cl".
+- barcode: the digits under the barcode if you can read them clearly, else "".
+- match: if it is clearly the same product as one in this list, copy that name EXACTLY; otherwise "". Same brand but a different
+  size or flavour is NOT a match. List: ${products.slice(0, 150).join(' | ') || 'none'}
+- confidence: 0 to 1, how sure you are. Never guess wildly: if you cannot tell, give a low confidence.`;
+  return ItemSchema.parse(extractJson(await complete([
+    { role: 'system', content: sys },
+    { role: 'user', content: [{ type: 'text', text: 'What product is this?' }, { type: 'image_url', image_url: { url: dataUrl } }] },
+  ], { vision: true, json: true })));
+}
+
 /**
  * Read a photographed receipt, invoice or handwritten notebook page (no barcode needed). Prices in minor units.
  * Known product names are given so items come back spelt the way the shop already writes them.

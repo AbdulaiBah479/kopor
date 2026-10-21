@@ -9,7 +9,7 @@ import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
 import { txnIcon } from '@/ui/txnIcon';
-import { Avatar, ContactPick, Empty, Field, MoneyInput, Seg, useDate } from '@/ui/widgets';
+import { Avatar, ContactPick, Empty, Field, MoneyInput, Seg, useDate, Verified } from '@/ui/widgets';
 import { formatMoney, currencySymbol } from '@/lib/money';
 import { shareText } from '@/lib/share';
 import { getSupabase } from '@/cloud/supabase';
@@ -104,7 +104,7 @@ export function Money() {
           <div key={x.id} className="item">
             <span className={`icon-dot ${x.type === 'in' ? 'bg-primary-soft text-positive' : 'bg-warning-soft text-warning'}`}><Icon name={txnIcon(x)} size={20} /></span>
             <div className="main">
-              <div className="t">{itemsLabel(x.items) || x.note || (x.contact_id && contacts.get(x.contact_id)) || t(`categories.${x.category}`)}</div>
+              <div className="t">{itemsLabel(x.items) || x.note || (x.contact_id && contacts.get(x.contact_id)) || t(`categories.${x.category}`)} <Verified id={x.verified_ref} /></div>
               <div className="s">{t(`methods.${x.method}`)} · {fmt(x.date)}</div>
             </div>
             <div className={`amt ${x.type === 'in' ? 'good' : ''}`}>{x.type === 'in' ? '+' : '−'}{formatMoney(x.amount)}</div>

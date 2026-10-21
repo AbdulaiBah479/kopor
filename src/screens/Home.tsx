@@ -6,8 +6,9 @@ import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
+import { ScanChooser } from '@/ui/ScanButton';
 import { txnIcon } from '@/ui/txnIcon';
-import { Avatar, BarChart, Money, ScoreRing, Seg, useDate } from '@/ui/widgets';
+import { Avatar, BarChart, Money, ScoreRing, Seg, useDate, Verified } from '@/ui/widgets';
 import { formatMoney } from '@/lib/money';
 import { today, monthStart, addDays } from '@/lib/dates';
 import { waLink } from '@/lib/phone';
@@ -22,7 +23,6 @@ import { NewCreditSheet, useReminderText } from './Credit';
 // AI tools (and their validation library) download only when first used.
 const VoiceSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.VoiceSheet })));
 const SearchSheet = lazyRetry(() => import('@/ui/SearchSheet').then((m) => ({ default: m.SearchSheet })));
-const ScanSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.ScanSheet })));
 
 type Period = 'today' | 'week' | 'month';
 
@@ -69,7 +69,7 @@ export function Home() {
   const expense = () => openSheet(t('cash.newExpense'), <ExpenseSheet />);
   const creditEntry = () => openSheet(t('credit.addEntry'), <NewCreditSheet />);
   const speak = () => openSheet(t('ai.speakTitle'), <Suspense fallback={t('common.loading')}><VoiceSheet /></Suspense>);
-  const scan = () => openSheet(t('ai.scanTitle'), <Suspense fallback={t('common.loading')}><ScanSheet /></Suspense>);
+  const scan = () => openSheet(t('item.chooseTitle'), <ScanChooser />);
   const search = () => openSheet(t('ux.searchTitle'), <Suspense fallback={t('common.loading')}><SearchSheet actions={[
     { label: t('cash.newSale'), icon: 'plus', run: sale }, { label: t('cash.newExpense'), icon: 'minus', run: expense },
     { label: t('credit.addEntry'), icon: 'book', run: creditEntry }, { label: t('ai.speakTitle'), icon: 'mic', run: speak },
@@ -192,7 +192,7 @@ export function Home() {
                   <Icon name={txnIcon(x)} size={20} />
                 </span>
                 <div className="main">
-                  <div className="t">{x.type === 'in' ? itemsLabel(x.items) || x.note || t('categories.sale') : t(`categories.${x.category}`)}</div>
+                  <div className="t">{x.type === 'in' ? itemsLabel(x.items) || x.note || t('categories.sale') : t(`categories.${x.category}`)} <Verified id={x.verified_ref} /></div>
                   <div className="s">{t(`methods.${x.method}`)} · {fmt(x.date)}</div>
                 </div>
                 <div className={`amt ${x.type === 'in' ? 'good' : ''}`}>{x.type === 'in' ? '+' : '−'}{formatMoney(x.amount)}</div>

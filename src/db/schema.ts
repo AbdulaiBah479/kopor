@@ -35,6 +35,7 @@ export interface Contact extends Base { name: string; phone: string; kind: 'cust
 export interface LedgerEntry extends Base {
   branch_id: string | null; contact_id: string; type: 'gave' | 'got'; amount: number;
   note: string; date: string; due_date: string | null; ref_type: string | null; ref_id: string | null;
+  verified_ref?: string | null; // set only by the server when Monime confirmed the money
 }
 export interface LineItem { product_id: string | null; name: string; qty: number; price: number; cost: number }
 export interface Txn extends Base {
@@ -44,6 +45,7 @@ export interface Txn extends Base {
   discount?: number;            // minor units taken off the subtotal
   tax?: number;                 // minor units of tax included in `amount`
   refund_of?: string | null;    // for category 'refund': the sale being returned
+  verified_ref?: string | null; // set only by the server when Monime confirmed the money ("Confirmed by Monime")
 }
 export interface Product extends Base { name: string; sku: string; unit: string; price: number; cost: number; low_at: number }
 export interface StockMove extends Base {

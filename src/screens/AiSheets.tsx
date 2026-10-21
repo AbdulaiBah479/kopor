@@ -6,16 +6,16 @@ import { haptic, useOverlay } from '@/ui/overlay';
 import { Icon } from '@/ui/Icon';
 import { formatMoney } from '@/lib/money';
 import { parseLocal, type Parsed } from '@/ai/parser';
-import { aiAvailable, aiParse, fixTranscript, scanReceipt, type ScanResult } from '@/ai/assistant';
+import { aiAvailable, aiParse, fixTranscript, scanReceipt, identifyItem, type ScanResult, type ItemGuess } from '@/ai/assistant';
 import { bestMatch, matchProduct } from '@/lib/fuzzy';
 import { BrowserSpeech, canRecord, startRecording, transcribe, voiceErrorKey, type Recording } from '@/ai/voice';
 import { recordSale, recordExpense, EXPENSE_CATEGORIES, METHODS } from '@/domain/cash';
-import { recordPurchase } from '@/domain/stock';
+import { recordPurchase, adjustStock, saveProduct } from '@/domain/stock';
 import { Field, MoneyInput, Seg } from '@/ui/widgets';
 import type { Method } from '@/db/schema';
 import { ensureContact, addEntry } from '@/domain/credit';
 import { findByName } from '@/domain/book';
-import { atomic } from '@/db/repo';
+import { atomic, update } from '@/db/repo';
 import { SaleSheet, ExpenseSheet } from './Cash';
 import { NewCreditSheet } from './Credit';
 
@@ -286,7 +286,7 @@ export function ScanSheet({ prefill, prefer }: { prefill?: ScanResult; prefer?: 
       {busy && <div className="muted small" role="status">{t('ai.reading')}</div>}
       {res && !rows.length && <div className="alert small"><Icon name="alert" /><div>{t('rscan.nothing')}</div></div>}
       {res && (
-        <div className="stack" data-testid="scan-review">
+        <div className="stack form" data-testid="scan-review">
           <Seg<ScanMode> value={mode} onChange={setMode} options={[
             ...(can('stock') ? [['purchase', t('rscan.bought')] as [ScanMode, string]] : []), ['sale', t('rscan.sold')], ['expense', t('rscan.expenseOnly')]]} />
           {!can('stock') && <div className="small muted">{t('rscan.managerOnly')}</div>}
@@ -317,6 +317,112 @@ export function ScanSheet({ prefill, prefer }: { prefill?: ScanResult; prefer?: 
             ? <Field label={t('rscan.total')}><MoneyInput value={total || lineSum} onChange={setTotal} /></Field>
             : <div className="row between"><b>{t('common.total')}</b><b className="num">{formatMoney(lineSum)}</b></div>}
           <button type="button" className="btn primary block" data-testid="scan-save" disabled={busy} onClick={save}><Icon name="check" size={18} /> {t('rscan.save')}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type Detector = { detect: (s: ImageBitmapSource) => Promise<{ rawValue: string }[]> };
+const NativeBarcode = (window as unknown as { BarcodeDetector?: new () => Detector }).BarcodeDetector;
+
+/**
+ * Point the camera at an item (no receipt needed): a known barcode is matched instantly (no AI, works offline);
+ * otherwise the AI recognises the product from its packaging. Then one tap: add to stock, sell, or create the product.
+ */
+export function ItemScanSheet({ prefer }: { prefer?: 'stock' | 'sale' } = {}) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx, can } = useApp();
+  const { openSheet, closeSheet, toast, fail } = useOverlay();
+  const [preview, setPreview] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [guess, setGuess] = useState<ItemGuess | null>(null);
+  const [code, setCode] = useState('');
+  const [f, setF] = useState({ productId: '', name: '', qty: 1, price: 0, cost: 0, paid: true });
+  const names = book.products.map((p) => p.name);
+  const product = book.products.find((p) => p.id === f.productId);
+
+  const pick = async (file?: File) => {
+    if (!file) return;
+    setBusy(true); setGuess(null); setCode('');
+    try {
+      const url = await toDataUrl(file, 1280);
+      setPreview(url);
+      // 1) A barcode the shop already knows: instant, offline.
+      const found = NativeBarcode ? (await new NativeBarcode().detect(await createImageBitmap(file)).catch(() => []))[0]?.rawValue ?? '' : '';
+      setCode(found);
+      const bySku = found ? book.products.find((p) => p.sku && p.sku === found) : undefined;
+      if (bySku) {
+        setGuess({ name: bySku.name, brand: '', size: '', barcode: found, match: bySku.name, confidence: 1 });
+        setF({ productId: bySku.id, name: bySku.name, qty: 1, price: bySku.price, cost: bySku.cost, paid: true });
+        return;
+      }
+      // 2) Otherwise the AI looks at the packaging.
+      const g = await identifyItem(url, names);
+      setGuess(g);
+      if (!found && /^\d{6,14}$/.test(g.barcode)) setCode(g.barcode);
+      const p = (g.match && findByName(book.products, g.match)) || book.products.find((x) => x.name === matchProduct(g.name, names));
+      setF({ productId: p?.id ?? '', name: p?.name ?? g.name, qty: 1, price: p?.price ?? 0, cost: p?.cost ?? 0, paid: true });
+    } catch (e) { fail(e); } finally { setBusy(false); }
+  };
+
+  /** Remember the barcode on the product, so the next scan is instant and offline. */
+  const rememberBarcode = async (id: string) => {
+    const p = book.products.find((x) => x.id === id);
+    if (code && p && !p.sku && can('stock')) await update(ctx, 'products', id, { sku: code }, `Barcode for ${p.name}`);
+  };
+  const addToStock = async () => {
+    try {
+      if (product) {
+        await adjustStock(ctx, product.id, f.qty, { recordExpense: f.paid, unitCost: f.cost || product.cost });
+        await rememberBarcode(product.id);
+      } else {
+        await saveProduct(ctx, { name: f.name.trim(), sku: code, unit: 'pcs', price: f.price, cost: f.cost, low_at: 0, opening: f.qty });
+        if (f.paid && f.cost > 0) await recordExpense(ctx, { amount: f.cost * f.qty, category: 'stock', note: `${f.qty} ${f.name.trim()}` });
+      }
+      closeSheet(); haptic(15);
+      toast(t('item.stockAdded', { qty: f.qty, name: product?.name ?? f.name.trim() }), { view: '/stock' });
+    } catch (e) { fail(e); }
+  };
+  const sell = async () => {
+    if (product) await rememberBarcode(product.id).catch(() => {});
+    openSheet(t('cash.newSale'), <SaleSheet prefill={{ items: [{ product_id: product?.id ?? null, name: product?.name ?? f.name, qty: f.qty, price: product?.price ?? f.price }] }} />);
+  };
+
+  return (
+    <div className="stack" data-testid="item-scan">
+      <div className="small muted">{t('item.help')}</div>
+      <label className="btn primary block"><Icon name="camera" size={18} /> {t('item.take')}
+        <input type="file" accept="image/*" capture="environment" hidden data-testid="item-file" onChange={(e) => pick(e.target.files?.[0])} /></label>
+      {preview && <img className="scan-preview" src={preview} alt="" />}
+      {busy && <div className="muted small" role="status">{t('item.looking')}</div>}
+      {guess && (
+        <div className="card flat stack form" data-testid="item-result">
+          <div><span className="small muted">{t('item.looksLike')}</span> <b>{guess.name || '—'}</b>{code && <span className="small muted"> · {code}</span>}</div>
+          {guess.confidence < 0.5 && <div className="alert small"><Icon name="alert" /><div>{t('item.unsure')}</div></div>}
+          <select aria-label={t('rscan.product')} value={f.productId} onChange={(e) => {
+            const p = book.products.find((x) => x.id === e.target.value);
+            setF({ ...f, productId: e.target.value, name: p?.name ?? guess.name, price: p?.price ?? f.price, cost: p?.cost ?? f.cost });
+          }}>
+            <option value="">{t('rscan.newProduct')}</option>
+            {book.products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          {!product && <Field label={t('item.name')}><input className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>}
+          <div className="grid2">
+            <Field label={t('rscan.qty')}><input type="number" inputMode="decimal" min="1" step="any" value={f.qty || ''} onChange={(e) => setF({ ...f, qty: Number(e.target.value) || 0 })} /></Field>
+            {!product && <Field label={t('rscan.sellPrice')}><MoneyInput value={f.price} onChange={(price) => setF({ ...f, price })} /></Field>}
+          </div>
+          {can('stock') && (
+            <>
+              <Field label={t('item.cost')}><MoneyInput value={f.cost} onChange={(cost) => setF({ ...f, cost })} /></Field>
+              <label className="row small" style={{ gap: 8, alignItems: 'center', justifyContent: 'flex-start' }}><input type="checkbox" checked={f.paid} onChange={(e) => setF({ ...f, paid: e.target.checked })} /> {t('item.paid')}</label>
+            </>
+          )}
+          <div className="btn-row">
+            {can('stock') && <button type="button" className={`btn ${prefer === 'sale' ? '' : 'primary'}`} data-testid="item-stock" disabled={!(f.qty > 0) || (!product && !f.name.trim())} onClick={addToStock}><Icon name="box" size={18} /> {t('item.addStock')}</button>}
+            {can('record') && <button type="button" className={`btn ${prefer === 'sale' || !can('stock') ? 'primary' : 'get'}`} data-testid="item-sell" disabled={!(f.qty > 0)} onClick={sell}><Icon name="bag" size={18} /> {t('item.sell')}</button>}
+          </div>
         </div>
       )}
     </div>

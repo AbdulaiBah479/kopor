@@ -339,5 +339,28 @@ const v3: V3Dict = {
     unsupported: 'Ce téléphone ou cette application ne peut pas afficher de rappels. Ouvrez Kopor dans Chrome, ou ajoutez-le à l’écran d’accueil (iPhone).',
     needCloud: 'Sauvegardez votre entreprise en ligne (Plus → Cloud et compte) pour recevoir les rappels quotidiens.',
   },
+  verified: {
+    short: 'Monime',
+    long: 'Confirmé par Monime : cet argent est bien arrivé',
+  },
+  item: {
+    chooseTitle: 'Que scannez-vous ?',
+    chooseItem: 'Un article',
+    chooseItemSub: 'Visez un produit : ajoutez-le au stock ou vendez-le',
+    chooseReceipt: 'Un reçu ou une page de cahier',
+    chooseReceiptSub: 'Reçus fournisseurs, factures, ventes manuscrites : plusieurs lignes d’un coup',
+    title: 'Scanner un article',
+    help: 'Photographiez le produit (étiquette, sac, boîte ou code-barres). Kopor le reconnaît et le relie à votre stock.',
+    take: 'Photographier l’article',
+    looking: 'Analyse de l’article…',
+    looksLike: 'Ressemble à',
+    unsure: 'Pas sûr pour celui-ci : vérifiez le produit ci-dessous.',
+    name: 'Nom du produit',
+    cost: 'Coût unitaire (prix payé)',
+    paid: 'Je les ai payés (noter le coût comme dépense)',
+    addStock: 'Ajouter au stock',
+    sell: 'Vendre',
+    stockAdded: '{{qty}} {{name}} ajouté(s) au stock',
+  },
 };
 export default v3;

@@ -132,6 +132,7 @@ await step('scan a supplier receipt (no barcode): stock goes up, new product cre
   before = await rice();
   await go('/');
   await page.getByRole('button', { name: 'Scan', exact: true }).click();
+  await page.getByTestId('choose-receipt').click();
   // Builds without the Kopor cloud (e.g. CI) cannot read photos and say so; the live test (tests/cloud/scan-live.mjs)
   // covers the real reading. Here: check the message, then stop.
   const noCloud = page.getByText('Reading photos needs an internet connection');
@@ -151,6 +152,34 @@ await step('scan a supplier receipt (no barcode): stock goes up, new product cre
   await page.waitForFunction((b) => Number(document.querySelector('[data-product="Rice 50kg bag"] [data-qty]')?.getAttribute('data-qty')) === b + 2, before, { timeout: 5000 })
     .catch(async () => { throw new Error(`rice ${before} -> ${await rice()}`); });
   await page.locator('[data-product="Candles box"]').waitFor();
+});
+
+await step('point the camera at an item: recognised, matched, added to stock, View opens Stock', async () => {
+  const guess = { name: 'Peak Milk tin', brand: 'Peak', size: '', barcode: '', match: 'Milk tin', confidence: 0.9 };
+  await page.route('**/functions/v1/ai', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: JSON.stringify(guess), provider: 'test' }) }));
+  const milk = async () => Number(await page.locator('[data-product="Milk tin"] [data-qty]').getAttribute('data-qty'));
+  let before = 0;
+  try {
+    await go('/stock');
+    before = await milk();
+    await go('/');
+    await page.getByRole('button', { name: 'Scan', exact: true }).click();
+    await page.getByTestId('choose-item').click();
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+    await page.getByTestId('item-file').setInputFiles({ name: 'item.png', mimeType: 'image/png', buffer: png });
+    const noCloud = page.getByText('This needs an internet connection');
+    await Promise.race([page.getByTestId('item-result').waitFor({ timeout: 20000 }), noCloud.first().waitFor({ timeout: 20000 })]);
+    if (await noCloud.count()) { console.log('   (no cloud in this build: checked the message instead)'); return; }
+    const r = page.getByTestId('item-result');
+    if ((await r.locator('select').inputValue()) === '') throw new Error('not matched to Milk tin');
+    await r.locator('input[type=number]').fill('2');
+    await shot('05c-item-scan');
+    await r.getByTestId('item-stock').click();
+    await page.locator('[data-sonner-toast]', { hasText: '2 Milk tin added to stock' }).getByRole('button', { name: 'View' }).click();
+  } finally { await page.unroute('**/functions/v1/ai'); }
+  if (!before) return;
+  await page.waitForFunction((b) => Number(document.querySelector('[data-product="Milk tin"] [data-qty]')?.getAttribute('data-qty')) === b + 2, before, { timeout: 5000 })
+    .catch(async () => { throw new Error(`milk ${before} -> ${await milk()}`); });
 });
 
 await step('expense', async () => {

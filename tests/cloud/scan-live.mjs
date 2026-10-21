@@ -35,6 +35,7 @@ try {
   await page.getByText("Today's profit").waitFor({ timeout: 90000 });
   for (let i = 0; i < 8 && await page.locator('.driver-popover').count(); i++) { await page.locator('.driver-popover-next-btn').click(); await page.waitForTimeout(200); }
   await page.getByRole('button', { name: 'Scan', exact: true }).click();
+  await page.getByTestId('choose-receipt').click();
   await page.getByTestId('scan-file').setInputFiles({ name: 'receipt.png', mimeType: 'image/png', buffer: png });
   await page.getByTestId('scan-review').waitFor({ timeout: 60000 });
   const rows = await page.getByTestId('scan-row').evaluateAll((els) => els.map((el) => ({

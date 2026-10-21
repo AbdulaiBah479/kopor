@@ -7,7 +7,7 @@ import { txnIcon } from '@/ui/txnIcon';
 import { ScanButton } from '@/ui/ScanButton';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
-import { Empty, Field, ItemsEditor, Money, MoneyInput, Seg, useDate } from '@/ui/widgets';
+import { Empty, Field, ItemsEditor, Money, MoneyInput, Seg, useDate, Verified } from '@/ui/widgets';
 import { ScanToggle, TotalsBlock, ActionButton } from '@/ui/extras';
 import { formatMoney } from '@/lib/money';
 import { today, addDays, monthStart } from '@/lib/dates';
@@ -45,7 +45,7 @@ export function CashBook() {
   const label = (e: Txn) => e.type === 'in' ? itemsLabel(e.items) || e.note || t('categories.sale') : e.category === 'refund' ? `${t('returns.refund')}: ${itemsLabel(e.items)}` : t(`categories.${e.category}`);
 
   return (
-    <Page guide="cash" title={t('cash.title')} sub={t('cash.sub')} right={can('record') && <ScanButton />}
+    <Page guide="cash" title={t('cash.title')} sub={t('cash.sub')} right={can('record') && <ScanButton prefer="sale" />}
       after={can('record') && (
         <div className="sticky-actions"><div className="btn-row">
           <button className="btn get" data-testid="new-sale" onClick={() => openSheet(t('cash.newSale'), <SaleSheet />)}><Icon name="plus" size={18} /> {t('home.sale')}</button>
@@ -91,7 +91,7 @@ export function CashBook() {
               <button key={e.id} type="button" className="item" style={{ width: '100%', border: 0, textAlign: 'left', font: 'inherit' }} onClick={() => openSheet(label(e), <TxnSheet txn={e} />)}>
                 <div className="avatar" style={{ background: e.type === 'in' ? 'var(--good-soft)' : 'var(--warn-soft)', color: e.type === 'in' ? 'var(--good)' : 'var(--warn)' }}><Icon name={txnIcon(e)} size={18} /></div>
                 <div className="main">
-                  <div className="t">{label(e)}</div>
+                  <div className="t">{label(e)} <Verified id={e.verified_ref} /></div>
                   <div className="s">{t(`methods.${e.method}`)}{e.contact_id && ` · ${contactName(e.contact_id) ?? ''}`}{e.type === 'out' && e.category !== 'refund' && e.note && ` · ${e.note}`}</div>
                 </div>
                 <div className={`amt num ${e.type === 'in' ? 'good' : 'bad'}`}>{e.type === 'in' ? '+' : '-'}{formatMoney(e.amount)}</div>
