@@ -1,7 +1,7 @@
 // Money hub: receive and send mobile money (Orange Money, Afrimoney, QMoney) from day one, without any partner
 // account. Kopor shows customers where to pay, opens the network's own menu to send, and records the result.
 // With Monime connected, payment links, USSD pay codes and payouts also confirm themselves.
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
@@ -142,16 +142,18 @@ export function Wallet() {
   const [items, setItems] = useState<WalletTxn[]>([]);
   const [next, setNext] = useState<string | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'error' | 'off'>('loading');
-  const load = useCallback(async () => {
-    try {
-      const [b, h] = await Promise.all([walletBalance(ctx.orgId), walletHistory(ctx.orgId)]);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let live = true;
+    Promise.all([walletBalance(ctx.orgId), walletHistory(ctx.orgId)]).then(([b, h]) => {
+      if (!live) return;
       setBal(b); setItems(h.items); setNext(h.next); setState('ready');
-    } catch (e) {
+    }).catch((e) => {
       // Not connected (or no Kopor cloud in this build): show how to turn the wallet on. Anything else: a real error.
-      setState(/not connected|noCloud/i.test(e instanceof Error ? e.message : '') ? 'off' : 'error');
-    }
-  }, [ctx.orgId]);
-  useEffect(() => { load(); }, [load]);
+      if (live) setState(/not connected|noCloud/i.test(e instanceof Error ? e.message : '') ? 'off' : 'error');
+    });
+    return () => { live = false; };
+  }, [ctx.orgId, attempt]);
   const more = () => next && walletHistory(ctx.orgId, next).then((h) => { setItems((x) => [...x, ...h.items]); setNext(h.next); }).catch(fail);
   const { fmt } = useDate();
   const day = (iso: string) => fmt(iso.slice(0, 10));
@@ -159,7 +161,7 @@ export function Wallet() {
   if (!can('reports')) return <Page title={t('wallet.title')} back="/money"><Empty icon="lock" title={t('wallet.managersOnly')} /></Page>;
   return (
     <Page title={t('wallet.title')} sub={t('wallet.sub')} back="/money"
-      right={state !== 'off' && <button className="icon-btn" aria-label={t('ux.refreshing')} onClick={() => { setState('loading'); load(); }}><Icon name="refresh" size={20} /></button>}>
+      right={state !== 'off' && <button className="icon-btn" aria-label={t('ux.refreshing')} onClick={() => { setState('loading'); setAttempt((a) => a + 1); }}><Icon name="refresh" size={20} /></button>}>
       {state === 'off' ? (
         <div className="card stack" data-testid="wallet-off">
           <h2><Icon name="wallet" size={18} /> {t('wallet.connectTitle')}</h2>
