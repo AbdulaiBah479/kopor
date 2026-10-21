@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write # to publish the test APK to the public "test-latest" download
 
 jobs:
   android:
@@ -84,3 +84,14 @@ jobs:
           path: |
             android/app/build/outputs/apk/debug/*.apk
             android/app/build/outputs/bundle/release/*.aab
+      - name: Publish the test APK to the permanent public download link
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK=$(ls android/app/build/outputs/apk/debug/kopor-test-*.apk | head -1)
+          cp "$APK" kopor-test.apk
+          gh release view test-latest >/dev/null 2>&1 || gh release create test-latest --prerelease --title "Kopor test app (latest)"             --notes "Android test build of Kopor. Install kopor-test.apk; newer builds install over it and keep your records."
+          gh release upload test-latest kopor-test.apk "$APK" --clobber
+          gh release edit test-latest --notes "Android test build ${{ github.run_number }} of Kopor ($(date -u +%F)). Install kopor-test.apk; newer builds install over it and keep your records."
+          echo "Download: https://github.com/${{ github.repository }}/releases/download/test-latest/kopor-test.apk" >> "$GITHUB_STEP_SUMMARY"
