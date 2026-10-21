@@ -1,0 +1,77 @@
+name: Nightly backup
+# Free nightly backup of the whole Kopor database (the free Supabase plan has no daily backups).
+# Every table is exported through the Supabase Management API, compressed, ENCRYPTED with the BACKUP_PASSPHRASE
+# secret (GPG, AES-256), checked by decrypting it again, and kept for 90 days as a run artifact.
+# Restore: see docs/OPERATIONS.md, "Backups".
+on:
+  schedule:
+    - cron: '0 2 * * *' # 02:00 Freetown time (UTC), when nobody is working
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Test everything with a throwaway passphrase and keep nothing
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      PROJECT: hpmpbzcloklaeghekjfz
+    steps:
+      - name: Check the secrets are set
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            p=$(openssl rand -hex 24); echo "::add-mask::$p"; echo "BACKUP_PASSPHRASE=$p" >> "$GITHUB_ENV"; BACKUP_PASSPHRASE=$p
+            echo "Dry run: a throwaway passphrase is used and nothing is kept." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN secret is missing"; exit 1; }
+          [ ${#BACKUP_PASSPHRASE} -ge 16 ] || { echo "::error::Add a BACKUP_PASSPHRASE secret of at least 16 characters (Settings → Secrets and variables → Actions)"; exit 1; }
+      - name: Export every table
+        run: |
+          set -euo pipefail
+          sql() { jq -Rs '{query: .}' | curl -fsS --retry 3 -X POST "https://api.supabase.com/v1/projects/$PROJECT/database/query" \
+                    -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' --data-binary @-; }
+          mkdir -p backup
+          # All tables in the app schema, plus sign-in accounts (needed to restore people's access).
+          tables=$(echo "select table_name from information_schema.tables where table_schema = 'public' and table_type = 'BASE TABLE' order by 1" | sql | jq -r '.[].table_name')
+          for t in $tables; do
+            : > "backup/public.$t.jsonl"; off=0
+            while :; do
+              page=$(echo "select coalesce(json_agg(r), '[]') as rows from (select * from public.\"$t\" order by 1 limit 2000 offset $off) r" | sql | jq -c '.[0].rows')
+              n=$(echo "$page" | jq 'length'); [ "$n" -gt 0 ] || break
+              echo "$page" | jq -c '.[]' >> "backup/public.$t.jsonl"; off=$((off + n)); [ "$n" -eq 2000 ] || break
+            done
+            echo "$t: $(wc -l < "backup/public.$t.jsonl") rows"
+          done
+          echo "select coalesce(json_agg(r), '[]') as rows from (select id, email, encrypted_password, created_at, raw_user_meta_data, raw_app_meta_data from auth.users order by created_at) r" \
+            | sql | jq -c '.[0].rows[]' > backup/auth.users.jsonl
+          echo "auth.users: $(wc -l < backup/auth.users.jsonl) rows"
+          # Schema version, so a restore knows which migrations the data matches.
+          echo "select coalesce(json_agg(r), '[]') as rows from (select * from public.kopor_migrations order by 1) r" | sql | jq -c '.[0].rows' > backup/migrations.json || echo '[]' > backup/migrations.json
+          date -u +%FT%TZ > backup/taken_at.txt
+      - name: Compress, encrypt, and prove the file can be decrypted
+        run: |
+          set -euo pipefail
+          name="kopor-backup-$(date -u +%Y-%m-%d)"
+          tar -czf "$name.tar.gz" backup
+          echo "$BACKUP_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 \
+            --s2k-digest-algo SHA512 --s2k-count 65011712 -o "$name.tar.gz.gpg" "$name.tar.gz"
+          # A backup that cannot be restored is worthless: decrypt it again and compare before keeping it.
+          echo "$BACKUP_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 -d "$name.tar.gz.gpg" > check.tar.gz
+          cmp "$name.tar.gz" check.tar.gz && tar -tzf check.tar.gz > /dev/null
+          rm -rf backup "$name.tar.gz" check.tar.gz
+          echo "NAME=$name" >> "$GITHUB_ENV"
+          echo "Encrypted backup **$name** ($(du -h "$name.tar.gz.gpg" | cut -f1)) checked and kept for 90 days." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !inputs.dry_run }}
+        with:
+          name: ${{ env.NAME }}
+          path: ${{ env.NAME }}.tar.gz.gpg
+          retention-days: 90
+          if-no-files-found: error

@@ -91,7 +91,23 @@ signing key; ask your developer the first time.
 | Domain name | Not needed | Optional: `kopor.sl` or similar for a more professional address (~$10–40/year) |
 
 **Backups:** each shop's records are on their phone, and in the cloud if they have an account. The Supabase free plan
-does not keep its own daily backups, so upgrade to Pro once real businesses depend on the cloud.
+does not keep its own daily backups, so Kopor makes its own: see "Backups" below. Upgrade to Supabase Pro once real
+businesses depend on the cloud (it adds point-in-time restore on top).
+
+## Backups
+
+Every night at 02:00 the **Nightly backup** job (GitHub → Actions) exports every table, compresses it, encrypts it
+with your `BACKUP_PASSPHRASE` secret, decrypts it again to prove it can be restored, and keeps it for **90 days**.
+
+- **Check:** GitHub → Actions → Nightly backup: each night should be green. A red run means no backup that night.
+- **Download:** open a run → Artifacts → `kopor-backup-YYYY-MM-DD` (a `.tar.gz.gpg` file inside a zip).
+- **Open it** (on any computer with GPG, e.g. Git Bash on Windows):
+  `gpg -d kopor-backup-YYYY-MM-DD.tar.gz.gpg > backup.tar.gz` then `tar -xzf backup.tar.gz`.
+  You get one file per table (`public.<table>.jsonl`, one record per line), `auth.users.jsonl` and `migrations.json`.
+- **Restore:** ask for help (or your developer) to load the files back into the database. Never paste the
+  passphrase into a chat.
+- **Keep the passphrase safe** (a password manager). Without it the backups cannot be opened by anyone, you included.
+  If you change it, older backups still need the old one.
 
 ## If something goes wrong
 
