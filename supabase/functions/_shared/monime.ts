@@ -32,3 +32,13 @@ export async function monime<T = Record<string, unknown>>(c: MonimeCreds, method
 }
 
 export const SLE = (minor: number) => ({ currency: 'SLE', value: Math.round(minor) });
+
+/** GET a list endpoint and return one page plus the cursor for the next page (null at the end). */
+export async function monimeList<T>(c: MonimeCreds, path: string): Promise<{ items: T[]; next: string | null }> {
+  const res = await fetch(BASE + path, {
+    headers: { Authorization: `Bearer ${c.token}`, 'Monime-Space-Id': c.spaceId, 'Monime-Version': 'caph.2025-08-23' },
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok || j.success === false) throw new HttpError(502, String(j?.error?.message ?? j?.messages?.[0]?.message ?? `Monime error ${res.status}`));
+  return { items: (j.result ?? []) as T[], next: j.pagination?.next ?? null };
+}

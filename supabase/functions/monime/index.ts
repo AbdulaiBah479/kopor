@@ -1,9 +1,18 @@
 // Kopor â‡„ Monime payments. Each business connects its OWN Monime account; Kopor never holds funds.
-// Actions: connect | status | disconnect | checkout | ussd | providers | payout
+// Actions: connect | status | disconnect | checkout | link | ussd | providers | payout | wallet | history
 import { admin, caller, cors, json, requireLevel, seal, HttpError, env, nowMs, randomSecret } from '../_shared/util.ts';
-import { credsFor, monime, SLE, type MonimeCreds } from '../_shared/monime.ts';
+import { credsFor, monime, monimeList, SLE, type MonimeCreds } from '../_shared/monime.ts';
 
-const LEVEL = { connect: 3, disconnect: 3, status: 0, checkout: 2, link: 2, ussd: 2, providers: 3, payout: 3 } as const;
+// wallet / history: the business's own Monime balances and money movements (managers and owners only).
+const LEVEL = { connect: 3, disconnect: 3, status: 0, checkout: 2, link: 2, ussd: 2, providers: 3, payout: 3, wallet: 2, history: 2 } as const;
+
+interface MonimeAccount { id: string; name: string; currency: string; uvan?: string; balance?: { available?: { currency: string; value: number } } | null }
+interface MonimeTxn {
+  id: string; type: 'credit' | 'debit'; amount: { currency: string; value: number }; timestamp: string; reference?: string | null;
+  financialAccount?: { id: string; balance?: { after?: { value: number } | null } | null };
+  originatingFee?: { code: string } | null; originatingReversal?: { originTxnId: string } | null;
+  ownershipGraph?: { owner?: { type?: string; metadata?: Record<string, string> | null } | null } | null; metadata?: Record<string, string> | null;
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -101,6 +110,28 @@ Deno.serve(async (req) => {
         });
         return json({ ussdCode: code.ussdCode, requestId });
       }
+      case 'wallet': {
+        // The money is in the business's own Monime account (Monime is licensed by the Bank of Sierra Leone).
+        const { items } = await monimeList<MonimeAccount>(await credsFor(orgId), '/financial-accounts?withBalance=true&limit=50');
+        const accounts = items.map((a) => ({ id: a.id, name: a.name, currency: a.currency, uvan: a.uvan ?? '', balance: a.balance?.available?.value ?? 0 }));
+        return json({ accounts, total: accounts.filter((a) => a.currency === 'SLE').reduce((s, a) => s + a.balance, 0), at: new Date().toISOString() });
+      }
+      case 'history': {
+        const q = new URLSearchParams({ limit: '30' });
+        if (/^fac-/.test(String(body.accountId ?? ''))) q.set('financialAccountId', String(body.accountId));
+        if (typeof body.after === 'string' && body.after.length <= 2000) q.set('after', body.after);
+        const { items, next } = await monimeList<MonimeTxn>(await credsFor(orgId), `/financial-transactions?${q}`);
+        return json({
+          next,
+          items: items.map((t) => ({
+            id: t.id, type: t.type, amount: Math.abs(t.amount?.value ?? 0), currency: t.amount?.currency ?? 'SLE', time: t.timestamp,
+            reference: t.reference ?? '', balanceAfter: t.financialAccount?.balance?.after?.value ?? null,
+            // What caused it, in words the app can translate: payment_code, checkout_session, payout, internal_transfer, fee, reversal.
+            kind: t.originatingFee ? 'fee' : t.originatingReversal ? 'reversal' : t.ownershipGraph?.owner?.type ?? 'other',
+            note: t.metadata?.note ?? t.ownershipGraph?.owner?.metadata?.name ?? '',
+          })),
+        });
+      }
       case 'payout': {
         const amount = Math.round(Number(body.amount));
         const phone = String(body.phone ?? '').replace(/[^\d+]/g, '');
@@ -108,7 +139,7 @@ Deno.serve(async (req) => {
         const requestId = crypto.randomUUID();
         const p = await monime<{ id: string; status: string }>(await credsFor(orgId), 'POST', '/payouts', {
           amount: SLE(amount), destination: { type: 'momo', providerId: body.providerId, phoneNumber: phone },
-          metadata: { orgId, requestId, ...(body.groupId ? { groupId: String(body.groupId) } : {}) },
+          metadata: { orgId, requestId, note: String(body.note ?? '').slice(0, 100), ...(body.groupId ? { groupId: String(body.groupId) } : {}) },
         }, `payout-${requestId}`);
         await db.from('payment_requests').insert({
           id: requestId, org_id: orgId, created_at: nowMs(), updated_at: nowMs(), kind: 'payout', group_id: body.groupId ?? null, amount,

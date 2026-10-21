@@ -31,3 +31,13 @@ export const momoProviders = (orgId: string) => call<{ providers: { id: string; 
 /** Send money out (osusu pot, supplier payment, salary). Owner only, enforced on the server. */
 export const createPayout = (orgId: string, args: { amount: number; phone: string; providerId: string; note: string; groupId?: string }) =>
   call<{ status: string; requestId: string }>({ action: 'payout', orgId, ...args });
+
+export interface WalletAccount { id: string; name: string; currency: string; uvan: string; balance: number }
+export interface WalletTxn { id: string; type: 'credit' | 'debit'; amount: number; currency: string; time: string; reference: string; balanceAfter: number | null; kind: string; note: string }
+
+/** Balances of the business's own Monime account (the money is held by Monime, licensed by the Bank of Sierra Leone). */
+export const walletBalance = (orgId: string) => call<{ accounts: WalletAccount[]; total: number; at: string }>({ action: 'wallet', orgId });
+
+/** Money in and out of the Monime account, newest first, 30 at a time (pass `after` for the next page). */
+export const walletHistory = (orgId: string, after?: string | null, accountId?: string) =>
+  call<{ items: WalletTxn[]; next: string | null }>({ action: 'history', orgId, ...(after ? { after } : {}), ...(accountId ? { accountId } : {}) });

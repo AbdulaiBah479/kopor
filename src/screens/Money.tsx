@@ -1,7 +1,7 @@
 // Money hub: receive and send mobile money (Orange Money, Afrimoney, QMoney) from day one, without any partner
 // account. Kopor shows customers where to pay, opens the network's own menu to send, and records the result.
 // With Monime connected, payment links, USSD pay codes and payouts also confirm themselves.
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
@@ -13,7 +13,7 @@ import { Avatar, ContactPick, Empty, Field, MoneyInput, Seg, useDate } from '@/u
 import { formatMoney, currencySymbol } from '@/lib/money';
 import { shareText } from '@/lib/share';
 import { getSupabase } from '@/cloud/supabase';
-import { createPayLink, createUssdCode, monimeStatus } from '@/cloud/payments';
+import { createPayLink, createUssdCode, monimeStatus, walletBalance, walletHistory, type WalletAccount, type WalletTxn } from '@/cloud/payments';
 import { updateOrg } from '@/domain/org';
 import { recordSale, recordExpense, itemsLabel, EXPENSE_CATEGORIES } from '@/domain/cash';
 import { addEntry, balances, ensureContact } from '@/domain/credit';
@@ -87,12 +87,14 @@ export function Money() {
         </div>
       )}
 
-      <div className="card stack">
-        <h2><Icon name="link" size={18} /> {t('money.instantTitle')}</h2>
-        <div className="small muted">{t('money.instantHelp')}</div>
-        {!monime && can('business') && <Link className="btn ghost block" to="/payments">{t('money.connect')}</Link>}
-        {monime && <div className="badge good">{t('pay.connected')}</div>}
-      </div>
+      {monime && can('reports') ? <WalletCard /> : (
+        <div className="card stack">
+          <h2><Icon name="link" size={18} /> {t('money.instantTitle')}</h2>
+          <div className="small muted">{t('money.instantHelp')}</div>
+          {!monime && can('business') && <Link className="btn ghost block" to="/payments">{t('money.connect')}</Link>}
+          {monime && <div className="badge good">{t('pay.connected')}</div>}
+        </div>
+      )}
 
       <div className="alert small"><Icon name="shield" /><div>{t('money.safety')} {t('money.notWallet')}</div></div>
 
@@ -109,6 +111,102 @@ export function Money() {
           </div>
         )) : <Empty icon="wallet" title={t('pay.noRequests')} />}
       </div>
+    </Page>
+  );
+}
+
+/** Wallet balance on the Money screen (the business's own Monime account). */
+function WalletCard() {
+  const { t } = useTranslation();
+  const { ctx } = useApp();
+  const [w, setW] = useState<{ total: number } | null | 'error'>(null);
+  useEffect(() => { walletBalance(ctx.orgId).then(setW).catch(() => setW('error')); }, [ctx.orgId]);
+  return (
+    <Link to="/wallet" className="hero wallet-card" data-testid="wallet-card">
+      <span className="label">{t('wallet.title')}</span>
+      <span className="big num">{w && w !== 'error' ? formatMoney(w.total) : w === 'error' ? '—' : '…'}</span>
+      <span className="small" style={{ opacity: 0.85 }}>{t('wallet.powered')} · {t('wallet.open')} ›</span>
+    </Link>
+  );
+}
+
+/**
+ * Wallet: the business's own Monime account inside Kopor. Monime (licensed by the Bank of Sierra Leone) holds the
+ * money; Kopor shows the balance and history and starts payments and transfers. Managers and owners only.
+ */
+export function Wallet() {
+  const { t } = useTranslation();
+  const { ctx, can } = useApp();
+  const { openSheet, fail } = useOverlay();
+  const [bal, setBal] = useState<{ accounts: WalletAccount[]; total: number; at: string } | null>(null);
+  const [items, setItems] = useState<WalletTxn[]>([]);
+  const [next, setNext] = useState<string | null>(null);
+  const [state, setState] = useState<'loading' | 'ready' | 'error' | 'off'>('loading');
+  const load = useCallback(async () => {
+    try {
+      const [b, h] = await Promise.all([walletBalance(ctx.orgId), walletHistory(ctx.orgId)]);
+      setBal(b); setItems(h.items); setNext(h.next); setState('ready');
+    } catch (e) {
+      // Not connected (or no Kopor cloud in this build): show how to turn the wallet on. Anything else: a real error.
+      setState(/not connected|noCloud/i.test(e instanceof Error ? e.message : '') ? 'off' : 'error');
+    }
+  }, [ctx.orgId]);
+  useEffect(() => { load(); }, [load]);
+  const more = () => next && walletHistory(ctx.orgId, next).then((h) => { setItems((x) => [...x, ...h.items]); setNext(h.next); }).catch(fail);
+  const { fmt } = useDate();
+  const day = (iso: string) => fmt(iso.slice(0, 10));
+
+  if (!can('reports')) return <Page title={t('wallet.title')} back="/money"><Empty icon="lock" title={t('wallet.managersOnly')} /></Page>;
+  return (
+    <Page title={t('wallet.title')} sub={t('wallet.sub')} back="/money"
+      right={state !== 'off' && <button className="icon-btn" aria-label={t('ux.refreshing')} onClick={() => { setState('loading'); load(); }}><Icon name="refresh" size={20} /></button>}>
+      {state === 'off' ? (
+        <div className="card stack" data-testid="wallet-off">
+          <h2><Icon name="wallet" size={18} /> {t('wallet.connectTitle')}</h2>
+          <div className="small">{t('wallet.connectHelp')}</div>
+          <ol className="small" style={{ paddingLeft: 18, margin: 0, display: 'grid', gap: 4 }}>
+            <li>{t('wallet.step1')}</li><li>{t('wallet.step2')}</li><li>{t('wallet.step3')}</li>
+          </ol>
+          {can('business') && <Link className="btn primary block" to="/payments">{t('money.connect')}</Link>}
+        </div>
+      ) : (
+        <>
+          <div className="hero balance-card" data-testid="wallet-balance">
+            <div className="balance-head">
+              <span className="label">{t('wallet.available')}</span>
+              <span className="amount">{bal ? formatMoney(bal.total) : state === 'error' ? '—' : '…'}</span>
+              <span className="split"><span>{t('wallet.powered')}</span></span>
+            </div>
+            <div className="money-actions">
+              <button className="btn on-hero" onClick={() => openSheet(t('money.receive'), <ReceiveSheet monime />)}><Icon name="down" size={20} /> {t('money.receive')}</button>
+              {can('payouts') && <button className="btn on-hero ghost-hero" onClick={() => openSheet(t('pay.payout'), <PayoutSheet amount={0} />)}><Icon name="up" size={20} /> {t('money.send')}</button>}
+            </div>
+          </div>
+          {state === 'error' && <div className="alert small" role="alert"><Icon name="alert" /><div>{t('wallet.loadFail')}</div></div>}
+          {bal && bal.accounts.length > 1 && (
+            <div className="list">
+              {bal.accounts.map((a) => (
+                <div key={a.id} className="item"><div className="main"><div className="t">{a.name}</div>{a.uvan && <div className="s num">{t('wallet.uvan', { uvan: a.uvan })}</div>}</div><div className="amt num">{formatMoney(a.balance)}</div></div>
+              ))}
+            </div>
+          )}
+          <div className="section-title"><span>{t('wallet.history')}</span></div>
+          <div className="list" data-testid="wallet-history">
+            {items.length ? items.map((x) => (
+              <div key={x.id} className="item">
+                <span className={`icon-dot ${x.type === 'credit' ? 'bg-primary-soft text-positive' : 'bg-warning-soft text-warning'}`}><Icon name={x.type === 'credit' ? 'down' : 'up'} size={20} /></span>
+                <div className="main">
+                  <div className="t">{x.note || t(`wallet.kind.${x.kind}`, { defaultValue: t(x.type === 'credit' ? 'wallet.in' : 'wallet.out') })}</div>
+                  <div className="s">{day(x.time)}{x.balanceAfter !== null ? ` · ${t('wallet.after', { amount: formatMoney(x.balanceAfter) })}` : ''}</div>
+                </div>
+                <div className={`amt num ${x.type === 'credit' ? 'good' : ''}`}>{x.type === 'credit' ? '+' : '−'}{formatMoney(x.amount)}</div>
+              </div>
+            )) : state === 'ready' ? <Empty icon="wallet" title={t('wallet.none')} /> : null}
+          </div>
+          {next && <button className="btn ghost block" onClick={more}>{t('wallet.more')}</button>}
+          <div className="alert small"><Icon name="shield" /><div>{t('wallet.safety')}</div></div>
+        </>
+      )}
     </Page>
   );
 }

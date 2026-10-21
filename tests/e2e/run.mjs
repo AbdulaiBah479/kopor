@@ -84,7 +84,7 @@ await step('first-use guided tour shows and can be finished', async () => {
   await shot('02-home');
 });
 
-for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl']) {
+for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/wallet', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl']) {
   await step(`screen ${r} renders at phone width`, async () => { await go(r); await noOverflow(); });
 }
 
@@ -305,6 +305,31 @@ await step('savings goal: create, add money, progress shown', async () => {
   await goal.getByText('Le 1,000').first().waitFor();
   await goal.getByRole('progressbar').and(page.locator('[aria-valuenow="33"]')).waitFor();
   await shot('06c-savings-goal');
+});
+
+await step('wallet: balance and money history from Monime (stand-in answers)', async () => {
+  // Stand-in for the Monime function, shaped like Monime's documented API, so this runs without a real account.
+  const answers = {
+    status: { connected: true },
+    wallet: { accounts: [{ id: 'fac-1', name: 'Main Wallet', currency: 'SLE', uvan: 'KOP123', balance: 125050 }], total: 125050, at: new Date().toISOString() },
+    history: { next: null, items: [
+      { id: 't1', type: 'credit', amount: 50000, currency: 'SLE', time: new Date().toISOString(), reference: '', balanceAfter: 125050, kind: 'payment_code', note: '' },
+      { id: 't2', type: 'debit', amount: 20000, currency: 'SLE', time: new Date().toISOString(), reference: '', balanceAfter: 75050, kind: 'payout', note: 'Rice supplier' },
+    ] },
+  };
+  await page.route('**/functions/v1/monime', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(answers[JSON.parse(r.request().postData() ?? '{}').action] ?? {}) }));
+  try {
+    await go('/wallet');
+    const noCloud = page.getByTestId('wallet-off');
+    await Promise.race([page.getByTestId('wallet-balance').waitFor(), noCloud.waitFor()]);
+    if (await noCloud.count()) { await noCloud.getByText('Open a free Monime business account').waitFor(); console.log('   (no cloud in this build: checked the set-up steps)'); return; }
+    await page.getByTestId('wallet-balance').getByText('Le 1,250.50').waitFor();
+    const h = page.getByTestId('wallet-history');
+    await h.getByText('USSD payment received').waitFor();
+    await h.getByText('Rice supplier').waitFor();
+    await h.getByText('−Le 200').waitFor();
+    await shot('13b-wallet');
+  } finally { await page.unroute('**/functions/v1/monime'); }
 });
 
 await step('invoice: create and mark paid', async () => {
