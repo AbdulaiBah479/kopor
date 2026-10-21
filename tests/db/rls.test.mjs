@@ -271,6 +271,28 @@ await test('savings & loan groups: managers lend, cashiers cannot; member link s
   assert.equal((await q(`select public_group('grp_wrong_token_00000') as g`)).rows[0].g, null);
 });
 
+await test('members claim payments from the link: only listed members, only pending, limited, staff decide', async () => {
+  const G = 'abababab-abab-4bab-8bab-abababababab', M1 = 'a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1';
+  await as(null);
+  const claim = (member, extra = {}) => q(`select submit_group_claim($1, $2, $3, $4, $5, $6, $7, $8) as r`,
+    [extra.token ?? 'grp_abcdefghijklmnop', member, extra.kind ?? 'contribution', extra.amount ?? 1000, 2, 'orange', 'MP123', '']);
+  assert.equal((await claim(M1)).rows[0].r.ok, true);
+  await rejects(claim('ffffffff-ffff-4fff-8fff-ffffffffffff'), /not a member/);
+  await rejects(claim(M1, { token: 'grp_wrong_token_00000' }), /invalid link/);
+  await rejects(claim(M1, { kind: 'loan' }), /invalid claim/);
+  for (let i = 0; i < 4; i++) await claim(M1);
+  await rejects(claim(M1), /too many claims/);                       // 5 waiting for this member: stop
+  const none = await q('select * from group_claims').then((r) => r.rows.length === 0, (e) => /permission denied/.test(e.message));
+  assert.ok(none, 'signed-out users cannot read claims');
+  await as('cashier');
+  const rows = (await q(`select id, status from group_claims where group_id = $1`, [G])).rows;
+  assert.equal(rows.length, 5);
+  assert.ok(rows.every((r) => r.status === 'pending'));
+  await q(`update group_claims set status = 'approved', updated_at = updated_at + 1 where id = $1`, [rows[0].id]);
+  await as('stranger');
+  assert.equal((await q('select * from group_claims')).rows.length, 0);
+});
+
 await test('back-office tools are for the server only, and every lookup is exact', async () => {
   for (const who of ['owner', null]) {
     await as(who);

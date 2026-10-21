@@ -289,6 +289,61 @@ await step('savings & loan group: save, lend with interest, repay, share out', a
   await shot('06b-vsla-share-out');
 });
 
+await step("member's \"I've paid\" claim: treasurer approves, member counted as paid", async () => {
+  // A claim arrives as it would from the member link (synced from the server): put it straight into the phone's database.
+  const ok = await page.evaluate(() => new Promise((resolve) => {
+    const open = indexedDB.open('kopor2');
+    open.onsuccess = () => {
+      const idb = open.result;
+      const g = idb.transaction('groups').objectStore('groups').getAll();
+      g.onsuccess = () => {
+        const grp = g.result.find((x) => x.name === 'Farmers VSLA' && !x.deleted);
+        if (!grp) return resolve(false);
+        const member = grp.members.find((m) => m.name === 'Sahr Koroma');
+        const now = Date.now();
+        const tx = idb.transaction('group_claims', 'readwrite');
+        tx.objectStore('group_claims').put({ id: crypto.randomUUID(), org_id: grp.org_id, created_at: now, updated_at: now, deleted: 0, created_by: null,
+          group_id: grp.id, member_id: member.id, kind: 'contribution', round: 2, amount: 10000, method: 'orange', ref: 'MP24A1', note: '', status: 'pending', dirty: 0 });
+        tx.oncomplete = () => resolve(true);
+      };
+    };
+  }));
+  if (!ok) throw new Error('group not found');
+  await go('/groups');
+  await page.reload();                                                 // the app reloads its data, like after a sync
+  await page.getByText('1 to approve').first().waitFor();
+  await page.locator('.item', { hasText: 'Farmers VSLA' }).first().click();
+  const claims = page.getByTestId('claims');
+  await claims.getByText('MP24A1').waitFor();
+  await shot('06d-claim-approve');
+  await claims.getByTestId('claim-approve').click();
+  await page.getByText('Approved: the payment now counts').waitFor();
+  await page.getByTestId('claims').waitFor({ state: 'detached' });
+});
+
+await step("member link: \"I've paid\" form sends a claim (stand-in server)", async () => {
+  const group = { name: 'Farmers VSLA', kind: 'savings', amount: 10000, frequency: 'weekly', start_date: new Date().toISOString().slice(0, 10), target: null, loan_interest: 10,
+    payouts: {}, org_name: "Fatu's Provisions", currency: 'Le', momo_number: '', saved_total: 20000, lent_out: 0, interest_earned: 0,
+    members: [{ id: 'm1', name: 'Mariama Kamara', saved: 10000, rounds: [1], owes: 0, next_due: null }, { id: 'm2', name: 'Sahr Koroma', saved: 10000, rounds: [1], owes: 0, next_due: null }] };
+  let sent = null;
+  await page.route('**/rest/v1/rpc/public_group', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(group) }));
+  await page.route('**/rest/v1/rpc/submit_group_claim', (r) => { sent = JSON.parse(r.request().postData() ?? '{}'); r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
+  try {
+    await page.goto(BASE + '#/g/grp_test_token_1234567');
+    const missing = page.getByTestId('group-missing');
+    await Promise.race([page.getByTestId('public-group').waitFor(), missing.waitFor()]);
+    if (await missing.count()) { console.log('   (no cloud in this build: checked the "not valid" message)'); return; }
+    await page.getByTestId('i-paid').click();
+    const f = page.getByTestId('claim-form');
+    await f.locator('#claim-member').selectOption({ label: 'Sahr Koroma' });
+    await f.getByPlaceholder('Transaction ID').fill('MP99Z');
+    await shot('06e-i-paid');
+    await f.getByRole('button', { name: 'Send to the treasurer' }).click();
+    await page.getByTestId('claim-sent').waitFor();
+    if (sent?.member !== 'm2' || sent?.ref !== 'MP99Z' || sent?.amount !== 10000) throw new Error('wrong claim: ' + JSON.stringify(sent));
+  } finally { await page.unroute('**/rest/v1/rpc/public_group'); await page.unroute('**/rest/v1/rpc/submit_group_claim'); }
+});
+
 await step('savings goal: create, add money, progress shown', async () => {
   await go('/savings');
   await page.getByTestId('new-goal').click();

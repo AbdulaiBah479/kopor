@@ -10,7 +10,7 @@ import { Empty, Field, Money, initials, useDate } from '@/ui/widgets';
 import { formatMoney } from '@/lib/money';
 import { waLink } from '@/lib/phone';
 import { overdueContacts, dueSoon } from '@/domain/credit';
-import { currentRound, roundStatus } from '@/domain/groups';
+import { currentRound, roundStatus, loanReminders } from '@/domain/groups';
 import { updateOrg } from '@/domain/org';
 import { useReminderText } from './Credit';
 
@@ -29,6 +29,11 @@ export function Reminders() {
   const jobs: Job[] = [
     ...overdueContacts(book).map((o) => ({ id: 'o' + o.contact.id, name: o.contact.name, phone: o.contact.phone, text: remind(o.contact), amount: o.balance, tag: `${t('rem.overdue')} · ${fmt(o.since)}`, tone: 'bad' })),
     ...dueSoon(book, book.org.reminder_days || 2).map((d) => ({ id: 's' + d.contact.id, name: d.contact.name, phone: d.contact.phone, text: remind(d.contact), amount: d.balance, tag: `${t('rem.dueSoon')} · ${fmt(d.due)}`, tone: 'warn' })),
+    ...loanReminders(book, book.org.reminder_days || 2).map((l) => ({
+      id: `l${l.group.id}${l.member.id}`, name: l.member.name, phone: l.member.phone, amount: l.owes, tone: l.overdue ? 'bad' : 'warn',
+      tag: `${l.group.name} · ${t(l.overdue ? 'vsla.loanOverdue' : 'vsla.loanDue', { date: fmt(l.due) })}`,
+      text: t('vsla.remindMsg', { name: l.member.name, amount: formatMoney(l.owes), group: l.group.name, date: fmt(l.due) }),
+    })),
     ...book.groups.flatMap((g) => {
       const r = currentRound(g);
       return roundStatus(book, g, r).unpaid.filter((m) => m.phone).map((m) => ({

@@ -13,7 +13,7 @@ import { waLink } from '@/lib/phone';
 import { update, remove, atomic } from '@/db/repo';
 import type { Group } from '@/db/schema';
 import { currentRound, totalRounds, roundDate, roundStatus, collectorFor, groupTotal, memberReliability, parseMembers, saveGroup, toggleContribution, markPayout,
-  groupMoney, memberMoney, loanInterest, lendFromGroup, repayToGroup, shareOut, groupToken } from '@/domain/groups';
+  groupMoney, memberMoney, loanInterest, lendFromGroup, repayToGroup, shareOut, groupToken, pendingClaims, approveClaim, rejectClaim } from '@/domain/groups';
 import { createPayout, momoProviders } from '@/cloud/payments';
 import { DeleteButton } from './Credit';
 
@@ -41,7 +41,7 @@ export function GroupList() {
                 <div className="s">{g.members.length} · {formatMoney(g.amount)} {t(`groups.${g.frequency}`)} · {totalRounds(g) ? t('groups.roundOf', { r, max: totalRounds(g) }) : t('groups.round', { r })}</div>
                 <div className="meter" style={{ marginTop: 6 }}><i style={{ width: `${pct}%` }} /></div>
               </div>
-              <div className="amt num">{pct}%<small>{t('groups.unpaid', { count: s.unpaid.length })}</small></div>
+              <div className="amt num">{pct}%<small>{pendingClaims(book, g.id).length ? t('claims.waiting', { count: pendingClaims(book, g.id).length }) : t('groups.unpaid', { count: s.unpaid.length })}</small></div>
             </Link>
           );
         }) : <Empty icon="users" title={t('groups.none')} text={t('groups.noneHelp')} />}
@@ -103,6 +103,7 @@ export function GroupDetail() {
           </div>
         )}
       </div>
+      <ClaimsCard group={g} />
       {g.kind === 'savings' && <PotCard group={g} />}
       {g.kind === 'dues' && g.target ? <TargetCard group={g} /> : null}
       <div className="btn-row">
@@ -126,6 +127,41 @@ export function GroupDetail() {
       </div>
       <div className="small muted" style={{ textAlign: 'center' }}>{t('groups.totalCollected', { amount: formatMoney(groupTotal(book, g)) })}</div>
     </Page>
+  );
+}
+
+/** Members' "I've paid" from the group link, waiting for the treasurer: approve (it then counts) or reject. */
+function ClaimsCard({ group: g }: { group: Group }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx, can } = useApp();
+  const { toast, fail } = useOverlay();
+  const { fmt } = useDate();
+  const claims = pendingClaims(book, g.id);
+  if (!claims.length) return null;
+  const name = (id: string) => g.members.find((m) => m.id === id)?.name ?? '?';
+  return (
+    <div className="card stack" data-testid="claims">
+      <h2><Icon name="bell" size={18} /> {t('claims.title', { count: claims.length })}</h2>
+      <div className="small muted">{t('claims.help')}</div>
+      <div className="list">
+        {claims.map((c) => (
+          <div key={c.id} className="item" data-claim={name(c.member_id)}>
+            <div className="main">
+              <div className="t">{name(c.member_id)} · <span className="num">{formatMoney(c.amount)}</span></div>
+              <div className="s">{c.kind === 'repay' ? t('claims.repay') : t('groups.round', { r: c.round ?? currentRound(g) })} · {t(`methods.${c.method}`)}{c.ref ? ` · ${c.ref}` : ''} · {fmt(new Date(c.created_at).toISOString().slice(0, 10))}</div>
+              {c.note && <div className="s">{c.note}</div>}
+              {can('record') && (
+                <div className="btn-row" style={{ marginTop: 8 }}>
+                  <button className="btn sm primary" data-testid="claim-approve" onClick={() => approveClaim(ctx, book, c.id).then(() => toast(t('claims.approved'))).catch(fail)}><Icon name="check" size={16} /> {t('claims.approve')}</button>
+                  <button className="btn sm" onClick={() => confirm(t('claims.rejectConfirm')) && rejectClaim(ctx, c.id).then(() => toast(t('claims.rejected'))).catch(fail)}>{t('claims.reject')}</button>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

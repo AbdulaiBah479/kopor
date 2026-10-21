@@ -4,7 +4,7 @@ import type { Ctx } from '@/db/repo';
 import { createOrg } from '@/domain/org';
 import { loadBook } from '@/domain/book';
 import { summary } from '@/domain/cash';
-import { saveGroup, toggleContribution, lendFromGroup, repayToGroup, groupMoney, memberMoney, shareOut, groupToken, parseMembers } from '@/domain/groups';
+import { saveGroup, toggleContribution, lendFromGroup, repayToGroup, groupMoney, memberMoney, shareOut, groupToken, parseMembers, approveClaim, rejectClaim, pendingClaims, loanReminders } from '@/domain/groups';
 import { saveGoal, moveSavings, goalProgress } from '@/domain/savings';
 import { today, addDays } from '@/lib/dates';
 
@@ -92,5 +92,49 @@ describe('savings goals (cashbox)', () => {
     p = goalProgress(b, goal);
     expect(p).toMatchObject({ saved: 300000, reached: true, pct: 100 });
     expect(summary(b, today(), today())).toMatchObject({ sales: 0, expenses: 0, profit: 0 });
+  });
+});
+
+describe("members' \"I've paid\" claims from the group link", () => {
+  const claim = async (g: { id: string }, memberId: string, extra: Record<string, unknown> = {}) => {
+    const id = crypto.randomUUID();
+    await db.group_claims.put({ id, org_id: ctx.orgId, created_at: Date.now(), updated_at: Date.now(), deleted: 0, created_by: null,
+      group_id: g.id, member_id: memberId, kind: 'contribution', round: 1, amount: 100000, method: 'orange', ref: 'MP1', note: '', status: 'pending', ...extra } as never);
+    return id;
+  };
+  it('approving a contribution counts it once; approving a repayment reduces the loan; rejecting changes nothing', async () => {
+    const g = await saveGroup(ctx, { name: 'VSLA', kind: 'savings', amount: 100000, frequency: 'weekly', start_date: today(), members: parseMembers('A\nB') });
+    const [a, b] = g.members;
+    const c1 = await claim(g, a.id);
+    await approveClaim(ctx, await book(), c1);
+    let bk = await book();
+    expect(memberMoney(bk, g, a.id).saved).toBe(100000);
+    expect(pendingClaims(bk, g.id)).toHaveLength(0);
+    // Same round claimed again (e.g. sent twice): approving it does not count the money twice.
+    await approveClaim(ctx, await book(), await claim(g, a.id));
+    expect(memberMoney(await book(), g, a.id).saved).toBe(100000);
+
+    await toggleContribution(ctx, g, b.id, 1);
+    await lendFromGroup(ctx, await book(), g, { memberId: b.id, amount: 100000, dueDate: '' });
+    await approveClaim(ctx, await book(), await claim(g, b.id, { kind: 'repay', round: null, amount: 60000 }));
+    expect(memberMoney(await book(), g, b.id).owes).toBe(50000);    // 110,000 owed − 60,000 repaid
+
+    const c3 = await claim(g, b.id, { amount: 999999 });
+    await rejectClaim(ctx, c3);
+    bk = await book();
+    expect(memberMoney(bk, g, b.id).saved).toBe(100000);
+    await expect(approveClaim(ctx, bk, c3)).rejects.toThrow();      // a decided claim cannot be approved later
+  });
+});
+
+describe('loan reminders', () => {
+  it('lists loans overdue or due within the reminder window, earliest first', async () => {
+    const g = await saveGroup(ctx, { name: 'VSLA', kind: 'savings', amount: 100000, frequency: 'weekly', start_date: today(), members: parseMembers('A\nB\nC') });
+    for (const m of g.members) await toggleContribution(ctx, g, m.id, 1);
+    await lendFromGroup(ctx, await book(), g, { memberId: g.members[0].id, amount: 10000, dueDate: addDays(today(), -3) });
+    await lendFromGroup(ctx, await book(), g, { memberId: g.members[1].id, amount: 10000, dueDate: addDays(today(), 2) });
+    await lendFromGroup(ctx, await book(), g, { memberId: g.members[2].id, amount: 10000, dueDate: addDays(today(), 20) });
+    const r = loanReminders(await book(), 3);
+    expect(r.map((x) => [x.member.name, x.overdue])).toEqual([['A', true], ['B', false]]);
   });
 });

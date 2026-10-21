@@ -99,6 +99,15 @@ export function memberMoney(book: Book, g: Group, memberId: string, now = today(
   return { saved, owes, due, overdue: !!due && due < now };
 }
 
+/** Group loans to remind about: overdue, or due within `days` days (members who still owe, with a due date). */
+export function loanReminders(book: Book, days: number, now = today()) {
+  const limit = addDays(now, days);
+  return book.groups.filter((g) => g.kind === 'savings').flatMap((g) => g.members.flatMap((m) => {
+    const mm = memberMoney(book, g, m.id, now);
+    return mm.owes > 0 && mm.due && mm.due <= limit ? [{ group: g, member: m, owes: mm.owes, due: mm.due, overdue: mm.overdue }] : [];
+  })).sort((a, b) => a.due.localeCompare(b.due));
+}
+
 /** Flat interest the group charges on a loan (e.g. 10% of Le 1,000 = Le 100). */
 export const loanInterest = (g: Group, amount: number) => Math.round((amount * (g.loan_interest ?? 10)) / 100);
 
@@ -142,6 +151,41 @@ export function shareOut(book: Book, g: Group) {
     return { ...r, share, earned: share - r.saved };
   });
   return { rows: out, inBox: money.inBox, stillOwed: money.owed };
+}
+
+/* ---------- Members' "I've paid" claims ---------- */
+
+export const pendingClaims = (book: Book, groupId?: string) =>
+  book.groupClaims.filter((c) => c.status === 'pending' && (!groupId || c.group_id === groupId)).sort((a, b) => a.created_at - b.created_at);
+
+/**
+ * Approve a member's claim: it becomes a real contribution (for its round) or a loan repayment, exactly as if the
+ * treasurer had recorded it. A contribution already recorded for that round is not counted twice.
+ */
+export async function approveClaim(ctx: Ctx, book: Book, claimId: string) {
+  assertCan(ctx.role, 'record');
+  return atomic(async () => {
+    const c = await db.group_claims.get(claimId);
+    if (!c || c.deleted || c.status !== 'pending') throw new AppError('err.notFound');
+    const g = book.groups.find((x) => x.id === c.group_id);
+    if (!g) throw new AppError('err.notFound');
+    const name = g.members.find((m) => m.id === c.member_id)?.name ?? '';
+    if (c.kind === 'repay') await repayToGroup(ctx, book, g, c.member_id, c.amount);
+    else {
+      const round = c.round ?? currentRound(g);
+      const already = (await db.contributions.where('group_id').equals(g.id).toArray()).some((x) => !x.deleted && x.member_id === c.member_id && x.round === round);
+      if (!already) {
+        await insert(ctx, 'contributions', { group_id: g.id, member_id: c.member_id, round, amount: c.amount, date: today(), method: c.method, payment_ref: c.ref || null },
+          `${name} paid round ${round} (approved claim)`);
+      }
+    }
+    return update(ctx, 'group_claims', c.id, { status: 'approved' }, `Approved ${name}'s payment ${c.amount / 100}`);
+  });
+}
+
+export async function rejectClaim(ctx: Ctx, claimId: string) {
+  assertCan(ctx.role, 'record');
+  return update(ctx, 'group_claims', claimId, { status: 'rejected' }, 'Rejected a payment claim');
 }
 
 /** The secret token behind a group's member link. Made on first share; renewing it stops the old link working. */

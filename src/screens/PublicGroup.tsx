@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { getSupabase } from '@/cloud/supabase';
 import { formatMoney, setCurrencySymbol } from '@/lib/money';
 import { useDate } from '@/ui/widgets';
+import { Icon } from '@/ui/Icon';
 import { LoadFailed } from './PublicStatement';
 import { currentRound, roundDate } from '@/domain/groups';
 import type { Group } from '@/db/schema';
@@ -73,7 +74,63 @@ export function PublicGroup() {
           {g.momo_number && <div className="small"><b>{t('stmt.payTo')}:</b> {g.momo_number}</div>}
           <div className="foot">{t('vsla.publicNote')} · {t('inv.generated')}</div>
         </div>
+        <IPaid token={token ?? ''} group={g} round={r} />
       </div>
     </div>
+  );
+}
+
+/**
+ * "I've paid": a member tells the treasurer about a payment (with the mobile money transaction ID if they have one).
+ * It is only a request: it counts after the treasurer approves it in Kopor.
+ */
+function IPaid({ token, group: g, round }: { token: string; group: PubGroup; round: number }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ member: '', kind: 'contribution' as 'contribution' | 'repay', amount: Number(g.amount) / 100, method: 'orange', ref: '' });
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [err, setErr] = useState('');
+  const owes = Number(g.members.find((m) => m.id === f.member)?.owes ?? 0);
+  if (state === 'sent') return <div className="card stack" data-testid="claim-sent"><b>{t('claims.sentTitle')}</b><div className="small">{t('claims.sentHelp')}</div></div>;
+  if (!open) return <button className="btn primary block" data-testid="i-paid" onClick={() => setOpen(true)}><Icon name="check" size={18} /> {t('claims.iPaid')}</button>;
+  return (
+    <form className="card stack" data-testid="claim-form" onSubmit={async (e) => {
+      e.preventDefault();
+      setState('sending'); setErr('');
+      try {
+        const sb = await getSupabase();
+        if (!sb) throw new Error('offline');
+        const { error } = await sb.rpc('submit_group_claim', {
+          token, member: f.member, kind: f.kind, amount: Math.round(f.amount * 100), round, method: f.method, ref: f.ref.trim(), note: '',
+        }).abortSignal(AbortSignal.timeout(15_000));
+        if (error) throw new Error(error.message);
+        setState('sent');
+      } catch (ex) {
+        setState('error');
+        setErr(/too many/i.test(ex instanceof Error ? ex.message : '') ? t('claims.tooMany') : t('public.loadFail'));
+      }
+    }}>
+      <b>{t('claims.iPaid')}</b>
+      <div className="small muted">{t('claims.formHelp')}</div>
+      <label className="small" htmlFor="claim-member">{t('claims.who')}</label>
+      <select id="claim-member" required value={f.member} onChange={(e) => setF({ ...f, member: e.target.value })}>
+        <option value="" disabled>{t('claims.pick')}</option>
+        {g.members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+      </select>
+      {g.kind === 'savings' && owes > 0 && (
+        <select aria-label={t('claims.what')} value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as 'contribution' | 'repay', amount: e.target.value === 'repay' ? owes / 100 : Number(g.amount) / 100 })}>
+          <option value="contribution">{t('groups.round', { r: round })}</option><option value="repay">{t('claims.repay')}</option>
+        </select>
+      )}
+      <label className="small" htmlFor="claim-amount">{t('common.amount')} (Le)</label>
+      <input id="claim-amount" className="input" type="number" inputMode="decimal" min="1" step="any" required value={f.amount || ''} onChange={(e) => setF({ ...f, amount: Number(e.target.value) })} />
+      <label className="small" htmlFor="claim-method">{t('claims.how')}</label>
+      <select id="claim-method" value={f.method} onChange={(e) => setF({ ...f, method: e.target.value })}>
+        {['orange', 'afrimoney', 'qmoney', 'cash', 'bank'].map((m) => <option key={m} value={m}>{t(`methods.${m}`)}</option>)}
+      </select>
+      {f.method !== 'cash' && <input className="input" aria-label={t('claims.ref')} placeholder={t('claims.ref')} maxLength={60} value={f.ref} onChange={(e) => setF({ ...f, ref: e.target.value })} />}
+      {state === 'error' && <div className="alert small" role="alert"><Icon name="alert" /><div>{err}</div></div>}
+      <button className="btn primary block" disabled={state === 'sending' || !f.member}>{t('claims.send')}</button>
+    </form>
   );
 }
