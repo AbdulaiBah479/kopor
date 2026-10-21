@@ -207,6 +207,11 @@ const v3: V3Dict = {
     more: 'Plus de détails (remise, client, date, note)',
   },
   aix: {
+    saveAs: 'Enregistrer comme :',
+    saveAsHelp: 'touchez la bonne rubrique',
+    suggested: 'suggéré',
+    editFirst: 'Vérifier ou modifier d’abord',
+    as: { sale: 'Vente', credit_given: 'Crédit (il doit)', payment_received: 'Paiement reçu', purchase: 'Achat de stock', expense: 'Dépense' },
     purchaseHelp: 'L’enregistrement ajoute ces articles à votre stock et note le montant payé comme dépense de stock.',
     purchaseCashier: 'Seul un gérant ou le propriétaire peut ajouter du stock : ceci sera enregistré comme dépense de stock.',
   },

@@ -205,6 +205,11 @@ const v3 = {
     more: 'More details (discount, customer, date, note)',
   },
   aix: {
+    saveAs: 'Save as:',
+    saveAsHelp: 'tap where it belongs',
+    suggested: 'suggested',
+    editFirst: 'Check or change details first',
+    as: { sale: 'Sale', credit_given: 'Credit (they owe)', payment_received: 'Payment received', purchase: 'Stock bought', expense: 'Expense' },
     purchaseHelp: 'Saving adds these goods to your stock and records what you paid as a stock expense.',
     purchaseCashier: 'Only a manager or owner can add stock, so this will be saved as a stock expense.',
   },

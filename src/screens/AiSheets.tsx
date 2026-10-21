@@ -19,6 +19,11 @@ import { atomic, update } from '@/db/repo';
 import { SaleSheet, ExpenseSheet } from './Cash';
 import { NewCreditSheet } from './Credit';
 
+// After every voice or typed entry the user picks where it goes: one button per part of the app.
+type SaveAs = Exclude<Parsed['action'], 'unknown'>;
+const SAVE_AS: SaveAs[] = ['sale', 'credit_given', 'payment_received', 'purchase', 'expense'];
+const SAVE_ICON: Record<SaveAs, string> = { sale: 'bag', credit_given: 'book', payment_received: 'down', purchase: 'box', expense: 'minus' };
+
 const EXAMPLES = ['Sold 3 bags rice 2550 cash', 'A sɛl tu bag rɛs 1700', 'Aminata tek 2 tin ɔyl 360 pan trɔs', 'Mohamed dɔn pe 250', 'Spent 120 on transport'];
 
 export function VoiceSheet() {
@@ -38,6 +43,9 @@ export function VoiceSheet() {
   const rec = useRef<Recording | null>(null);
   const browserRec = useRef<{ stop: () => void; abort: () => void } | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  // When the answer appears, bring it (and its "Save as" buttons) into view: on a phone it is below the fold.
+  const previewRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (result) previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, [result]);
   const finishRef = useRef<() => void>(() => {});
 
   useEffect(() => { aiAvailable().then(setSmart); return () => { rec.current?.cancel(); browserRec.current?.abort(); }; }, []);
@@ -129,12 +137,20 @@ export function VoiceSheet() {
     const p = r.item && findByName(book.products, r.item);
     return p ? [{ product_id: p.id, name: p.name, qty: r.qty || 1, price: r.amount ? Math.round(r.amount / (r.qty || 1)) : p.price }] : [];
   };
-  const save = async () => {
+  /** Save into the part the user chose ("Save as"), whatever the AI first guessed. */
+  const save = async (as: SaveAs = suggested) => {
     if (!result) return;
-    const r = result;
+    const r: Parsed = { ...result, action: as };
+    // A sale guessed "on credit" but saved as a plain sale without a customer is a cash sale.
+    if (as === 'sale' && r.method === 'credit' && !r.name) r.method = 'cash';
     try {
       let view = '/cash';
-      if (r.action === 'sale') await recordSale(ctx, { items: saleItems(r), amount: r.amount, method: r.method, customer: r.name, note: saleItems(r).length ? '' : r.item || r.note });
+      if (as === 'credit_given' && r.name && saleItems(r).length) {
+        // Goods taken on credit: a sale on credit, so the stock goes down AND the customer owes.
+        await recordSale(ctx, { items: saleItems(r), amount: r.amount, method: 'credit', customer: r.name });
+        view = '/credit';
+      } else if (as === 'purchase' && !r.item) { edit(as); return; }       // which goods? the review screen asks
+      else if (r.action === 'sale') await recordSale(ctx, { items: saleItems(r), amount: r.amount, method: r.method, customer: r.name, note: saleItems(r).length ? '' : r.item || r.note });
       else if (r.action === 'purchase' && can('stock') && r.item) {
         // Goods bought to sell again: stock goes up and the cost is recorded as one stock expense.
         await recordPurchase(ctx, { total: r.amount, lines: [{ productId: findByName(book.products, r.item)?.id ?? null, name: r.item, qty: r.qty || 1, unitCost: Math.round(r.amount / (r.qty || 1)) }] });
@@ -151,8 +167,8 @@ export function VoiceSheet() {
       closeSheet(); toast(t('common.saved'), { view });
     } catch (e) { fail(e); }
   };
-  const edit = () => {
-    const r = result!;
+  const edit = (as: SaveAs = suggested) => {
+    const r: Parsed = { ...result!, action: as };
     if (r.action === 'sale') openSheet(t('cash.newSale'), <SaleSheet prefill={{ items: saleItems(r), amount: r.amount, method: r.method, customer: r.name, note: r.item }} />);
     else if (r.action === 'purchase') openSheet(t('ai.scanTitle'), <ScanSheet prefill={{ kind: 'purchase', vendor: '', date: '', category: 'stock', total: r.amount,
       items: [{ name: r.item || r.note, qty: r.qty || 1, price: Math.round(r.amount / (r.qty || 1)) }] }} />);
@@ -160,7 +176,9 @@ export function VoiceSheet() {
     else openSheet(t('credit.addEntry'), <NewCreditSheet name={r.name} type={r.action === 'payment_received' ? 'got' : 'gave'} amount={r.amount} note={r.note} />);
   };
 
-  const valid = result && result.action !== 'unknown' && result.amount > 0;
+  // The user always chooses where it goes; the AI's guess is only the highlighted suggestion.
+  const valid = result && result.amount > 0;
+  const suggested: SaveAs = result && result.action !== 'unknown' ? result.action : 'sale';
   return (
     <form className="form" ref={formRef} data-testid="voice-form" onSubmit={(e) => { e.preventDefault(); understand(); }}>
       <div className="small muted">{t('ai.speakHelp')}</div>
@@ -183,18 +201,25 @@ export function VoiceSheet() {
       <button className="btn primary block" disabled={busy || voice === 'stt'}><Icon name="spark" size={18} /> {busy ? t('ai.thinking') : t('ai.understand')}</button>
       <div className="small muted">{smart ? t('ai.smartMode') : t('ai.offlineMode')}</div>
       {result && (valid ? (
-        <div className="card flat stack" data-testid="ai-preview">
+        <div className="card flat stack" data-testid="ai-preview" ref={previewRef}>
           {([
-            [t('common.type'), t(`ai.actions.${result.action}`)], [t('common.amount'), formatMoney(result.amount)],
+            [t('common.amount'), formatMoney(result.amount)],
             result.name && [t('ai.person'), result.name], result.item && [t('common.item'), `${result.qty} × ${result.item}`],
             result.action === 'sale' && [t('cash.method'), t(`methods.${result.method}`)], result.action === 'expense' && [t('cash.category'), t(`categories.${result.category}`)],
           ].filter(Boolean) as [string, string][]).map(([k, v]) => <div key={k} className="row between"><span className="muted">{k}</span><b>{v}</b></div>)}
-          {result.action === 'purchase' && <div className="small muted">{t(can('stock') ? 'aix.purchaseHelp' : 'aix.purchaseCashier')}</div>}
           {fromPrice && <div className="small muted" data-testid="from-price">{t('ai.fromPrice')}</div>}
-          <div className="btn-row">
-            <button type="button" className="btn" onClick={edit}><Icon name="edit" size={18} /> {t('common.edit')}</button>
-            <button type="button" className="btn primary" onClick={save} data-testid="ai-save"><Icon name="check" size={18} /> {t('common.save')}</button>
+          {/* Ask where it goes: one tap saves it there. The AI's guess is highlighted. */}
+          <div className="small"><b>{t('aix.saveAs')}</b> <span className="muted">{t('aix.saveAsHelp')}</span></div>
+          <div className="save-as" role="group" aria-label={t('aix.saveAs')}>
+            {SAVE_AS.map((a) => (
+              <button type="button" key={a} className={`btn ${a === suggested ? 'primary' : ''}`} data-testid={a === suggested ? 'ai-save' : `save-as-${a}`}
+                data-action={a} onClick={() => save(a)}>
+                <Icon name={SAVE_ICON[a]} size={18} /> {t(`aix.as.${a}`)}{a === suggested && <span className="sr-only"> ({t('aix.suggested')})</span>}
+              </button>
+            ))}
           </div>
+          {suggested === 'purchase' && <div className="small muted">{t(can('stock') ? 'aix.purchaseHelp' : 'aix.purchaseCashier')}</div>}
+          <button type="button" className="btn ghost block" onClick={() => edit()}><Icon name="edit" size={18} /> {t('aix.editFirst')}</button>
         </div>
       ) : <div className="alert"><Icon name="alert" /><div>{t('ai.notSure')}</div></div>)}
     </form>

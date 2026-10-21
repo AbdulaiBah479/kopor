@@ -207,6 +207,11 @@ const v3: V3Dict = {
     more: 'Mɔ tin (diskawnt, kɔstoma, de, nɔt)',
   },
   aix: {
+    saveAs: 'Sev am as:',
+    saveAsHelp: 'tap usay i fɔ go',
+    suggested: 'wetin a tink',
+    editFirst: 'Chɛk ɔ chenj di ditel fɔs',
+    as: { sale: 'Sɛl', credit_given: 'Kredit (dɛn ɔw)', payment_received: 'Dɛn pe', purchase: 'Bay stɔk', expense: 'Spɛn' },
     purchaseHelp: 'If yu sev, dɛn tin ya go ad to yu stɔk ɛn wetin yu pe go rayt as stɔk spɛn.',
     purchaseCashier: 'Na ɔnli manija ɔ ɔna kin ad stɔk, so dis go sev as stɔk spɛn.',
   },

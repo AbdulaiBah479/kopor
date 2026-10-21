@@ -209,7 +209,7 @@ await step('speak/type entry (offline parser)', async () => {
   await f.locator('textarea').fill('Isatu took 2 tins palm oil 360 on credit');
   await f.getByRole('button', { name: /Understand/ }).click();
   // Offline parser: credit entry. Live AI may (correctly) record it as a credit sale to Isatu instead.
-  await page.getByTestId('ai-preview').getByText(LIVE_AI ? /Credit given|On credit/ : 'Credit given (they owe you)').first().waitFor();
+  await page.getByTestId('ai-save').getByText(LIVE_AI ? /Credit|Sale/ : 'Credit (they owe)').first().waitFor();   // the AI's suggestion is highlighted
   await shot('05-voice');
   await page.getByTestId('ai-save').click();
   await page.getByText('Saved').first().waitFor();
@@ -224,7 +224,7 @@ await step('bought stock by voice/typing: stock goes up, "View" opens Stock', as
   const f = page.getByTestId('voice-form');
   await f.locator('textarea').fill('Bought 5 bags rice 3500');
   await f.getByRole('button', { name: /Understand/ }).click();
-  await page.getByTestId('ai-preview').getByText('Bought stock').waitFor();
+  await page.getByTestId('ai-save').getByText('Stock bought').waitFor();
   // Let earlier "Saved" popups disappear, so the View tapped below is this entry's.
   await page.waitForFunction(() => !document.querySelector('[data-sonner-toast]'), null, { timeout: 15000 });
   await page.getByTestId('ai-save').click();
@@ -232,6 +232,33 @@ await step('bought stock by voice/typing: stock goes up, "View" opens Stock', as
   await page.waitForFunction(() => location.hash.startsWith('#/stock'));
   await page.waitForFunction((b) => Number(document.querySelector('[data-product="Rice 50kg bag"] [data-qty]')?.getAttribute('data-qty')) === b + 5, before, { timeout: 5000 })
     .catch(async () => { throw new Error(`rice ${before} -> ${await rice()}`); });
+});
+
+await step('voice/typing "Save as": the user picks where it goes, one tap records it there', async () => {
+  const milk = async () => Number(await page.locator('[data-product="Milk tin"] [data-qty]').getAttribute('data-qty'));
+  await go('/stock');
+  const before = await milk();
+  const enter = async (text) => {
+    await go('/');
+    await page.getByRole('button', { name: 'Speak' }).click();
+    const f = page.getByTestId('voice-form');
+    await f.locator('textarea').fill(text);
+    await f.getByRole('button', { name: /Understand/ }).click();
+    await page.getByTestId('ai-preview').waitFor();
+  };
+  await enter('2 milk tin 50');
+  await page.getByTestId('ai-preview').getByText('Save as:').waitFor();
+  await page.waitForTimeout(500);
+  await page.getByTestId('ai-preview').screenshot({ path: 'screenshots/05d-save-as.png' });
+  await page.waitForFunction(() => !document.querySelector('[data-sonner-toast]'), null, { timeout: 15000 });
+  await page.getByTestId('ai-preview').locator('[data-action=purchase]').click();      // "Stock bought"
+  await page.locator('[data-sonner-toast]').getByRole('button', { name: 'View' }).click();
+  await page.waitForFunction((b) => Number(document.querySelector('[data-product="Milk tin"] [data-qty]')?.getAttribute('data-qty')) === b + 2, before, { timeout: 5000 })
+    .catch(async () => { throw new Error(`milk ${before} -> ${await milk()}`); });
+  await enter('2 milk tin 50');
+  await page.getByTestId('ai-preview').locator('[data-action=sale]').click();          // the same words, saved as a sale
+  await go('/cash');
+  await page.locator('.list .item', { hasText: '2 Milk tin' }).first().waitFor();
 });
 
 await step('team: add staff; a second branch on the free plan explains the limit', async () => {

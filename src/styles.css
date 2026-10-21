@@ -571,3 +571,10 @@
   .wallet-card .label { font-size: 15px; opacity: .85; }
   .wallet-card .big { font-size: 34px; font-weight: 700; letter-spacing: -.02em; }
 }
+
+/* Voice "Save as": one big button per part of the app (2 per row; the suggestion is highlighted). */
+@layer components {
+  .save-as { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .save-as .btn { min-height: 52px; justify-content: flex-start; padding-inline: 14px; font-size: 15px; text-align: left; line-height: 1.2; }
+  .save-as .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
