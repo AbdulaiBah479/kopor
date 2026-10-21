@@ -1,19 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
-import { Empty, Field, MoneyInput, initials, useDate } from '@/ui/widgets';
+import { Empty, Field, Money, MoneyInput, initials, useDate } from '@/ui/widgets';
 import { formatMoney } from '@/lib/money';
-import { today } from '@/lib/dates';
+import { today, addDays } from '@/lib/dates';
+import { publicLink } from '@/lib/links';
 import { waLink } from '@/lib/phone';
 import { update, remove, atomic } from '@/db/repo';
 import type { Group } from '@/db/schema';
-import { currentRound, totalRounds, roundDate, roundStatus, collectorFor, groupTotal, memberReliability, parseMembers, saveGroup, toggleContribution, markPayout } from '@/domain/groups';
+import { currentRound, totalRounds, roundDate, roundStatus, collectorFor, groupTotal, memberReliability, parseMembers, saveGroup, toggleContribution, markPayout,
+  groupMoney, memberMoney, loanInterest, lendFromGroup, repayToGroup, shareOut, groupToken } from '@/domain/groups';
 import { createPayout, momoProviders } from '@/cloud/payments';
 import { DeleteButton } from './Credit';
+
+const kindShort = (g: Group) => (g.kind === 'osusu' ? 'groups.osusuShort' : g.kind === 'savings' ? 'vsla.short' : 'groups.duesShort');
 
 export function GroupList() {
   const { t } = useTranslation();
@@ -33,7 +37,7 @@ export function GroupList() {
             <Link key={g.id} className="item" to={`/groups/${g.id}`}>
               <div className="avatar" style={{ background: 'var(--brand-soft)', color: 'var(--brand)' }}><Icon name="users" size={18} /></div>
               <div className="main">
-                <div className="t with-badge"><span className="trunc">{g.name}</span> <span className="badge">{t(g.kind === 'osusu' ? 'groups.osusuShort' : 'groups.duesShort')}</span></div>
+                <div className="t with-badge"><span className="trunc">{g.name}</span> <span className="badge">{t(kindShort(g))}</span></div>
                 <div className="s">{g.members.length} · {formatMoney(g.amount)} {t(`groups.${g.frequency}`)} · {totalRounds(g) ? t('groups.roundOf', { r, max: totalRounds(g) }) : t('groups.round', { r })}</div>
                 <div className="meter" style={{ marginTop: 6 }}><i style={{ width: `${pct}%` }} /></div>
               </div>
@@ -75,7 +79,7 @@ export function GroupDetail() {
   };
 
   return (
-    <Page title={g.name} sub={`${t(g.kind === 'osusu' ? 'groups.osusuShort' : 'groups.duesShort')} · ${formatMoney(g.amount)} ${t(`groups.${g.frequency}`)}`} back="/groups"
+    <Page title={g.name} sub={`${t(kindShort(g))} · ${formatMoney(g.amount)} ${t(`groups.${g.frequency}`)}`} back="/groups"
       right={can('groups') && <button className="icon-btn" aria-label={t('groups.edit')} onClick={() => openSheet(t('groups.edit'), <GroupSheet group={g} />)}><Icon name="edit" /></button>}>
       <div className="card">
         <div className="round-nav">
@@ -99,17 +103,21 @@ export function GroupDetail() {
           </div>
         )}
       </div>
+      {g.kind === 'savings' && <PotCard group={g} />}
+      {g.kind === 'dues' && g.target ? <TargetCard group={g} /> : null}
       <div className="btn-row">
         <a className="btn" href={waLink('', summaryText, cc)} target="_blank" rel="noopener noreferrer"><Icon name="share" size={18} /> {t('groups.shareUpdate')}</a>
         {can('groups') && <button className="btn" onClick={() => openSheet(t('groups.members'), <MembersSheet group={g} />)}><Icon name="plus" size={18} /> {t('groups.members')}</button>}
       </div>
+      <button className="btn ghost block" data-testid="group-link" onClick={() => openSheet(t('vsla.linkTitle'), <GroupLinkSheet group={g} />)}><Icon name="link" size={18} /> {t('vsla.link')}</button>
       <div className="list members">
         {g.members.length ? g.members.map((m, i) => (
           <div className="item" key={m.id}>
             <div className="avatar">{initials(m.name)}</div>
             <div className="main">
               <div className="t with-badge"><span className="trunc">{m.name}</span> {collector?.id === m.id && <span className="badge good">{t('groups.collects')}</span>}</div>
-              <div className="s">{g.kind === 'osusu' ? `${t('groups.turn', { n: i + 1 })} · ${fmt(roundDate(g, i + 1))}` : m.phone} · {t('groups.reliability', { pct: Math.round((rel.get(m.id) ?? 0) * 100) })}</div>
+              <div className="s">{[g.kind === 'osusu' ? `${t('groups.turn', { n: i + 1 })} · ${fmt(roundDate(g, i + 1))}` : m.phone, t('groups.reliability', { pct: Math.round((rel.get(m.id) ?? 0) * 100) })].filter(Boolean).join(' · ')}</div>
+              {g.kind === 'savings' && <MemberBalance group={g} memberId={m.id} />}
             </div>
             {!s.paidIds.has(m.id) && m.phone && <a className="icon-btn" href={waLink(m.phone, remindText(m.name), cc)} target="_blank" rel="noopener noreferrer" aria-label={`${t('credit.remind')} ${m.name}`}><Icon name="chat" size={18} /></a>}
             <button className={`tick ${s.paidIds.has(m.id) ? 'on' : ''}`} disabled={!can('record')} aria-pressed={s.paidIds.has(m.id)} aria-label={`${m.name}`} onClick={() => tick(m.id)}><Icon name="check" /></button>
@@ -121,12 +129,165 @@ export function GroupDetail() {
   );
 }
 
+/** Savings & loan group: what is in the box, what is lent out, and the Lend / Share out actions. */
+function PotCard({ group: g }: { group: Group }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { can } = useApp();
+  const { openSheet } = useOverlay();
+  const m = groupMoney(book, g);
+  return (
+    <div className="card stack" data-testid="pot-card">
+      <div className="grid3">
+        <div className="stat"><div className="k">{t('vsla.inBox')}</div><div className="v"><Money compact v={m.inBox} /></div></div>
+        <div className="stat"><div className="k">{t('vsla.lentOut')}</div><div className="v"><Money compact v={m.owed} /></div></div>
+        <div className="stat"><div className="k">{t('vsla.worth')}</div><div className="v"><Money compact v={m.worth} className="good" /></div></div>
+      </div>
+      <div className="small muted">{t('vsla.potHelp', { pct: g.loan_interest ?? 10 })}</div>
+      {g.target ? <Progress label={t('vsla.toTarget', { target: formatMoney(g.target) })} value={m.worth} target={g.target} /> : null}
+      <div className="btn-row">
+        {can('groups') && <button className="btn primary" data-testid="lend" onClick={() => openSheet(t('vsla.lend'), <LendSheet group={g} />)}><Icon name="send" size={18} /> {t('vsla.lend')}</button>}
+        <button className="btn" data-testid="share-out" onClick={() => openSheet(t('vsla.shareOut'), <ShareOutSheet group={g} />)}><Icon name="users" size={18} /> {t('vsla.shareOut')}</button>
+      </div>
+    </div>
+  );
+}
+
+function TargetCard({ group: g }: { group: Group }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  return <div className="card"><Progress label={t('vsla.toTarget', { target: formatMoney(g.target!) })} value={groupTotal(book, g)} target={g.target!} /></div>;
+}
+
+function Progress({ label, value, target }: { label: string; value: number; target: number }) {
+  const pct = Math.min(100, Math.round((value / target) * 100));
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <div className="row between small"><span>{label}</span><b className="num">{pct}%</b></div>
+      <div className="meter" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={label}><i style={{ width: `${pct}%` }} /></div>
+      <div className="small muted num">{formatMoney(value)} / {formatMoney(target)}</div>
+    </div>
+  );
+}
+
+/** One member's savings and loan, with Repay when they owe. */
+function MemberBalance({ group: g, memberId }: { group: Group; memberId: string }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { can } = useApp();
+  const { openSheet } = useOverlay();
+  const { fmt } = useDate();
+  const mm = memberMoney(book, g, memberId);
+  return (
+    <div className="small" style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+      <span>{t('vsla.saved')} <b className="num">{formatMoney(mm.saved)}</b></span>
+      {mm.owes > 0 && <span className={mm.overdue ? 'bad' : ''}>{t('vsla.owes')} <b className="num">{formatMoney(mm.owes)}</b>{mm.due ? ` · ${t('vsla.due', { date: fmt(mm.due) })}` : ''}</span>}
+      {mm.owes > 0 && can('record') && <button className="btn sm tinted" data-testid="repay" onClick={() => openSheet(t('vsla.repay'), <RepaySheet group={g} memberId={memberId} />)}>{t('vsla.repay')}</button>}
+    </div>
+  );
+}
+
+function LendSheet({ group: g }: { group: Group }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx } = useApp();
+  const { closeSheet, toast, fail } = useOverlay();
+  const [f, setF] = useState({ memberId: g.members[0]?.id ?? '', amount: 0, dueDate: addDays(today(), 28) });
+  const interest = loanInterest(g, f.amount);
+  return (
+    <form className="form" data-testid="lend-form" onSubmit={async (e) => {
+      e.preventDefault();
+      try { await lendFromGroup(ctx, book, g, f); closeSheet(); toast(t('vsla.lent')); } catch (err) { fail(err); }
+    }}>
+      <div className="small muted">{t('vsla.lendHelp', { amount: formatMoney(groupMoney(book, g).inBox) })}</div>
+      <Field label={t('vsla.member')}><select value={f.memberId} onChange={(e) => setF({ ...f, memberId: e.target.value })}>{g.members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select></Field>
+      <Field label={t('common.amount')}><MoneyInput name="amount" big required value={f.amount} onChange={(amount) => setF({ ...f, amount })} /></Field>
+      <Field label={t('common.dueDate')}><input type="date" value={f.dueDate} onChange={(e) => setF({ ...f, dueDate: e.target.value })} /></Field>
+      {f.amount > 0 && <div className="card flat small">{t('vsla.toRepay', { amount: formatMoney(f.amount + interest), interest: formatMoney(interest), pct: g.loan_interest ?? 10 })}</div>}
+      <button className="btn primary block">{t('vsla.lend')}</button>
+    </form>
+  );
+}
+
+function RepaySheet({ group: g, memberId }: { group: Group; memberId: string }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx } = useApp();
+  const { closeSheet, toast, fail } = useOverlay();
+  const owes = memberMoney(book, g, memberId).owes;
+  const [amount, setAmount] = useState(owes);
+  return (
+    <form className="form" data-testid="repay-form" onSubmit={async (e) => {
+      e.preventDefault();
+      try { await repayToGroup(ctx, book, g, memberId, amount); closeSheet(); toast(t('vsla.repaid')); } catch (err) { fail(err); }
+    }}>
+      <div className="small muted">{t('vsla.owesTotal', { name: g.members.find((m) => m.id === memberId)?.name ?? '', amount: formatMoney(owes) })}</div>
+      <Field label={t('common.amount')}><MoneyInput name="amount" big required value={amount} onChange={setAmount} /></Field>
+      <button className="btn primary block">{t('vsla.repay')}</button>
+    </form>
+  );
+}
+
+/** What each member takes home: their savings plus their share of the interest (the cash in the box, by savings). */
+function ShareOutSheet({ group: g }: { group: Group }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const s = shareOut(book, g);
+  const text = `*${g.name}* · ${t('vsla.shareOut')}\n\n${s.rows.map((r) => `${r.member.name}: ${formatMoney(r.share)} (${t('vsla.saved')} ${formatMoney(r.saved)})`).join('\n')}\n\n${t('vsla.inBox')}: ${formatMoney(s.inBox)}\nKopor`;
+  return (
+    <div className="stack" data-testid="share-out-sheet">
+      <div className="small muted">{t('vsla.shareHelp')}</div>
+      {s.stillOwed > 0 && <div className="alert small"><Icon name="alert" /><div>{t('vsla.stillOwed', { amount: formatMoney(s.stillOwed) })}</div></div>}
+      <div className="list">
+        {s.rows.map((r) => (
+          <div className="item" key={r.member.id}>
+            <div className="main"><div className="t">{r.member.name}</div><div className="s">{t('vsla.saved')} {formatMoney(r.saved)}{r.earned > 0 ? ` · +${formatMoney(r.earned)}` : ''}</div></div>
+            <div className="amt num">{formatMoney(r.share)}</div>
+          </div>
+        ))}
+      </div>
+      <div className="row between"><b>{t('vsla.inBox')}</b><b className="num">{formatMoney(s.inBox)}</b></div>
+      <a className="btn get block" href={waLink('', text, book.org.country_code)} target="_blank" rel="noopener noreferrer"><Icon name="chat" size={18} /> {t('common.whatsapp')}</a>
+    </div>
+  );
+}
+
+/** Member link: every member sees the group, whose turn it is, who has paid and their own balance on their phone. */
+function GroupLinkSheet({ group }: { group: Group }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx, can, sync, requestSync } = useApp();
+  const { toast, fail } = useOverlay();
+  const [token, setToken] = useState<string | null>(group.public_token ?? null);
+  const started = useRef(false);
+  useEffect(() => {
+    if (token || started.current) return;
+    started.current = true;
+    groupToken(ctx, group).then((tk) => { setToken(tk); requestSync(); }).catch(fail);
+  }, [ctx, group, token, fail, requestSync]);
+  const link = token ? publicLink(`/g/${token}`) : '';
+  const msg = t('vsla.linkMsg', { group: group.name, link });
+  return (
+    <div className="stack" data-testid="group-link-sheet">
+      <div className="small muted">{t('vsla.linkHelp')}</div>
+      {sync.status === 'off' && <div className="alert small"><Icon name="alert" /><div>{t('stmt.needCloud')}</div></div>}
+      <input className="input" readOnly value={link} aria-label={t('vsla.link')} data-testid="group-link-url" onFocus={(e) => e.target.select()} />
+      <a className="btn get block" target="_blank" rel="noopener noreferrer" href={waLink('', msg, book.org.country_code)}><Icon name="chat" size={18} /> {t('stmt.share')}</a>
+      <button type="button" className="btn block" disabled={!token} onClick={() => navigator.clipboard?.writeText(link).then(() => toast(t('common.copied'))).catch(() => {})}><Icon name="link" size={18} /> {t('stmt.copy')}</button>
+      {can('groups') && token && <button type="button" className="btn ghost block" onClick={() => confirm(t('stmt.renewHelp')) && groupToken(ctx, group, true).then((tk) => { setToken(tk); requestSync(); toast(t('stmt.renewed')); }).catch(fail)}>{t('stmt.renew')}</button>}
+    </div>
+  );
+}
+
 function GroupSheet({ group }: { group?: Group }) {
   const { t } = useTranslation();
   const { ctx } = useApp();
   const { closeSheet, toast, fail } = useOverlay();
   const nav = useNavigate();
-  const [f, setF] = useState({ name: group?.name ?? '', kind: group?.kind ?? 'osusu', amount: group?.amount ?? 0, frequency: group?.frequency ?? 'weekly', start_date: group?.start_date ?? today(), members: '' });
+  const [f, setF] = useState({
+    name: group?.name ?? '', kind: group?.kind ?? 'osusu', amount: group?.amount ?? 0, frequency: group?.frequency ?? 'weekly', start_date: group?.start_date ?? today(),
+    members: '', target: group?.target ?? 0, loan_interest: group?.loan_interest ?? 10,
+  });
   return (
     <form className="form" data-testid="group-form" onSubmit={async (e) => {
       e.preventDefault();
@@ -138,9 +299,10 @@ function GroupSheet({ group }: { group?: Group }) {
       <Field label={t('groups.name')}><input name="name" required autoFocus value={f.name} placeholder={t('groups.namePh')} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
       <Field label={t('groups.kind')}>
         <select name="kind" value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as Group['kind'] })}>
-          <option value="osusu">{t('groups.osusu')}</option><option value="dues">{t('groups.dues')}</option>
+          <option value="osusu">{t('groups.osusu')}</option><option value="dues">{t('groups.dues')}</option><option value="savings">{t('vsla.kind')}</option>
         </select>
       </Field>
+      {f.kind === 'savings' && <div className="small muted">{t('vsla.kindHelp')}</div>}
       <div className="grid2">
         <Field label={t('groups.amount')}><MoneyInput name="amount" required value={f.amount} onChange={(amount) => setF({ ...f, amount })} /></Field>
         <Field label={t('groups.frequency')}>
@@ -150,6 +312,11 @@ function GroupSheet({ group }: { group?: Group }) {
         </Field>
       </div>
       <Field label={t('groups.start')}><input type="date" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} /></Field>
+      {f.kind !== 'osusu' && <Field label={t('vsla.target')}><MoneyInput name="target" value={f.target} onChange={(target) => setF({ ...f, target })} /></Field>}
+      {f.kind === 'savings' && (
+        <Field label={t('vsla.interest')}><input name="loan_interest" type="number" inputMode="decimal" min="0" max="100" step="0.5" value={f.loan_interest}
+          onChange={(e) => setF({ ...f, loan_interest: Number(e.target.value) })} /></Field>
+      )}
       {!group && <Field label={t('groups.membersHelp')}><textarea name="members" value={f.members} onChange={(e) => setF({ ...f, members: e.target.value })} placeholder={'Fatmata Sesay, 076123456\nMohamed Bangura, 088123456'} /></Field>}
       <button className="btn primary block">{t('common.save')}</button>
       {group && <GroupDelete group={group} />}
@@ -165,6 +332,7 @@ function GroupDelete({ group }: { group: Group }) {
   return <DeleteButton label={t('groups.deleteGroup')} onDelete={async () => {
     await atomic(async () => {
       for (const c of book.contributions.filter((x) => x.group_id === group.id)) await remove(ctx, 'contributions', c.id);
+      for (const l of book.groupLoans.filter((x) => x.group_id === group.id)) await remove(ctx, 'group_loans', l.id);
       await remove(ctx, 'groups', group.id, `Deleted group ${group.name}`);
     });
     nav('/groups');

@@ -86,7 +86,7 @@ const extra = {
     recoverBad: 'The phone number or recovery code is wrong.', recoverLocked: 'Too many tries. Try again in an hour.',
     offline: 'No internet connection. Your records are safe on this phone. Check your data or Wi-Fi and try again.',
     returnTooMany: 'You cannot return more {{name}} than was sold.', voidPaid: 'Only unpaid invoices can be voided. Record a return instead.',
-    proBranches: 'The free plan includes {{limit}} branch. To open more branches, upgrade to Kopor Pro (More → Kopor Pro).', proStaff: 'The free plan includes {{limit}} people on the team, the owner included. To add more, upgrade to Kopor Pro (More → Kopor Pro).', proLimit: 'The free plan allows {{limit}}. Upgrade to Kopor Pro for more.', noBluetooth: 'Bluetooth printing is not available in this browser. Use Chrome on Android or the RawBT option.',
+    potTooSmall: 'The group box has only Le {{amount}} now. Lend less, or wait for more savings.', repayTooMuch: 'This member owes only Le {{amount}}.', takeTooMuch: 'You cannot take out more than is saved for this goal.', proBranches: 'The free plan includes {{limit}} branch. To open more branches, upgrade to Kopor Pro (More → Kopor Pro).', proStaff: 'The free plan includes {{limit}} people on the team, the owner included. To add more, upgrade to Kopor Pro (More → Kopor Pro).', proLimit: 'The free plan allows {{limit}}. Upgrade to Kopor Pro for more.', noBluetooth: 'Bluetooth printing is not available in this browser. Use Chrome on Android or the RawBT option.',
     printerService: 'This printer type is not supported over Bluetooth LE. Try the RawBT option.', noPrinter: 'Choose a printer in Settings first.',
   },
 };

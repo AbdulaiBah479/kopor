@@ -30,6 +30,8 @@ const Settings = lazyRetry(() => import('./screens/Settings').then((m) => ({ def
 const Account = lazyRetry(() => import('./screens/Settings').then((m) => ({ default: m.Account })));
 const PublicInvoice = lazyRetry(() => import('./screens/PublicInvoice').then((m) => ({ default: m.PublicInvoice })));
 const PublicStatement = lazyRetry(() => import('./screens/PublicStatement').then((m) => ({ default: m.PublicStatement })));
+const PublicGroup = lazyRetry(() => import('./screens/PublicGroup').then((m) => ({ default: m.PublicGroup })));
+const Savings = lazyRetry(() => import('./screens/Savings').then((m) => ({ default: m.Savings })));
 const Help = lazyRetry(() => import('./screens/Help').then((m) => ({ default: m.Help })));
 const Legal = lazyRetry(() => import('./screens/Legal').then((m) => ({ default: m.Legal })));
 const Money = lazyRetry(() => import('./screens/Money').then((m) => ({ default: m.Money })));
@@ -44,10 +46,11 @@ function Gate() {
   const { ready, session, book, locked } = useApp();
   const { pathname } = useLocation();
   // Public pages work without a business or sign-in (customer invoice and statement links, legal pages for app stores).
-  if (pathname.startsWith('/i/') || pathname.startsWith('/s/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/')) return (
+  if (pathname.startsWith('/i/') || pathname.startsWith('/s/') || pathname.startsWith('/g/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/')) return (
     <Suspense fallback={<Boot />}><Routes>
       <Route path="/i/:token" element={<PublicInvoice />} />
       <Route path="/s/:token" element={<PublicStatement />} />
+      <Route path="/g/:token" element={<PublicGroup />} />
       <Route path="/legal/:doc" element={<Legal />} />
       <Route path="/pay/:data" element={<PayPage />} />
     </Routes></Suspense>
@@ -83,6 +86,7 @@ function Gate() {
         <Route path="/plan" element={<Plan />} />
         <Route path="/admin" element={<Owner />} />
         <Route path="/pnl" element={<ProfitLoss />} />
+        <Route path="/savings" element={<Savings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

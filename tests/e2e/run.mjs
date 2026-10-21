@@ -84,7 +84,7 @@ await step('first-use guided tour shows and can be finished', async () => {
   await shot('02-home');
 });
 
-for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl']) {
+for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl']) {
   await step(`screen ${r} renders at phone width`, async () => { await go(r); await noOverflow(); });
 }
 
@@ -260,6 +260,51 @@ await step('osusu: mark a contribution', async () => {
   await page.locator('.tick:not(.on)').first().click();
   await page.waitForFunction((n) => document.querySelectorAll('.tick.on').length === n + 1, before);
   await shot('06-osusu');
+});
+
+await step('savings & loan group: save, lend with interest, repay, share out', async () => {
+  await go('/groups');
+  await page.getByRole('button', { name: /New group/ }).click();
+  const f = page.getByTestId('group-form');
+  await f.locator('[name=name]').fill('Farmers VSLA');
+  await f.locator('[name=kind]').selectOption('savings');
+  await f.locator('[name=amount]').fill('100');
+  await f.locator('[name=members]').fill('Mariama Kamara\nSahr Koroma');
+  await tapInSheet(f.getByRole('button', { name: 'Save' }));
+  await page.getByTestId('pot-card').waitFor();
+  for (const name of ['Mariama Kamara', 'Sahr Koroma']) await page.getByRole('button', { name, exact: true }).click();
+  await page.getByTestId('pot-card').getByText('Le 200').first().waitFor();
+  await page.getByTestId('lend').click();
+  const lend = page.getByTestId('lend-form');
+  await lend.locator('[name=amount]').fill('100');
+  await lend.getByText('To repay: Le 110').waitFor();               // 10% interest
+  await tapInSheet(lend.getByRole('button', { name: 'Lend' }));
+  await page.getByTestId('repay').first().waitFor();
+  await page.getByTestId('repay').first().click();
+  await tapInSheet(page.getByTestId('repay-form').getByRole('button', { name: 'Repay' }));
+  await page.getByText('Repayment recorded').first().waitFor();
+  await page.getByTestId('share-out').click();
+  const so = page.getByTestId('share-out-sheet');
+  await so.getByText('Le 105').first().waitFor();                     // each member: Le 100 saved + Le 5 interest
+  await shot('06b-vsla-share-out');
+});
+
+await step('savings goal: create, add money, progress shown', async () => {
+  await go('/savings');
+  await page.getByTestId('new-goal').click();
+  const f = page.getByTestId('goal-form');
+  await f.locator('[name=name]').fill('Shop rent');
+  await f.locator('[name=target]').fill('3000');
+  await tapInSheet(f.getByRole('button', { name: 'Save' }));
+  const goal = page.locator('[data-goal="Shop rent"]');
+  await goal.waitFor();
+  await goal.getByTestId('goal-add').click();
+  const m = page.getByTestId('goal-move-form');
+  await m.locator('[name=amount]').fill('1000');
+  await tapInSheet(m.getByRole('button', { name: 'Add money' }));
+  await goal.getByText('Le 1,000').first().waitFor();
+  await goal.getByRole('progressbar').and(page.locator('[aria-valuenow="33"]')).waitFor();
+  await shot('06c-savings-goal');
 });
 
 await step('invoice: create and mark paid', async () => {

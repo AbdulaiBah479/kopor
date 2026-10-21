@@ -243,6 +243,34 @@ await test('anyone can send a problem report or complaint, nobody but the server
   assert.equal((await q('select count(*)::int as n from reports')).rows[0].n, 2);
   assert.equal((await q('select kopor_admin_reports_new() as n')).rows[0].n, 2);
 });
+await test('savings & loan groups: managers lend, cashiers cannot; member link shows balances without phone numbers', async () => {
+  await as('owner');
+  const G = 'abababab-abab-4bab-8bab-abababababab', M1 = 'a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1', M2 = 'a2a2a2a2-a2a2-4a2a-8a2a-a2a2a2a2a2a2';
+  await q(`insert into groups (id, org_id, created_at, updated_at, created_by, name, kind, amount, frequency, start_date, members, target, public_token)
+           values ($1, $2, 1, 1, $3, 'Farmers VSLA', 'savings', 1000, 'weekly', current_date, $4, 50000, 'grp_abcdefghijklmnop')`,
+    [G, ORG, OWNER_M, JSON.stringify([{ id: M1, name: 'Mariama', phone: '+23276000001' }, { id: M2, name: 'Sahr', phone: '+23276000002' }])]);
+  await q(`insert into contributions (id, org_id, created_at, updated_at, created_by, group_id, member_id, round, amount, date)
+           values (gen_random_uuid(), $1, 1, 1, $2, $3, $4, 1, 1000, current_date), (gen_random_uuid(), $1, 1, 1, $2, $3, $5, 1, 1000, current_date)`, [ORG, OWNER_M, G, M1, M2]);
+  await q(`insert into group_loans (id, org_id, created_at, updated_at, created_by, group_id, member_id, type, amount, interest, date, due_date)
+           values (gen_random_uuid(), $1, 1, 1, $2, $3, $4, 'loan', 1500, 150, current_date, current_date + 28),
+                  (gen_random_uuid(), $1, 2, 2, $2, $3, $4, 'repay', 500, 0, current_date, null)`, [ORG, OWNER_M, G, M1]);
+  await as('cashier');
+  await rejects(q(`insert into group_loans (id, org_id, created_at, updated_at, group_id, member_id, type, amount, date) values (gen_random_uuid(), $1, 1, 1, $2, $3, 'loan', 100, current_date)`, [ORG, G, M1]), /row-level security/);
+  await q(`insert into savings_goals (id, org_id, created_at, updated_at, name, target) values (gen_random_uuid(), $1, 1, 1, 'Rent', 300000)`, [ORG]);
+  await as('stranger');
+  assert.equal((await q('select * from group_loans')).rows.length, 0);
+  assert.equal((await q('select * from savings_goals')).rows.length, 0);
+  await as(null);
+  const g = (await q(`select public_group('grp_abcdefghijklmnop') as g`)).rows[0].g;
+  assert.equal(g.name, 'Farmers VSLA');
+  assert.equal(Number(g.saved_total), 2000);
+  assert.equal(Number(g.lent_out), 1150);                    // 1500 + 150 interest − 500 repaid
+  const mariama = g.members.find((m) => m.name === 'Mariama');
+  assert.equal(Number(mariama.owes), 1150);
+  assert.ok(!JSON.stringify(g).includes('+232'), 'no phone numbers');
+  assert.equal((await q(`select public_group('grp_wrong_token_00000') as g`)).rows[0].g, null);
+});
+
 await test('back-office tools are for the server only, and every lookup is exact', async () => {
   for (const who of ['owner', null]) {
     await as(who);

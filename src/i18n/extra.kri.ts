@@ -88,7 +88,7 @@ const extra: ExtraDict = {
     recoverBad: 'Di fon nɔmba ɔ di kod nɔ rayt.', recoverLocked: 'Yu tray tumɔs. Tray bak afta wan awa.',
     offline: 'No nɛt naw. Yu rɛkɔd dɛn sef na dis fon. Chɛk yu data ɔ Wi-Fi ɛn tray bak.',
     returnTooMany: 'Yu nɔ kin tek mɔ {{name}} bak pas wetin yu sɛl.', voidPaid: 'Na invɔys we nɔ pe nɔmɔ yu kin kansul. Rayt "tek tin bak" instead.',
-    proBranches: 'Di fri plan gɛt {{limit}} branch. Fɔ opin mɔ branch, go ɔp to Kopor Pro (Mɔ → Kopor Pro).', proStaff: 'Di fri plan gɛt {{limit}} pipul na di tim, di ɔna inklud. Fɔ ad mɔ, go ɔp to Kopor Pro (Mɔ → Kopor Pro).', proLimit: 'Di fri plan gri fɔ {{limit}}. Go ɔp to Kopor Pro fɔ mɔ.', noBluetooth: 'Bluetooth print nɔ de pan dis brawza. Yuz Chrome pan Android ɔ di RawBT opshɔn.',
+    potTooSmall: 'Di grup bɔks gɛt Le {{amount}} nɔmɔ naw. Lɛnt smɔl, ɔ wet fɔ mɔ sev.', repayTooMuch: 'Dis mɛmba ɔw Le {{amount}} nɔmɔ.', takeTooMuch: 'Yu nɔ kin tek mɔ pas wetin yu sev fɔ dis tagɛt.', proBranches: 'Di fri plan gɛt {{limit}} branch. Fɔ opin mɔ branch, go ɔp to Kopor Pro (Mɔ → Kopor Pro).', proStaff: 'Di fri plan gɛt {{limit}} pipul na di tim, di ɔna inklud. Fɔ ad mɔ, go ɔp to Kopor Pro (Mɔ → Kopor Pro).', proLimit: 'Di fri plan gri fɔ {{limit}}. Go ɔp to Kopor Pro fɔ mɔ.', noBluetooth: 'Bluetooth print nɔ de pan dis brawza. Yuz Chrome pan Android ɔ di RawBT opshɔn.',
     printerService: 'Dis kayn printa nɔ de wok pan Bluetooth LE. Tray di RawBT opshɔn.', noPrinter: 'Pik printa na Sɛtin fɔs.',
   },
 };

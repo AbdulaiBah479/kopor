@@ -52,9 +52,18 @@ export interface StockMove extends Base {
 }
 export interface GroupMember { id: string; name: string; phone: string }
 export interface Group extends Base {
-  name: string; kind: 'osusu' | 'dues'; amount: number; frequency: 'daily' | 'weekly' | 'monthly';
+  // savings = savings & loan group (VSLA): members save, borrow from the pot, repay with interest, then share out.
+  name: string; kind: 'osusu' | 'dues' | 'savings'; amount: number; frequency: 'daily' | 'weekly' | 'monthly';
   start_date: string; members: GroupMember[]; payouts: Record<string, string>;
+  target?: number | null; loan_interest?: number; public_token?: string | null;
 }
+/** A loan from a group's pot (interest = the flat interest the group charges) or a repayment of it. */
+export interface GroupLoan extends Base {
+  group_id: string; member_id: string; type: 'loan' | 'repay'; amount: number; interest: number; date: string; due_date: string | null; note: string;
+}
+/** Money set aside for a purpose ("cashbox"): Kopor only keeps the record; the money stays where it is kept. */
+export interface SavingsGoal extends Base { name: string; target: number; due_date: string | null; kept_in: string; archived: 0 | 1 }
+export interface SavingsMove extends Base { goal_id: string; amount: number; date: string; note: string }
 export interface Contribution extends Base {
   group_id: string; member_id: string; round: number; amount: number; date: string; method: Method; payment_ref: string | null;
 }
@@ -79,14 +88,14 @@ export interface Meta { key: string; value: unknown }
 
 export const SYNC_TABLES = [
   'orgs', 'branches', 'members', 'contacts', 'ledger', 'transactions', 'products', 'stock_moves',
-  'groups', 'contributions', 'invoices', 'payment_requests', 'closings', 'audit',
+  'groups', 'contributions', 'invoices', 'payment_requests', 'closings', 'group_loans', 'savings_goals', 'savings_moves', 'audit',
 ] as const;
 export type SyncTable = (typeof SYNC_TABLES)[number];
 
 export interface RowOf {
   orgs: Org; branches: Branch; members: Member; contacts: Contact; ledger: LedgerEntry; transactions: Txn;
   products: Product; stock_moves: StockMove; groups: Group; contributions: Contribution; invoices: Invoice;
-  payment_requests: PaymentRequest; closings: Closing; audit: AuditEntry;
+  payment_requests: PaymentRequest; closings: Closing; group_loans: GroupLoan; savings_goals: SavingsGoal; savings_moves: SavingsMove; audit: AuditEntry;
 }
 
 export class KoporDB extends Dexie {
@@ -103,6 +112,9 @@ export class KoporDB extends Dexie {
   invoices!: Table<Invoice, string>;
   payment_requests!: Table<PaymentRequest, string>;
   closings!: Table<Closing, string>;
+  group_loans!: Table<GroupLoan, string>;
+  savings_goals!: Table<SavingsGoal, string>;
+  savings_moves!: Table<SavingsMove, string>;
   audit!: Table<AuditEntry, string>;
   meta!: Table<Meta, string>;
 
@@ -126,6 +138,8 @@ export class KoporDB extends Dexie {
     });
     // v2: end-of-day cash closings (new columns on existing tables need no migration in IndexedDB).
     this.version(2).stores({ closings: 'id, org_id, date, dirty' });
+    // v3: savings & loan groups and savings goals.
+    this.version(3).stores({ group_loans: 'id, org_id, group_id, dirty', savings_goals: 'id, org_id, dirty', savings_moves: 'id, org_id, goal_id, dirty' });
   }
   /** Typed access to a synced table by name. */
   t<K extends SyncTable>(name: K): Table<RowOf[K], string> {

@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 import { chromium } from 'playwright-core';
 
 const PORT = 4185, BASE = `http://localhost:${PORT}/`;
-const ROUTES = ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/invoices', '/payments', '/reminders', '/assistant', '/health',
+const ROUTES = ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/invoices', '/payments', '/reminders', '/assistant', '/health',
   '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl', '/appearance', '/account'];
 // Never tap these: they delete, sign out, void or leave the page (they have their own tests).
 const SKIP = /delete|remove|void|cancel quotation|reset|sign out|log ?out|clear|delete my account|leave|lock|switch user|install|share|whatsapp|sms|call|print|pdf|excel|download|export|choose printer|test receipt|connect monime|upgrade|pay now|camera|scan|take or choose photo|microphone|speak|tap the microphone/i;
