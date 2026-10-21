@@ -324,5 +324,20 @@ const v3: V3Dict = {
     sentHelp: 'Votre paiement apparaîtra ici une fois approuvé.',
     tooMany: 'Vous avez déjà des paiements en attente. Attendez qu’ils soient approuvés.',
   },
+  push: {
+    memberTitle: 'Me rappeler sur ce téléphone',
+    memberHelp: 'Recevez une notification gratuite quand votre paiement ou remboursement est dû. Choisissez votre nom.',
+    remindMe: 'Activer les rappels',
+    memberOn: 'Les rappels sont activés sur ce téléphone.',
+    ownerTitle: 'Rappels quotidiens sur ce téléphone',
+    ownerHelp: 'Une notification gratuite chaque matin : paiements à approuver, prêts de groupe dus et clients en retard.',
+    turnOn: 'Activer',
+    turnOff: 'Désactiver',
+    on: 'Rappels quotidiens activés',
+    off: 'Rappels quotidiens désactivés',
+    denied: 'Les notifications sont bloquées. Autorisez-les pour ce site dans les réglages du navigateur, puis réessayez.',
+    unsupported: 'Ce téléphone ou cette application ne peut pas afficher de rappels. Ouvrez Kopor dans Chrome, ou ajoutez-le à l’écran d’accueil (iPhone).',
+    needCloud: 'Sauvegardez votre entreprise en ligne (Plus → Cloud et compte) pour recevoir les rappels quotidiens.',
+  },
 };
 export default v3;

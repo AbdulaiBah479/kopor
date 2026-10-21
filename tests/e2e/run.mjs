@@ -333,6 +333,7 @@ await step("member link: \"I've paid\" form sends a claim (stand-in server)", as
     const missing = page.getByTestId('group-missing');
     await Promise.race([page.getByTestId('public-group').waitFor(), missing.waitFor()]);
     if (await missing.count()) { console.log('   (no cloud in this build: checked the "not valid" message)'); return; }
+    await page.getByTestId('remind-me').waitFor();                      // free reminder notifications offered
     await page.getByTestId('i-paid').click();
     const f = page.getByTestId('claim-form');
     await f.locator('#claim-member').selectOption({ label: 'Sahr Koroma' });
@@ -342,6 +343,11 @@ await step("member link: \"I've paid\" form sends a claim (stand-in server)", as
     await page.getByTestId('claim-sent').waitFor();
     if (sent?.member !== 'm2' || sent?.ref !== 'MP99Z' || sent?.amount !== 10000) throw new Error('wrong claim: ' + JSON.stringify(sent));
   } finally { await page.unroute('**/rest/v1/rpc/public_group'); await page.unroute('**/rest/v1/rpc/submit_group_claim'); }
+});
+
+await step('reminders: loan reminders listed, daily notification setting shown', async () => {
+  await go('/reminders');
+  await page.locator('[data-testid=daily-push], [data-testid=push-unsupported]').or(page.getByText('Back up your business online')).first().waitFor();
 });
 
 await step('savings goal: create, add money, progress shown', async () => {

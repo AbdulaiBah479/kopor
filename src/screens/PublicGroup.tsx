@@ -8,6 +8,7 @@ import { getSupabase } from '@/cloud/supabase';
 import { formatMoney, setCurrencySymbol } from '@/lib/money';
 import { useDate } from '@/ui/widgets';
 import { Icon } from '@/ui/Icon';
+import { pushSupported, remindMember } from '@/cloud/push';
 import { LoadFailed } from './PublicStatement';
 import { currentRound, roundDate } from '@/domain/groups';
 import type { Group } from '@/db/schema';
@@ -75,7 +76,34 @@ export function PublicGroup() {
           <div className="foot">{t('vsla.publicNote')} · {t('inv.generated')}</div>
         </div>
         <IPaid token={token ?? ''} group={g} round={r} />
+        <RemindMe token={token ?? ''} group={g} />
       </div>
+    </div>
+  );
+}
+
+/** "Remind me": free notifications on this phone when this member's payment or loan repayment is due. */
+function RemindMe({ token, group: g }: { token: string; group: PubGroup }) {
+  const { t, i18n } = useTranslation();
+  const [member, setMember] = useState('');
+  const [state, setState] = useState<'idle' | 'busy' | 'on' | 'error'>('idle');
+  const [err, setErr] = useState('');
+  if (!pushSupported()) return null;
+  if (state === 'on') return <div className="card small" data-testid="remind-on"><Icon name="bell" size={16} /> {t('push.memberOn')}</div>;
+  return (
+    <div className="card stack" data-testid="remind-me">
+      <b><Icon name="bell" size={18} /> {t('push.memberTitle')}</b>
+      <div className="small muted">{t('push.memberHelp')}</div>
+      <select aria-label={t('claims.who')} value={member} onChange={(e) => setMember(e.target.value)}>
+        <option value="" disabled>{t('claims.pick')}</option>
+        {g.members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+      </select>
+      {state === 'error' && <div className="alert small" role="alert"><Icon name="alert" /><div>{err}</div></div>}
+      <button className="btn block" disabled={!member || state === 'busy'} onClick={async () => {
+        setState('busy');
+        try { await remindMember(token, member, i18n.language); setState('on'); }
+        catch (e) { setState('error'); setErr(t(e instanceof Error && e.message === 'push.denied' ? 'push.denied' : 'public.loadFail')); }
+      }}>{t('push.remindMe')}</button>
     </div>
   );
 }

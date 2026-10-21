@@ -1,6 +1,6 @@
 // Daily reminder queue: overdue debts, debts due soon, and unpaid group contributions.
 // WhatsApp cannot be sent automatically for free, so Kopor queues them and the user taps "Send next".
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
@@ -13,6 +13,29 @@ import { overdueContacts, dueSoon } from '@/domain/credit';
 import { currentRound, roundStatus, loanReminders } from '@/domain/groups';
 import { updateOrg } from '@/domain/org';
 import { useReminderText } from './Credit';
+import { pushIsOn, pushSupported, remindOwner, stopReminders } from '@/cloud/push';
+
+/** Free daily "to do" notification on this phone (owners and managers): payments to approve, loans due, overdue debts. */
+function DailyPush() {
+  const { t, i18n } = useTranslation();
+  const { ctx, sync } = useApp();
+  const { toast, fail } = useOverlay();
+  const [on, setOn] = useState<boolean | null>(null);
+  useEffect(() => { pushIsOn().then(setOn).catch(() => setOn(false)); }, []);
+  if (!pushSupported()) return <div className="card small muted" data-testid="push-unsupported">{t('push.unsupported')}</div>;
+  if (sync.status === 'off') return <div className="card small muted">{t('push.needCloud')}</div>;
+  return (
+    <div className="card row between" data-testid="daily-push">
+      <div><b>{t('push.ownerTitle')}</b><div className="small muted">{t('push.ownerHelp')}</div></div>
+      <button className={`btn sm ${on ? '' : 'primary'}`} disabled={on === null} onClick={async () => {
+        try {
+          if (on) { await stopReminders(); setOn(false); toast(t('push.off')); }
+          else { await remindOwner(ctx.orgId, i18n.language); setOn(true); toast(t('push.on')); }
+        } catch (e) { fail(e instanceof Error && e.message === 'push.denied' ? new Error(t('push.denied')) : e); }
+      }}>{on ? t('push.turnOff') : t('push.turnOn')}</button>
+    </div>
+  );
+}
 
 interface Job { id: string; name: string; phone: string; text: string; amount: number; tag: string; tone: string }
 
@@ -63,6 +86,7 @@ export function Reminders() {
           </div>
         )) : <Empty icon="bell" title={t('rem.none')} />}
       </div>
+      {can('reports') && <DailyPush />}
       {can('business') && (
         <Field label={t('rem.autoDays')}>
           <select value={book.org.reminder_days} onChange={(e) => updateOrg(ctx, { reminder_days: Number(e.target.value) }).catch(fail)}>

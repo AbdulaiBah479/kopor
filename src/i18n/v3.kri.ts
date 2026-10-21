@@ -324,5 +324,20 @@ const v3: V3Dict = {
     sentHelp: 'Yu pemɛnt go sho ya we di trɛzhɔra apruv am.',
     tooMany: 'Yu gɛt pemɛnt dɛn we de wet fɔ di trɛzhɔra. Duya wet te dɛn apruv dɛn.',
   },
+  push: {
+    memberTitle: 'Rimayn mi pan dis fon',
+    memberHelp: 'Gɛt fri nɔtifikeshɔn we yu pemɛnt ɔ lɔn pe-bak fɔ pe. Pik yu nem.',
+    remindMe: 'Ɔn rimayn',
+    memberOn: 'Rimayn dɔn ɔn fɔ dis fon.',
+    ownerTitle: 'Ɛvri de rimayn pan dis fon',
+    ownerHelp: 'Fri nɔtifikeshɔn ɛvri mɔnin: pemɛnt fɔ apruv, grup lɔn fɔ pe ɛn kɔstoma we dɔn pas tɛm.',
+    turnOn: 'Ɔn am',
+    turnOff: 'Ɔf am',
+    on: 'Ɛvri de rimayn dɔn ɔn',
+    off: 'Ɛvri de rimayn dɔn ɔf',
+    denied: 'Dɛn dɔn blɔk nɔtifikeshɔn. Alaw dɛn fɔ dis sayt na yu brawza sɛtin, dɔn tray bak.',
+    unsupported: 'Dis fon ɔ ap nɔ kin sho rimayn nɔtifikeshɔn. Opin Kopor na Chrome, ɔ ad am to yu Hom Skrin (iPhone).',
+    needCloud: 'Bakɔp yu biznɛs ɔnlayn (Mɔ → Klawd ɛn akawnt) fɔ gɛt ɛvri de rimayn.',
+  },
 };
 export default v3;

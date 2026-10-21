@@ -322,6 +322,21 @@ const v3 = {
     sentHelp: 'Your payment will show here once the treasurer approves it.',
     tooMany: 'You already have payments waiting for the treasurer. Please wait for them to be approved.',
   },
+  push: {
+    memberTitle: 'Remind me on this phone',
+    memberHelp: 'Get a free notification when your payment or loan repayment is due. Choose your name.',
+    remindMe: 'Turn on reminders',
+    memberOn: 'Reminders are on for this phone.',
+    ownerTitle: 'Daily reminders on this phone',
+    ownerHelp: 'A free notification each morning: payments to approve, group loans due and customers overdue.',
+    turnOn: 'Turn on',
+    turnOff: 'Turn off',
+    on: 'Daily reminders are on',
+    off: 'Daily reminders are off',
+    denied: 'Notifications are blocked. Allow them for this site in your browser settings, then try again.',
+    unsupported: 'This phone or app cannot show reminder notifications. Open Kopor in Chrome, or add it to your Home Screen (iPhone).',
+    needCloud: 'Back up your business online (More → Cloud & account) to get daily reminders.',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

@@ -42,6 +42,8 @@ export default defineConfig({
           options: { cacheName: 'kopor-on-demand', expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 90 } },
         }],
         navigateFallback: 'index.html',
+        // Reminder notifications (free Web Push): shows them and opens the right page when tapped.
+        importScripts: ['push-sw.js'],
         cleanupOutdatedCaches: true,
       },
     }),

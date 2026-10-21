@@ -293,6 +293,33 @@ await test('members claim payments from the link: only listed members, only pend
   assert.equal((await q('select * from group_claims')).rows.length, 0);
 });
 
+await test('reminder notifications: server only; the daily digest finds dues and loans correctly', async () => {
+  const G = 'abababab-abab-4bab-8bab-abababababab', M1 = 'a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1', M2 = 'a2a2a2a2-a2a2-4a2a-8a2a-a2a2a2a2a2a2';
+  for (const who of ['owner', null]) {
+    await as(who);
+    const hidden = await q('select * from push_subscriptions').then((r) => r.rows.length === 0, (e) => /permission denied/.test(e.message));
+    assert.ok(hidden, 'subscriptions are server only');
+    await rejects(q('select * from kopor_push_digest(current_date)'), /permission denied/);
+  }
+  assert.equal((await q(`select kopor_due_on('2026-01-05', 'weekly', '2026-01-19') as a, kopor_due_on('2026-01-05', 'weekly', '2026-01-20') as b`)).rows[0].a, true);
+  assert.equal((await q(`select kopor_round_on('2026-01-05', 'weekly', '2026-01-19') as r`)).rows[0].r, 3);
+  assert.equal((await q(`select kopor_due_on('2026-01-31', 'monthly', '2026-02-28') as r`)).rows[0].r, true);   // short month: last day
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  const p = 'B' + 'x'.repeat(86), a = 'y'.repeat(22);
+  // The VSLA group starts today (weekly): round 1 is due today. Mariama has paid round 1, Sahr has too (earlier test).
+  await q(`update groups set start_date = current_date where id = $1`, [G]);
+  await q(`delete from contributions where group_id = $1 and member_id = $2`, [G, M2]);
+  await q(`insert into push_subscriptions (endpoint, p256dh, auth, scope, org_id, group_id, member_id) values
+           ('https://push.example/1', $1, $2, 'member', $3, $4, $5), ('https://push.example/2', $1, $2, 'member', $3, $4, $6),
+           ('https://push.example/3', $1, $2, 'org', $3, null, null)`, [p, a, ORG, G, M1, M2]);
+  const rows = (await q(`select * from kopor_push_digest(current_date) order by endpoint`)).rows;
+  assert.equal(rows.length, 3);
+  assert.equal(Number(rows[0].contribution_due), 0);          // Mariama paid this round
+  assert.equal(Number(rows[0].loan_owes), 1150);              // her loan from the earlier test
+  assert.equal(Number(rows[1].contribution_due), 1000);       // Sahr has not paid: due today
+  assert.ok(rows[2].claims_pending >= 0 && rows[2].scope === 'org');
+});
+
 await test('back-office tools are for the server only, and every lookup is exact', async () => {
   for (const who of ['owner', null]) {
     await as(who);
