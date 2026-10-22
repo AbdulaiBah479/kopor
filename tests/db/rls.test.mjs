@@ -330,6 +330,8 @@ await test('"Confirmed by Monime" can only be set by the server, never by a phon
   await as('owner');
   await q(`update transactions set verified_ref = null, note = 'edited', updated_at = 3 where id = $1`, [id.id]);
   assert.equal((await q('select verified_ref, note from transactions where id = $1', [id.id])).rows[0].verified_ref, 'mon-123'); // and cannot remove it
+  await q(`update transactions set amount = 90000, updated_at = 4 where id = $1`, [id.id]);
+  assert.equal((await q('select verified_ref from transactions where id = $1', [id.id])).rows[0].verified_ref, null); // a changed amount is no longer confirmed
 });
 
 await test('back-office tools are for the server only, and every lookup is exact', async () => {
