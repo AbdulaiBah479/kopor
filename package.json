@@ -30,6 +30,7 @@
     "@sentry/browser": "^11.7.0",
     "@supabase/supabase-js": "^2.46.1",
     "@tanstack/react-virtual": "^3.14.19",
+    "@tesseract.js-data/eng": "^1.0.0",
     "@zxing/browser": "^0.2.1",
     "@zxing/library": "^0.23.0",
     "class-variance-authority": "^0.7.1",
@@ -49,6 +50,7 @@
     "react-router-dom": "^7.18.4",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
+    "tesseract.js": "^6.0.1",
     "vaul": "^1.1.2",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^3.23.8"

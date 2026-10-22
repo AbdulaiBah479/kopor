@@ -50,8 +50,10 @@ jobs:
           [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN secret is missing"; exit 1; }
           curl -fsS --retry 3 -o splinter.sql https://raw.githubusercontent.com/supabase/splinter/fccca4b1c4d8b48b8ccd69bd6b30e84adcb92975/splinter.sql
           echo "d8d558baad3e03832e521c527907fa50a9a172fabd899dd0f5c2504a5a0e9349  splinter.sql" | sha256sum -c -
-          jq -Rs '{query: ("begin;\n" + . + ";\ncommit;"), read_only: true}' splinter.sql | curl -fsS --retry 3 -X POST "https://api.supabase.com/v1/projects/$PROJECT/database/query" \
-            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' --data-binary @- > advisor.json
+          code=$(jq -Rs '{query: .}' splinter.sql | curl -sS --retry 3 -o advisor.json -w '%{http_code}' -X POST "https://api.supabase.com/v1/projects/$PROJECT/database/query" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' --data-binary @-)
+          [ "$code" != 401 ] || { echo "::error::Supabase refused SUPABASE_ACCESS_TOKEN (expired or revoked). Make a new one at supabase.com/dashboard/account/tokens and replace the GitHub secret."; exit 1; }
+          [ "$code" -lt 300 ] || { echo "::error::Supabase answered $code"; cat advisor.json; exit 1; }
           jq 'if type == "array" then {lints: [.[] | select(.categories | index("SECURITY"))]} else . end' advisor.json > lints.json
           echo "### Supabase security advisor" >> "$GITHUB_STEP_SUMMARY"
           jq -r '.lints[]? | "- **\(.level)** \(.title): \(.detail)"' lints.json | tee -a "$GITHUB_STEP_SUMMARY"

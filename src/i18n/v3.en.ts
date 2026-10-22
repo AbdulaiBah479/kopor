@@ -174,6 +174,8 @@ const v3 = {
     remove: 'Remove from this phone',
   },
   rscan: {
+    readingHere: 'Reading on this phone… The first time, the reader downloads once (about 7 MB).',
+    readHere: 'Read on this phone without the AI: it is less accurate and cannot read handwriting. Check every name and number.',
     bought: 'Bought (add to stock)',
     sold: 'Sold',
     expenseOnly: 'Expense only',

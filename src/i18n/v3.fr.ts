@@ -176,6 +176,8 @@ const v3: V3Dict = {
     remove: 'Retirer de ce téléphone',
   },
   rscan: {
+    readingHere: 'Lecture sur ce téléphone… La première fois, le lecteur se télécharge une fois (environ 7 Mo).',
+    readHere: 'Lu sur ce téléphone sans l’IA : moins précis, et l’écriture à la main n’est pas lue. Vérifiez chaque nom et chaque nombre.',
     bought: 'Acheté (ajouter au stock)',
     sold: 'Vendu',
     expenseOnly: 'Dépense seulement',

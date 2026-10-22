@@ -176,6 +176,8 @@ const v3: V3Dict = {
     remove: 'Rimuv frɔm dis fon',
   },
   rscan: {
+    readingHere: 'Di fon de rid am… Di fos tem, i go download di rida wan tem (lɛk 7 MB).',
+    readHere: 'Na di fon rid am, nɔ di AI: i nɔ kin rid fayn lɛk di AI ɛn i nɔ de rid an-rayt. Chɛk ɔl di nem ɛn nɔmba dɛn.',
     bought: 'Bay (ad to stɔk)',
     sold: 'Sɛl',
     expenseOnly: 'Na spɛn nɔmɔ',

@@ -257,6 +257,7 @@ export function ScanSheet({ prefill, prefer }: { prefill?: ScanResult; prefer?: 
   const [method, setMethod] = useState<Method>('cash');
   const [category, setCategory] = useState('other');
   const [ok, setOk] = useState<boolean | null>(null);
+  const [here, setHere] = useState(false); // read on this phone (no AI): less accurate
   useEffect(() => { aiAvailable().then(setOk); }, []);
   const names = book.products.map((p) => p.name);
   // Strict matching: a wrong match would add stock to the wrong product, so unsure lines become new products to check.
@@ -265,10 +266,10 @@ export function ScanSheet({ prefill, prefer }: { prefill?: ScanResult; prefer?: 
   const pick = async (file?: File) => {
     if (!file) return;
     try {
-      setBusy(true); setRes(null); setRows([]);
+      setBusy(true); setRes(null); setRows([]); setHere(false);
       const url = await toDataUrl(file, 1600);
       setPreview(url);
-      const r = await scanReceipt(url, names);
+      const r = await readReceipt(url);
       setRes(r);
       setRows(r.items.map((i) => { const id = matchId(i.name); return { name: book.products.find((p) => p.id === id)?.name ?? i.name, productId: id, qty: i.qty || 1, price: i.price, sellPrice: i.price }; }));
       setTotal(r.total);
@@ -277,6 +278,18 @@ export function ScanSheet({ prefill, prefer }: { prefill?: ScanResult; prefer?: 
       const kind = prefer && r.items.length && (prefer !== 'purchase' || can('stock')) ? prefer : r.kind;
       setMode(!r.items.length || (kind === 'purchase' && !can('stock')) ? 'expense' : kind);
     } catch (e) { fail(e); } finally { setBusy(false); }
+  };
+  /** The AI reads best; with no internet (or if it fails) the phone reads printed receipts itself. */
+  const readReceipt = async (url: string): Promise<ScanResult> => {
+    let aiError: unknown;
+    if (ok !== false && navigator.onLine) { try { return await scanReceipt(url, names); } catch (e) { aiError = e; } }
+    setHere(true);
+    try {
+      const { ocrImage, parseReceiptText } = await import('@/ai/ocrReceipt');
+      const r = parseReceiptText(await ocrImage(url));
+      if (r.items.length || !aiError) return r;
+    } catch (e) { if (!aiError) throw e; }
+    throw aiError;
   };
   const set = (k: number, patch: Partial<ScanRow>) => setRows(rows.map((r, i) => (i === k ? { ...r, ...patch } : r)));
   const lineSum = rows.reduce((s, r) => s + r.qty * r.price, 0);
@@ -301,14 +314,14 @@ export function ScanSheet({ prefill, prefer }: { prefill?: ScanResult; prefer?: 
     } catch (e) { fail(e); }
   };
 
-  if (ok === false) return <div className="alert"><Icon name="alert" /><div>{t('ai.needAi')}</div></div>;
   return (
     <div className="stack" data-testid="scan-sheet">
       <div className="small muted">{t('ai.scanHelp')}</div>
       <label className="btn primary block"><Icon name="camera" size={18} /> {t('ai.takePhoto')}
         <input type="file" accept="image/*" capture="environment" hidden data-testid="scan-file" onChange={(e) => pick(e.target.files?.[0])} /></label>
       {preview && <img className="scan-preview" src={preview} alt="" />}
-      {busy && <div className="muted small" role="status">{t('ai.reading')}</div>}
+      {busy && <div className="muted small" role="status">{t(here ? 'rscan.readingHere' : 'ai.reading')}</div>}
+      {res && here && <div className="alert small" data-testid="scan-here"><Icon name="alert" /><div>{t('rscan.readHere')}</div></div>}
       {res && !rows.length && <div className="alert small"><Icon name="alert" /><div>{t('rscan.nothing')}</div></div>}
       {res && (
         <div className="stack form" data-testid="scan-review">

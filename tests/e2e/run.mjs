@@ -133,15 +133,13 @@ await step('scan a supplier receipt (no barcode): stock goes up, new product cre
   await go('/');
   await page.getByRole('button', { name: 'Scan', exact: true }).click();
   await page.getByTestId('choose-receipt').click();
-  // Builds without the Kopor cloud (e.g. CI) cannot read photos and say so; the live test (tests/cloud/scan-live.mjs)
-  // covers the real reading. Here: check the message, then stop.
-  const noCloud = page.getByText('Reading photos needs an internet connection');
-  await Promise.race([page.getByTestId('scan-file').waitFor({ state: 'attached' }), noCloud.waitFor()]);
-  if (await noCloud.count()) { console.log('   (no cloud in this build: checked the message instead)'); return; }
   // A tiny white PNG stands in for the camera photo.
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
   await page.getByTestId('scan-file').setInputFiles({ name: 'receipt.png', mimeType: 'image/png', buffer: png });
-  await page.getByTestId('scan-review').waitFor({ timeout: 20000 });
+  // Builds without the Kopor cloud (e.g. CI) read on the phone instead (next step); the live test
+  // (tests/cloud/scan-live.mjs) covers the real AI reading.
+  await Promise.race([page.getByTestId('scan-review').waitFor({ timeout: 60000 }), page.getByTestId('scan-here').waitFor({ timeout: 60000 })]);
+  if (await page.getByTestId('scan-here').count()) { console.log('   (no cloud in this build: read on the phone, see next step)'); await page.keyboard.press('Escape'); return; }
   if ((await page.getByTestId('scan-row').count()) !== 2) throw new Error('expected 2 lines');
   await page.getByText('1 new products will be added').waitFor();
   await shot('05b-scan-receipt');
@@ -152,6 +150,35 @@ await step('scan a supplier receipt (no barcode): stock goes up, new product cre
   await page.waitForFunction((b) => Number(document.querySelector('[data-product="Rice 50kg bag"] [data-qty]')?.getAttribute('data-qty')) === b + 2, before, { timeout: 5000 })
     .catch(async () => { throw new Error(`rice ${before} -> ${await rice()}`); });
   await page.locator('[data-product="Candles box"]').waitFor();
+});
+
+await step('no AI: the phone reads a printed receipt itself (Tesseract), then again with no internet', async () => {
+  // Draw a printed receipt, as a phone camera would see it.
+  const dataUrl = await page.evaluate(() => {
+    const lines = ['KISSY ROAD WHOLESALE', 'CASH RECEIPT', 'RICE 50KG BAG   2 x 720   1,440', 'SUGAR 1KG   10 x 25   250', 'CANDLES BOX   3 x 40   120', 'TOTAL   1,810'];
+    const c = document.createElement('canvas'); c.width = 900; c.height = 80 + lines.length * 70;
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = '#111'; g.font = '40px monospace';
+    lines.forEach((l, i) => g.fillText(l, 40, 80 + i * 70));
+    return c.toDataURL('image/png');
+  });
+  const png = Buffer.from(dataUrl.split(',')[1], 'base64');
+  const read = async () => {
+    await go('/');
+    await page.getByRole('button', { name: 'Scan', exact: true }).click();
+    await page.getByTestId('choose-receipt').click();
+    await page.getByTestId('scan-file').setInputFiles({ name: 'receipt.png', mimeType: 'image/png', buffer: png });
+    await page.getByTestId('scan-here').waitFor({ timeout: 120000 });
+    await page.getByTestId('scan-review').waitFor({ timeout: 5000 });
+    const names = await page.getByTestId('scan-row').locator('input[aria-label=Item]').evaluateAll((els) => els.map((e) => e.value));
+    if (names.length !== 3 || !/rice/i.test(names[0]) || !/candles/i.test(names[2])) throw new Error('read: ' + JSON.stringify(names));
+    await page.keyboard.press('Escape');
+  };
+  await page.route('**/functions/v1/ai', (r) => r.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"busy"}' }));
+  try {
+    await read();                    // the AI is down: falls back to the phone
+    await ctx.setOffline(true);
+    try { await read(); } finally { await ctx.setOffline(false); } // no internet at all: the reader was kept
+  } finally { await page.unroute('**/functions/v1/ai'); }
 });
 
 await step('point the camera at an item: recognised, matched, added to stock, View opens Stock', async () => {
