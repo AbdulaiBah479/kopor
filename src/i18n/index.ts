@@ -9,7 +9,6 @@ export const LANGUAGES = [
   { code: 'kri', label: 'Krio' },
   { code: 'fr', label: 'Français' },
 ] as const;
-export type Lang = (typeof LANGUAGES)[number]['code'];
 
 // Locale used for dates/numbers (Krio uses British English formats).
 export const dateLocale = (lang: string) => (lang === 'fr' ? 'fr-FR' : 'en-GB');

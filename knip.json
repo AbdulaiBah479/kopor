@@ -1,0 +1,7 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["tests/**/*.{ts,mjs}", "tools/*.mjs", "supabase/functions/*/index.ts", "public/push-sw.js"],
+  "project": ["src/**/*.{ts,tsx}", "supabase/functions/**/*.ts", "tests/**/*.{ts,mjs}", "tools/*.mjs"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": ["@capacitor/android", "@fontsource-variable/inter", "tailwindcss", "axe-core", "@tesseract.js-data/eng"]
+}

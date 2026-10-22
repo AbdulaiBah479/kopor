@@ -74,8 +74,6 @@ const webBt = () => (navigator as unknown as { bluetooth?: WebBluetooth }).bluet
 
 let webDevice: BleDevice | null = null;
 
-export const printingSupport = () => ({ native: Capacitor.isNativePlatform(), web: !!webBt(), rawbt: /android/i.test(navigator.userAgent) });
-
 /** Ask the user to choose a printer (must be called from a tap). */
 export async function pairPrinter(): Promise<{ id: string; name: string }> {
   if (Capacitor.isNativePlatform()) {

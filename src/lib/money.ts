@@ -34,4 +34,3 @@ export function formatShort(m: Minor): string {
 }
 const trim = (n: number) => n.toFixed(1).replace(/\.0$/, '');
 
-export const sum = <T>(rows: T[], pick: (r: T) => number) => rows.reduce((a, r) => a + pick(r), 0);

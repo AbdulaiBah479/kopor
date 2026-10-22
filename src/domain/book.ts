@@ -43,6 +43,5 @@ export async function loadBook(orgId: string, branchId: string | null = null): P
   };
 }
 
-export const byId = <T extends { id: string }>(rows: T[], id: string | null | undefined) => rows.find((r) => r.id === id);
 const norm = (s: string) => s.trim().toLowerCase();
 export const findByName = <T extends { name: string }>(rows: T[], name: string) => rows.find((r) => norm(r.name) === norm(name));
