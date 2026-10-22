@@ -1,0 +1,65 @@
+name: Deep security scan
+# Free security scanners on top of CodeQL, OSV, Gitleaks and Scorecard (security.yml):
+#   - Semgrep:   reads the code for security mistakes (rules for TypeScript, React, Node and secrets).
+#   - Supabase:  the database's own security advisor (missing row-level security, unsafe functions...).
+#   - OWASP ZAP: probes the live website from outside, like an attacker would (passive baseline scan).
+# Findings appear in GitHub → Security → Code scanning (Semgrep) and in each run's summary.
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'supabase/**', '.github/workflows/scan.yml']
+  schedule:
+    - cron: '0 4 * * 1' # Mondays 04:00
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # upload results to Code scanning
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Semgrep
+        run: |
+          pipx install semgrep==1.182.0
+          semgrep scan --metrics off --config p/typescript --config p/react --config p/javascript --config p/secrets \
+            --exclude 'tests' --exclude 'dist' --sarif --output semgrep.sarif src supabase || true
+          semgrep scan --metrics off --config p/typescript --config p/react --config p/javascript --config p/secrets \
+            --exclude 'tests' --exclude 'dist' --text src supabase | tee semgrep.txt || true
+          echo "### Semgrep" >> "$GITHUB_STEP_SUMMARY"; tail -20 semgrep.txt >> "$GITHUB_STEP_SUMMARY"
+      - uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+  supabase-advisor:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT: hpmpbzcloklaeghekjfz
+    steps:
+      - name: Database security advisor
+        run: |
+          set -euo pipefail
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN secret is missing"; exit 1; }
+          curl -fsS --retry 3 "https://api.supabase.com/v1/projects/$PROJECT/advisors/security" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" > advisor.json
+          echo "### Supabase security advisor" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '.lints[]? | "- **\(.level)** \(.title): \(.detail)"' advisor.json | tee -a "$GITHUB_STEP_SUMMARY"
+          errors=$(jq '[.lints[]? | select(.level == "ERROR")] | length' advisor.json)
+          echo "Errors: $errors" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$errors" -eq 0 ] || { echo "::error::The database security advisor found $errors error(s)"; exit 1; }
+
+  zap:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push' # the live site changes after deploy; scan weekly or on request
+    steps:
+      - uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+        with:
+          target: https://abdulaibah479.github.io/kopor/
+          allow_issue_writing: false
+          fail_action: false
+          artifact_name: zap-report
