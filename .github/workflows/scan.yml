@@ -42,14 +42,20 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       PROJECT: hpmpbzcloklaeghekjfz
     steps:
+      # The dashboard's advisor runs Supabase's open-source lints (github.com/supabase/splinter). The advisor API refuses
+      # access tokens, so run the same read-only lint SQL ourselves, pinned to a reviewed commit and checked by hash.
       - name: Database security advisor
         run: |
           set -euo pipefail
           [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN secret is missing"; exit 1; }
-          curl -fsS --retry 3 "https://api.supabase.com/v1/projects/$PROJECT/advisors/security" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" > advisor.json
+          curl -fsS --retry 3 -o splinter.sql https://raw.githubusercontent.com/supabase/splinter/fccca4b1c4d8b48b8ccd69bd6b30e84adcb92975/splinter.sql
+          echo "d8d558baad3e03832e521c527907fa50a9a172fabd899dd0f5c2504a5a0e9349  splinter.sql" | sha256sum -c -
+          jq -Rs '{query: ("begin;\n" + . + ";\ncommit;"), read_only: true}' splinter.sql | curl -fsS --retry 3 -X POST "https://api.supabase.com/v1/projects/$PROJECT/database/query" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' --data-binary @- > advisor.json
+          jq 'if type == "array" then {lints: [.[] | select(.categories | index("SECURITY"))]} else . end' advisor.json > lints.json
           echo "### Supabase security advisor" >> "$GITHUB_STEP_SUMMARY"
-          jq -r '.lints[]? | "- **\(.level)** \(.title): \(.detail)"' advisor.json | tee -a "$GITHUB_STEP_SUMMARY"
-          errors=$(jq '[.lints[]? | select(.level == "ERROR")] | length' advisor.json)
+          jq -r '.lints[]? | "- **\(.level)** \(.title): \(.detail)"' lints.json | tee -a "$GITHUB_STEP_SUMMARY"
+          errors=$(jq '[.lints[]? | select(.level == "ERROR")] | length' lints.json)
           echo "Errors: $errors" | tee -a "$GITHUB_STEP_SUMMARY"
           [ "$errors" -eq 0 ] || { echo "::error::The database security advisor found $errors error(s)"; exit 1; }
 
