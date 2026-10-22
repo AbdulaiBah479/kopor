@@ -90,6 +90,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const book = useLiveQuery(() => (session ? loadBook(session.orgId, session.branchId) : Promise.resolve(null)), [session?.orgId, session?.branchId]);
+  // Android app: keep tomorrow's 8:00 reminder up to date with the records (a few seconds after any change).
+  useEffect(() => {
+    if (!book) return;
+    const timer = window.setTimeout(() => {
+      import('@/features/dailyReminder').then((m) => m.scheduleDailyReminder(book, i18n.t)).catch(() => {});
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [book]);
   const member = book?.members.find((m) => m.id === session?.memberId);
   const role: Role = member?.active ? member.role : 'viewer';
   if (book) setCurrencySymbol(book.org.currency);

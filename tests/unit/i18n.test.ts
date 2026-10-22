@@ -29,9 +29,11 @@ describe('translations', () => {
   });
   it('all literal keys used in the code exist', () => {
     const missing: string[] = [];
+    // A key with a {{count}} may exist only in its plural forms (key_one / key_other).
+    const has = (k: string) => k in E || (`${k}_one` in E && `${k}_other` in E);
     for (const f of files(join(__dirname, '../../src'))) {
       const src = readFileSync(f, 'utf8');
-      for (const m of src.matchAll(/\bt\(\s*'([a-zA-Z]+\.[a-zA-Z0-9_.]+)'/g)) if (!(m[1] in E)) missing.push(`${m[1]} (${f})`);
+      for (const m of src.matchAll(/\bt\(\s*'([a-zA-Z]+\.[a-zA-Z0-9_.]+)'/g)) if (!has(m[1])) missing.push(`${m[1]} (${f})`);
       for (const m of src.matchAll(/new AppError\('([a-zA-Z.]+)'/g)) if (!(m[1] in E)) missing.push(`${m[1]} (${f})`);
       for (const m of src.matchAll(/new Error\('(errx?\.[a-zA-Z]+)'/g)) if (!(m[1] in E)) missing.push(`${m[1]} (${f})`);
     }

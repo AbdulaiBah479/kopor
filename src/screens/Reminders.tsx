@@ -14,6 +14,29 @@ import { currentRound, roundStatus, loanReminders } from '@/domain/groups';
 import { updateOrg } from '@/domain/org';
 import { useReminderText } from './Credit';
 import { pushIsOn, pushSupported, remindOwner, stopReminders } from '@/cloud/push';
+import { dailyReminderOn, disableDailyReminder, enableDailyReminder, localRemindersSupported, scheduleDailyReminder } from '@/features/dailyReminder';
+
+/** Android app: the daily reminder is made on the phone itself from its records (works offline, no account needed). */
+function AppDailyReminder() {
+  const { t, i18n } = useTranslation();
+  const book = useBook();
+  const { toast, fail } = useOverlay();
+  const [on, setOn] = useState<boolean | null>(null);
+  useEffect(() => { dailyReminderOn().then(setOn).catch(() => setOn(false)); }, []);
+  return (
+    <div className="card row between" data-testid="app-daily">
+      <div><b>{t('push.ownerTitle')}</b><div className="small muted">{t('daily.help')}</div></div>
+      <button className={`btn sm ${on ? '' : 'primary'}`} disabled={on === null} onClick={async () => {
+        try {
+          if (on) { await disableDailyReminder(); setOn(false); toast(t('push.off')); return; }
+          if (!(await enableDailyReminder())) { toast(t('push.denied'), { tone: 'error' }); return; }
+          setOn(true); toast(t('push.on'));
+          await scheduleDailyReminder(book, i18n.t);
+        } catch (e) { fail(e); }
+      }}>{on ? t('push.turnOff') : t('push.turnOn')}</button>
+    </div>
+  );
+}
 
 /** Free daily "to do" notification on this phone (owners and managers): payments to approve, loans due, overdue debts. */
 function DailyPush() {
@@ -22,6 +45,7 @@ function DailyPush() {
   const { toast, fail } = useOverlay();
   const [on, setOn] = useState<boolean | null>(null);
   useEffect(() => { pushIsOn().then(setOn).catch(() => setOn(false)); }, []);
+  if (localRemindersSupported()) return <AppDailyReminder />;
   if (!pushSupported()) return <div className="card small muted" data-testid="push-unsupported">{t('push.unsupported')}</div>;
   if (sync.status === 'off') return <div className="card small muted">{t('push.needCloud')}</div>;
   return (

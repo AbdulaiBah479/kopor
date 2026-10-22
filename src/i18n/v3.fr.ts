@@ -367,5 +367,18 @@ const v3: V3Dict = {
     sell: 'Vendre',
     stockAdded: '{{qty}} {{name}} ajouté(s) au stock',
   },
+  daily: {
+    title: '{{name}} : aujourd’hui',
+    help: 'Une notification à 8 h chaque matin avec ce qui demande votre attention. Faite sur ce téléphone à partir de vos données, donc hors ligne aussi.',
+    nudge: 'Ouvrez Kopor pour voir ce qui demande votre attention aujourd’hui.',
+    overdue_one: '{{count}} client en retard',
+    overdue_other: '{{count}} clients en retard',
+    claims_one: '{{count}} paiement à approuver',
+    claims_other: '{{count}} paiements à approuver',
+    loans_one: '{{count}} prêt de groupe dû',
+    loans_other: '{{count}} prêts de groupe dus',
+    low_one: '{{count}} article bientôt épuisé',
+    low_other: '{{count}} articles bientôt épuisés',
+  },
 };
 export default v3;

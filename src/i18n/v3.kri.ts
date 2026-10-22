@@ -367,5 +367,18 @@ const v3: V3Dict = {
     sell: 'Sɛl',
     stockAdded: '{{qty}} {{name}} dɔn ad to stɔk',
   },
+  daily: {
+    title: '{{name}}: tide',
+    help: 'Nɔtifikeshɔn na 8:00 ɛvri mɔnin wit wetin fɔ du. I de mek am pan dis fon frɔm yu rɛkɔd, so i de wok ɔflayn.',
+    nudge: 'Opin Kopor fɔ si wetin fɔ du tide.',
+    overdue_one: '{{count}} kɔstoma dɔn pas tɛm',
+    overdue_other: '{{count}} kɔstoma dɔn pas tɛm',
+    claims_one: '{{count}} pemɛnt fɔ apruv',
+    claims_other: '{{count}} pemɛnt fɔ apruv',
+    loans_one: '{{count}} grup lɔn fɔ pe',
+    loans_other: '{{count}} grup lɔn fɔ pe',
+    low_one: '{{count}} tin de dɔn',
+    low_other: '{{count}} tin dɛn de dɔn',
+  },
 };
 export default v3;

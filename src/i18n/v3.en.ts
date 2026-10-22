@@ -365,6 +365,19 @@ const v3 = {
     sell: 'Sell',
     stockAdded: '{{qty}} {{name}} added to stock',
   },
+  daily: {
+    title: '{{name}}: today',
+    help: 'A notification at 8:00 each morning with what needs attention. Made on this phone from your records, so it works offline.',
+    nudge: 'Open Kopor to see what needs attention today.',
+    overdue_one: '{{count}} customer overdue',
+    overdue_other: '{{count}} customers overdue',
+    claims_one: '{{count}} payment to approve',
+    claims_other: '{{count}} payments to approve',
+    loans_one: '{{count}} group loan due',
+    loans_other: '{{count}} group loans due',
+    low_one: '{{count}} item running low',
+    low_other: '{{count}} items running low',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

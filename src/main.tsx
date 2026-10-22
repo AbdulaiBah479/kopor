@@ -31,3 +31,12 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   import('virtual:pwa-register').then(({ registerSW }) => registerSW({ immediate: true })).catch(() => {});
 }
 navigator.storage?.persist?.();
+
+// Android app: tapping the morning reminder opens the screen it is about.
+if ((window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()) {
+  import('@capacitor/local-notifications').then(({ LocalNotifications }) =>
+    LocalNotifications.addListener('localNotificationActionPerformed', (a) => {
+      const url = (a.notification.extra as { url?: string } | undefined)?.url;
+      if (url?.startsWith('#/')) window.location.hash = url.slice(1);
+    })).catch(() => {});
+}
