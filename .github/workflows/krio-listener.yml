@@ -2,10 +2,9 @@ name: Krio listener
 # Puts the Krio listener (krio-listener/) on a free Hugging Face Space and connects it to Kopor's voice feature.
 # Needs the GitHub secret HF_WRITE_TOKEN (a Hugging Face token with "Write" access). Run from Actions -> Krio listener.
 # Each run: create/update the Space, give it a fresh private key, save the address and key on the Kopor server, test it.
+# Manual only: not hosted yet (the owner is testing first). Hugging Face now needs PRO ($9/month) for Docker Spaces;
+# the free alternative is an Oracle Cloud Always Free server.
 on:
-  push:
-    branches: [main]
-    paths: ['krio-listener/**']
   workflow_dispatch:
 
 permissions:
