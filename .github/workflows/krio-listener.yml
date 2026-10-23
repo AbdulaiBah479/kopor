@@ -1,0 +1,85 @@
+name: Krio listener
+# Puts the Krio listener (krio-listener/) on a free Hugging Face Space and connects it to Kopor's voice feature.
+# Needs the GitHub secret HF_WRITE_TOKEN (a Hugging Face token with "Write" access). Run from Actions -> Krio listener.
+# Each run: create/update the Space, give it a fresh private key, save the address and key on the Kopor server, test it.
+on:
+  push:
+    branches: [main]
+    paths: ['krio-listener/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency: { group: krio-listener, cancel-in-progress: false }
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_WRITE_TOKEN }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT: hpmpbzcloklaeghekjfz
+      SPACE_NAME: kopor-krio-listener
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Check the tokens
+        run: |
+          [ -n "$HF_TOKEN" ] || { echo "::warning::Add the GitHub secret HF_WRITE_TOKEN (Hugging Face token with Write access), then run this again"; exit 0; }
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN secret is missing"; exit 1; }
+      - name: Create or update the Space
+        if: env.HF_TOKEN != ''
+        id: space
+        run: |
+          pip install --quiet huggingface_hub==0.26.5
+          python - <<'PY'
+          import os, secrets
+          from huggingface_hub import HfApi
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          user = api.whoami()["name"]
+          repo = f"{user}/{os.environ['SPACE_NAME']}"
+          api.create_repo(repo, repo_type="space", space_sdk="docker", exist_ok=True)
+          key = secrets.token_urlsafe(32)
+          api.add_space_secret(repo, "KRIO_KEY", key)
+          api.upload_folder(repo_id=repo, repo_type="space", folder_path="krio-listener", commit_message="Update from Kopor")
+          url = f"https://{user}-{os.environ['SPACE_NAME']}.hf.space".lower().replace("_", "-")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"url={url}\n")
+          print(f"::add-mask::{key}")
+          with open(os.environ["GITHUB_ENV"], "a") as f:
+              f.write(f"KRIO_KEY={key}\n")
+          print("Space:", f"https://huggingface.co/spaces/{repo}", "| address:", url)
+          PY
+      - name: Save the address and key on the Kopor server
+        if: env.HF_TOKEN != ''
+        env:
+          URL: ${{ steps.space.outputs.url }}
+        run: |
+          jq -n --arg u "$URL" --arg k "$KRIO_KEY" '[{name: "KRIO_LISTENER_URL", value: $u}, {name: "KRIO_LISTENER_KEY", value: $k}]' \
+            | curl -fsS -X POST "https://api.supabase.com/v1/projects/$PROJECT/secrets" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              -H 'Content-Type: application/json' --data-binary @- >/dev/null
+          echo "Kopor server now uses $URL" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Wait for the Space to build, then test it
+        if: env.HF_TOKEN != ''
+        env:
+          URL: ${{ steps.space.outputs.url }}
+        run: |
+          # The first build downloads the model (a few GB) and can take 20-40 minutes.
+          for i in $(seq 1 90); do
+            if curl -fsS -m 20 "$URL/" | grep -q '"ok":true'; then echo "Space is up"; break; fi
+            sleep 30
+          done
+          curl -fsS -m 20 "$URL/" | grep -q '"ok":true' || { echo "::warning::The Space is still building. Kopor skips it until it is ready."; exit 0; }
+          python - <<'PY'
+          import io, math, struct, wave
+          buf = io.BytesIO()
+          with wave.open(buf, "wb") as w:   # one second of a quiet tone: checks the key and the audio path, not the words
+              w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000)
+              w.writeframes(b"".join(struct.pack("<h", int(800 * math.sin(i / 8))) for i in range(16000)))
+          open("tone.wav", "wb").write(buf.getvalue())
+          PY
+          code=$(curl -sS -m 120 -o out.json -w '%{http_code}' -X POST "$URL/transcribe?lang=kri" -H "x-krio-key: $KRIO_KEY" -H 'Content-Type: audio/wav' --data-binary @tone.wav)
+          echo "Test answer ($code): $(cat out.json)" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$code" = 200 ]
+          bad=$(curl -sS -m 30 -o /dev/null -w '%{http_code}' -X POST "$URL/transcribe" -H "x-krio-key: wrong" --data-binary @tone.wav)
+          [ "$bad" = 401 ] || { echo "::error::The Space accepted a wrong key ($bad)"; exit 1; }

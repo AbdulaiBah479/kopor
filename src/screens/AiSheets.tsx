@@ -99,9 +99,9 @@ export function VoiceSheet() {
     try {
       // Customer and product names help Whisper spell them right; the AI then fixes any remaining slips.
       const hints = [...book.contacts.map((c) => c.name), ...book.products.map((p) => p.name)].slice(0, 80).join(', ');
-      const { text: first, alt } = await transcribe(await current.stop(), i18n.language, hints);
-      const heard = first || alt;
-      const said = heard && smart && navigator.onLine ? await fixTranscript(heard, book, 9000, first ? alt : '') : heard;
+      const { text: first, alt, krio } = await transcribe(await current.stop(), i18n.language, hints);
+      const heard = first || alt || krio;
+      const said = heard && smart && navigator.onLine ? await fixTranscript(heard, book, 9000, first ? alt : '', heard === krio ? '' : krio) : heard;
       if (!said) throw new Error('voice.tooShort');
       setText(said); setResult(null); setVoice('idle');
       haptic(15);

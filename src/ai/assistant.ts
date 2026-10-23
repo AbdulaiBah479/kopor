@@ -37,7 +37,7 @@ const ParsedSchema = z.object({
  * the business's own customer and product names and, when available, a second listener's version of the same
  * recording (alt): keep every detail either version heard, never add anything. Falls back to the original text.
  */
-export async function fixTranscript(text: string, book: Book, timeoutMs = 7000, alt = ''): Promise<string> {
+export async function fixTranscript(text: string, book: Book, timeoutMs = 7000, alt = '', krio = ''): Promise<string> {
   const names = book.contacts.slice(0, 60).map((c) => c.name).join(', ') || 'none';
   const items = book.products.slice(0, 60).map((p) => p.name).join(', ') || 'none';
   const sys = `You fix speech-to-text slips in ONE short shop record (Sierra Leone English or Krio). Make the SMALLEST possible change.
@@ -46,17 +46,19 @@ export async function fixTranscript(text: string, book: Book, timeoutMs = 7000, 
 - Keep every other word exactly as it is, in the same language. Never translate, summarise, add or remove information.
 - If nothing is clearly wrong, return the sentence unchanged.${alt ? `
 - A second listener wrote down the SAME recording (Version 2). Where Version 1 missed or garbled words, quantities or
-  amounts that Version 2 heard, use what Version 2 heard. Only use words found in one of the two versions.` : ''}
+  amounts that Version 2 heard, use what Version 2 heard. Only use words found in one of the two versions.` : ''}${krio ? `
+- Version 3 comes from a listener trained on Krio. It writes Krio by sound, all lower case, and numbers often in words.
+  Use it to settle Krio words, names and numbers the other versions disagree on or missed.` : ''}
 Reply with the sentence only.
 Customers: ${names}
 Products: ${items}`;
   try {
     const out = await Promise.race([
-      complete([{ role: 'system', content: sys }, { role: 'user', content: alt ? `Version 1: ${text}\nVersion 2: ${alt}` : text }], { json: true }),
+      complete([{ role: 'system', content: sys }, { role: 'user', content: alt || krio ? [`Version 1: ${text}`, alt && `Version 2: ${alt}`, krio && `Version 3: ${krio}`].filter(Boolean).join('\n') : text }], { json: true }),
       new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
     ]);
     const fixed = out.trim().replace(/^["'`]+|["'`]+$/g, '').split('\n')[0].trim();
-    return keepsMeaning(text, fixed, book, alt) ? fixed : text;
+    return keepsMeaning(text, fixed, book, alt, krio) ? fixed : text;
   } catch { return text; }
 }
 
@@ -67,20 +69,21 @@ Products: ${items}`;
 // Digits or number words (English, Krio, French): an amount may only be written down if something like this was said.
 const SAID_NUMBER = /\d|\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|wan|tu|to|tri|fo|fayv|siks|sevin|et|nayn|tɛn|ɔndrɛd|ondred|tawzin|deux|trois|quatre|cinq|sept|huit|neuf|dix|cent|mille)\b/i;
 
-export function keepsMeaning(original: string, fixed: string, book: Pick<Book, 'contacts' | 'products'>, alt = ''): boolean {
+export function keepsMeaning(original: string, fixed: string, book: Pick<Book, 'contacts' | 'products'>, alt = '', krio = ''): boolean {
   if (!fixed || fixed === original) return !!fixed;
   const known = { contacts: book.contacts.map((c) => c.name), products: book.products.map((p) => p.name) };
   const a = parseLocal(original, known), b = parseLocal(fixed, known), c = alt ? parseLocal(alt, known) : null;
+  const k = krio ? parseLocal(krio, known) : null;
   // Never invent an amount: it must be one a listener heard (when any amount was heard at all).
-  const heard = [a.amount, c?.amount ?? 0].filter((x) => x > 0);
+  const heard = [a.amount, c?.amount ?? 0, k?.amount ?? 0].filter((x) => x > 0);
   if (heard.length && !heard.includes(b.amount)) return false;
-  if (!heard.length && b.amount > 0 && !SAID_NUMBER.test(`${original} ${alt}`)) return false;   // no number was said at all
+  if (!heard.length && b.amount > 0 && !SAID_NUMBER.test(`${original} ${alt} ${krio}`)) return false;   // no number was said at all
   if (a.action !== 'unknown' && b.action !== 'unknown' && a.action !== b.action && c?.action !== b.action) return false;
   const words = (s: string): string[] => s.toLowerCase().normalize('NFC').match(/[\p{L}\p{N}]+/gu) ?? [];
   const wa = words(original), wc = words(alt), wb = words(fixed);
   const longest = Math.max(wa.length, wc.length), shortest = wc.length ? Math.min(wa.length, wc.length) : wa.length;
   if (wb.length < shortest * 0.6 || wb.length > longest * 1.5 + 2) return false;
-  const pool = new Set([...wa, ...wc]);
+  const pool = new Set([...wa, ...wc, ...words(krio)]);
   const shared = wb.filter((w) => pool.has(w)).length;
   return shared >= Math.min(longest, wb.length) * 0.5;               // mostly words that were really heard
 }

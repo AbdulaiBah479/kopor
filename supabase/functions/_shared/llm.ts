@@ -117,17 +117,40 @@ async function geminiListen(file: File, lang: string, hints: string): Promise<st
 }
 
 
-/** Whisper (with the amount retry) and Gemini listen at the same time. alt = Gemini's version, for the app to combine. */
-export async function transcribe(file: File, lang: string, hints = ''): Promise<{ text: string; provider: string; alt?: string }> {
+/**
+ * Whisper (with the amount retry), Gemini and, when set up, the Krio listener (Meta Omnilingual ASR, trained on Krio)
+ * listen at the same time. alt = the second version and krio = the Krio listener's, for the app to combine.
+ */
+export async function transcribe(file: File, lang: string, hints = ''): Promise<{ text: string; provider: string; alt?: string; krio?: string }> {
   const second = geminiListen(file, lang, hints).catch(() => null);
   const first = whisper(file, lang).catch((e) => { console.error('STT whisper', e); return null; });
-  const [w, alt] = await Promise.all([first, second]);
+  const third = krioListen(file, lang);
+  const [w, alt, krio] = await Promise.all([first, second, third]);
+  const k = krio ? { krio } : {};
   // Krio: Whisper only knows English and guesses English words; Gemini writes Krio well. So when the speech is Krio
   // (the app is in Krio, or Gemini's version is clearly Krio) Gemini's version leads and Whisper's is the backup.
-  if (alt && w?.text && (lang === 'kri' || krioWords(alt) >= 2)) return { text: alt, provider: 'gemini', alt: w.text };
-  if (w?.text) return { ...w, ...(alt && alt !== w.text ? { alt } : {}) };
-  if (alt) return { text: alt, provider: 'gemini' };
+  if (alt && w?.text && (lang === 'kri' || krioWords(alt) >= 2)) return { text: alt, provider: 'gemini', alt: w.text, ...k };
+  if (w?.text) return { ...w, ...(alt && alt !== w.text ? { alt } : {}), ...k };
+  if (alt) return { text: alt, provider: 'gemini', ...k };
+  if (krio) return { text: krio, provider: 'krio' };
   throw new Error('Voice service is busy. Please type instead.');
+}
+
+/**
+ * The Krio listener on Kopor's free Hugging Face Space (krio-listener/ in this repo). It is free but slow to wake after
+ * a quiet spell, so it gets a short time limit and is simply skipped when it is late, asleep or not set up.
+ */
+async function krioListen(file: File, lang: string): Promise<string | null> {
+  const url = Deno.env.get('KRIO_LISTENER_URL'), key = Deno.env.get('KRIO_LISTENER_KEY');
+  if (!url || !key || file.type !== 'audio/wav' || file.size > 1_300_000) return null;
+  try {
+    const res = await fetch(`${url.replace(/\/$/, '')}/transcribe?lang=${lang === 'kri' ? 'kri' : 'en'}`, {
+      method: 'POST', headers: { 'x-krio-key': key, 'Content-Type': 'audio/wav' }, body: file, signal: AbortSignal.timeout(12_000),
+    });
+    if (!res.ok) { console.error('STT krio', res.status); return null; }
+    const text = String((await res.json())?.text ?? '').trim();
+    return text || null;
+  } catch (e) { console.error('STT krio', e instanceof Error ? e.name : e); return null; }
 }
 
 async function whisper(file: File, lang: string): Promise<{ text: string; provider: string }> {

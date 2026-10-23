@@ -90,9 +90,9 @@ export async function toWav16k(blob: Blob): Promise<Blob> {
   } catch { return blob; }
 }
 
-export interface Heard { text: string; alt: string }
+export interface Heard { text: string; alt: string; krio: string }
 
-/** Turn a recording into text with the Kopor cloud: Whisper, plus Gemini's version (alt) when available. */
+/** Turn a recording into text with the Kopor cloud: Whisper, plus Gemini's version (alt) and the Krio listener's (krio). */
 export async function transcribe(recorded: Blob, lang: string, hints = ''): Promise<Heard> {
   const blob = await toWav16k(recorded);
   const file = new File([blob], `speech.${blob.type === 'audio/wav' ? 'wav' : extFor(blob.type)}`, { type: blob.type || 'audio/webm' });
@@ -106,5 +106,5 @@ export async function transcribe(recorded: Blob, lang: string, hints = ''): Prom
     const body = await (error as { context?: Response }).context?.json?.().catch(() => null);
     throw new Error(body?.error ?? error.message);
   }
-  return { text: String(data?.text ?? '').trim(), alt: String(data?.alt ?? '').trim() };
+  return { text: String(data?.text ?? '').trim(), alt: String(data?.alt ?? '').trim(), krio: String(data?.krio ?? '').trim() };
 }

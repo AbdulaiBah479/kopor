@@ -26,6 +26,12 @@ describe('AI transcript correction is only accepted when it keeps the meaning', 
     expect(keepsMeaning('Sold rice 2550 cash', 'Sold rice 2500 cash', book, 'Sold rice 2500 cash')).toBe(true);
     expect(keepsMeaning('Sold rice 2550 cash', 'Sold rice 2000 cash', book, 'Sold rice 2500 cash')).toBe(false);
   });
+  it('the Krio listener (third version) can supply the amount and Krio words, but not invent them', () => {
+    // Whisper missed the amount; the Krio listener heard "tri tawzin" (3000).
+    expect(keepsMeaning('Mohamed don pay', 'Mohamed don pay 3000', book, '', 'mohamed dɔn pe tri tawzin')).toBe(true);
+    expect(keepsMeaning('Mohamed don pay', 'Mohamed don pay 5000', book, '', 'mohamed dɔn pe tri tawzin')).toBe(false);
+    expect(keepsMeaning('Sold rice 2550 cash', 'Sold rice 2500 cash', book, 'Sold rice 2550 cash', 'sɛl rays 2500 kash')).toBe(true);
+  });
   it('rejects a translation or summary', () => {
     expect(keepsMeaning('Spent 200 on transport today for the shop', 'A spɛn 200 fɔ transpɔt', book)).toBe(false);
   });
