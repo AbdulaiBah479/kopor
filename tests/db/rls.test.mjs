@@ -17,7 +17,7 @@ const rejects = async (p, re) => { try { await p; } catch (e) { if (re && !re.te
 // --- Supabase-compatible auth stub ---
 await db.exec(`
   create schema auth;
-  create table auth.users (id uuid primary key, email text, created_at timestamptz not null default now(), last_sign_in_at timestamptz, raw_user_meta_data jsonb);
+  create table auth.users (id uuid primary key, email text, created_at timestamptz not null default now(), last_sign_in_at timestamptz, raw_user_meta_data jsonb, banned_until timestamptz);
   create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   create function auth.role() returns text language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claim.role', true), ''), 'anon') $$;
   create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
@@ -358,6 +358,39 @@ await test('account deletion removes the user from businesses', async () => {
   await q(`select kopor_forget_user($1)`, [U.cashier]);
   await as('cashier');
   assert.equal((await q('select * from orgs')).rows.length, 0);
+});
+
+await test('full owner dashboard: lists and business details for the server only; announcements show only when live', async () => {
+  for (const who of [null, 'owner']) {
+    await as(who);
+    for (const fn of [`kopor_admin_users('', 50, 0)`, `kopor_admin_orgs('', 'new', 50, 0)`, `kopor_admin_org('${ORG}')`, 'kopor_admin_money()', 'kopor_admin_ai()'])
+      await rejects(q(`select ${fn}`), /permission denied/, fn);
+  }
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  const users = (await q(`select kopor_admin_users('', 50, 0) as r`)).rows[0].r;
+  assert.equal(users.total, 3);
+  assert.ok(users.rows.some((u) => u.phone === '23276000000' && u.businesses.length === 1), 'owner account with its business');
+  assert.equal((await q(`select kopor_admin_users('0760 00', 50, 0) as r`)).rows[0].r.total, 1);   // search by phone digits
+  const orgs = (await q(`select kopor_admin_orgs('', 'active', 50, 0) as r`)).rows[0].r;
+  assert.equal(orgs.total, 1); assert.equal(orgs.rows[0].owner_phone, '23276000000'); assert.ok(orgs.rows[0].records > 0);
+  const d = (await q(`select kopor_admin_org($1) as r`, [ORG])).rows[0].r;
+  assert.equal(d.org.id, ORG); assert.ok(d.members.length >= 2); assert.equal(d.activity_14d.length, 14); assert.ok(Array.isArray(d.audit));
+  const m = (await q('select kopor_admin_money() as r')).rows[0].r;
+  assert.equal(m.daily_14d.length, 14);
+  assert.equal((await q('select kopor_admin_ai() as r')).rows[0].r.daily_14d.length, 14);
+
+  await q(`insert into announcements (message, created_by) values ('New: easy payments', '23276000000'), ('Old news', 'x')`);
+  await q(`update announcements set active = false where message = 'Old news'`);
+  await q(`insert into announcements (message, expires_at) values ('Expired', now() - interval '1 hour')`);
+  // (the test setup grants every table to everyone; re-apply the migration's column grant, as on the real server)
+  await q('revoke all on announcements from anon, authenticated');
+  await q('grant select (id, created_at, message, level, active, expires_at) on announcements to anon, authenticated');
+  for (const who of [null, 'stranger']) {
+    await as(who);
+    assert.deepEqual((await q('select message from announcements')).rows.map((r) => r.message), ['New: easy payments']);
+    await rejects(q('select created_by from announcements'), /permission denied/);
+    await rejects(q(`insert into announcements (message) values ('spam')`), /permission denied|row-level security/);
+  }
 });
 
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

@@ -9,6 +9,13 @@
 //   { action: 'recovery', phone }               -> a new one-time recovery code, to give the person after checking it is them
 //   { action: 'pro', orgId, months }            -> give Pro for N months (0 = back to free), e.g. for testers
 //   { action: 'log' }                           -> the last 50 support actions
+//   { action: 'users', q?, offset? }            -> every account (50 at a time), search by phone or name
+//   { action: 'orgs', q?, sort?, offset? }      -> every business with size and activity (sort: new|active|records|name)
+//   { action: 'org', orgId }                    -> one business in detail (written to the log)
+//   { action: 'money' } / { action: 'ai' }      -> payments through Monime / AI use across all businesses
+//   { action: 'announcements' }                 -> all announcements, live or not
+//   { action: 'announce', message, level?, days? } / { action: 'unannounce', id } -> show / stop a message on everyone's Home
+//   { action: 'suspend', phone, on }            -> block or unblock an account from signing in (abuse, fraud)
 // Every change is written to admin_log with the administrator's phone number.
 import { admin, cors, json, HttpError, env } from '../_shared/util.ts';
 import { issueCode, lockKey } from '../_shared/recovery.ts';
@@ -112,6 +119,64 @@ Deno.serve(async (req) => {
         if (error) throw new Error(error.message);
         await log(months ? 'pro:give' : 'pro:remove', String(org.name), months ? `${months} months` : '');
         return json({ ok: true, ...patch });
+      }
+      case 'users': {
+        const { data, error } = await db.rpc('kopor_admin_users', { q: String(body.q ?? '').slice(0, 60), lim: 50, off: Math.max(0, Math.floor(Number(body.offset) || 0)) });
+        if (error) throw new Error(error.message);
+        return json(data);
+      }
+      case 'orgs': {
+        const sort = ['new', 'active', 'records', 'name'].includes(String(body.sort)) ? String(body.sort) : 'new';
+        const { data, error } = await db.rpc('kopor_admin_orgs', { q: String(body.q ?? '').slice(0, 60), sort, lim: 50, off: Math.max(0, Math.floor(Number(body.offset) || 0)) });
+        if (error) throw new Error(error.message);
+        return json(data);
+      }
+      case 'org': {
+        if (!/^[0-9a-f-]{36}$/.test(String(body.orgId))) throw new HttpError(400, 'Bad request');
+        const { data, error } = await db.rpc('kopor_admin_org', { oid: body.orgId });
+        if (error) throw new Error(error.message);
+        if (!data?.org) throw new HttpError(404, 'Business not found');
+        await log('view-business', String(data.org.name));
+        return json(data);
+      }
+      case 'money':
+      case 'ai': {
+        const { data, error } = await db.rpc(body.action === 'money' ? 'kopor_admin_money' : 'kopor_admin_ai');
+        if (error) throw new Error(error.message);
+        return json(data);
+      }
+      case 'announcements': {
+        const { data, error } = await db.from('announcements').select('id, created_at, message, level, active, expires_at, created_by').order('created_at', { ascending: false }).limit(30);
+        if (error) throw new Error(error.message);
+        return json({ announcements: data });
+      }
+      case 'announce': {
+        const message = String(body.message ?? '').trim();
+        const days = Math.round(Number(body.days ?? 7));
+        if (!message || message.length > 500 || !(days >= 1 && days <= 90)) throw new HttpError(400, 'Write a message of up to 500 characters');
+        const level = body.level === 'warn' ? 'warn' : 'info';
+        const { error } = await db.from('announcements').insert({ message, level, expires_at: new Date(Date.now() + days * DAY).toISOString(), created_by: phone });
+        if (error) throw new Error(error.message);
+        await log('announce', message.slice(0, 80), `${days} days`);
+        return json({ ok: true });
+      }
+      case 'unannounce': {
+        if (!/^[0-9a-f-]{36}$/.test(String(body.id))) throw new HttpError(400, 'Bad request');
+        const { error } = await db.from('announcements').update({ active: false }).eq('id', body.id);
+        if (error) throw new Error(error.message);
+        await log('unannounce', String(body.id));
+        return json({ ok: true });
+      }
+      case 'suspend': {
+        const n = intl(body.phone);
+        if (admins.includes(n)) throw new HttpError(400, 'An administrator account cannot be suspended here');
+        const a = await account(n);
+        const on = body.on === true;
+        // Supabase signs the person out everywhere and refuses new sign-ins until the ban is lifted.
+        const { error } = await db.auth.admin.updateUserById(a.id, { ban_duration: on ? '876000h' : 'none' });
+        if (error) throw new Error(error.message);
+        await log(on ? 'suspend' : 'unsuspend', `+${n}`, String(body.reason ?? '').slice(0, 200));
+        return json({ ok: true });
       }
       case 'log': {
         const { data, error } = await db.from('admin_log').select('at, admin_phone, action, target, detail').order('at', { ascending: false }).limit(50);

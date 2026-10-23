@@ -573,6 +573,71 @@ await step('close the day', async () => {
   await page.getByText('Day closed').waitFor();
 });
 
+await step('owner dashboard: every user and business, a business page, money, AI and an announcement on Home', async () => {
+  // Stand-in for the admin server (the real one only answers phones listed in KOPOR_ADMIN_PHONES).
+  const days = Array.from({ length: 14 }, (_, i) => ({ day: new Date(Date.now() - (13 - i) * 864e5).toISOString().slice(0, 10), n: i, active: i % 3, records: i * 2 }));
+  const ORGID = '99999999-9999-4999-8999-999999999999';
+  const calls = [];
+  const answers = {
+    stats: { stats: { accounts: 12, accounts_week: 3, businesses: 9, businesses_active_week: 5, staff: 4, pro: 2, records_week: 140, money_recorded_week: 5_000_000, ai_today: 17,
+      payments_completed: 6, locked_accounts: 0, signups_14d: days, activity_14d: days, business_types: { shop: 7, food: 2 }, reports_waiting: 1 },
+      health: { ai: ['groq', 'gemini'], voice: true, voice_backup: false, pin_pepper: true, payments: true, pro_billing: false }, at: new Date().toISOString() },
+    reports: { reports: [] }, log: { log: [] },
+    users: { total: 2, rows: [
+      { id: 'u1', phone: '23276123456', name: 'Fatmata Kamara', created_at: new Date().toISOString(), last_sign_in_at: new Date().toISOString(), banned_until: null, businesses: [{ id: ORGID, name: 'Mama Fatu Store', role: 'owner' }] },
+      { id: 'u2', phone: '23288111222', name: null, created_at: new Date().toISOString(), last_sign_in_at: null, banned_until: '2999-01-01T00:00:00Z', businesses: [] }] },
+    orgs: { total: 1, rows: [{ id: ORGID, name: 'Mama Fatu Store', type: 'shop', owner_name: 'Fatmata Kamara', owner_phone: '23276123456', phone: '', plan: 'free', plan_until: null,
+      created_at: Date.now() - 864e6, staff: 2, branches: 1, records: 320, records_30d: 85, money_in_30d: 2_400_000, last_record: Date.now(), payments: 'easy' }] },
+    org: { org: { id: ORGID, name: 'Mama Fatu Store', type: 'shop', owner_name: 'Fatmata Kamara', phone: '', address: 'Kissy Road', momo_number: '', plan: 'free', plan_until: null, created_at: Date.now() - 864e6, owner_phone: '23276123456' },
+      members: [{ name: 'Fatmata Kamara', role: 'owner', phone: '', active: true, account: '23276123456', last_sign_in_at: new Date().toISOString() }], branches: ['Main'],
+      counts: { customers: 40, suppliers: 3, products: 55, records: 320, invoices_unpaid: 2, groups: 1 }, money_30d: { in: 2_400_000, out: 900_000 }, credit_outstanding: 350_000,
+      activity_14d: days, audit: [{ member_name: 'Fatmata Kamara', action: 'create', entity: 'transactions', summary: 'Sale 2 Soap bar', at: Date.now() }], payments: [], payments_mode: 'easy', ai_14d: 9 },
+    money: { received_30d: 1_000_000, sent_30d: 990_000, by_status: { completed: 6, pending: 1 }, own_accounts: 1, easy_accounts: 2, daily_14d: days,
+      latest: [{ kind: 'ussd', amount: 50_000, status: 'completed', note: 'Rice', created_at: Date.now(), business: 'Mama Fatu Store', org_id: ORGID }] },
+    ai: { daily_14d: days, top_week: [{ org_id: ORGID, name: 'Mama Fatu Store', n: 30 }], guests_today: 4 },
+    announcements: { announcements: [] }, announce: { ok: true },
+  };
+  await page.route('**/functions/v1/admin', async (r) => {
+    const b = JSON.parse(r.request().postData() || '{}');
+    calls.push(b);
+    await r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(answers[b.action] ?? { ok: true }) });
+  });
+  await page.route('**/rest/v1/announcements*', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ id: 'n1', message: 'New: easy payments are here', level: 'info' }]) }));
+  try {
+    await go('/admin');
+    await page.locator('.owner-tabs').waitFor({ timeout: 8000 }).catch(() => {});
+    if (!(await page.locator('.owner-tabs').count())) {
+      console.log('   (no cloud in this build: skipped)'); return;
+    }
+    await noOverflow();
+    await page.locator('.owner-tabs').getByRole('tab', { name: 'Users' }).click();
+    await page.getByTestId('admin-users').getByText('Fatmata Kamara').waitFor();
+    await page.getByTestId('admin-users').getByText('Suspended').waitFor();               // the banned account is marked
+    await page.locator('.owner-tabs').getByRole('tab', { name: 'Businesses' }).click();
+    await page.getByTestId('admin-orgs').getByText('Mama Fatu Store').click();
+    await page.getByTestId('admin-org').getByText('Customers owe them').waitFor();
+    await page.getByTestId('admin-org').getByText('Sale 2 Soap bar').waitFor();
+    if (!calls.some((c) => c.action === 'org' && c.orgId === ORGID)) throw new Error('business detail not asked for');
+    await noOverflow();
+    await shot('10b-owner-business');
+    await page.locator('.owner-tabs').getByRole('tab', { name: 'Money' }).click();
+    await page.getByTestId('admin-money').getByText('Mama Fatu Store').waitFor();
+    await page.locator('.owner-tabs').getByRole('tab', { name: 'AI' }).click();
+    await page.getByText('Most AI use this week').waitFor();
+    await page.locator('.owner-tabs').getByRole('tab', { name: 'News' }).click();
+    await page.getByTestId('admin-news').locator('textarea').fill('New: easy payments are here');
+    await page.getByTestId('admin-news').getByRole('button', { name: 'Show to everyone' }).click();
+    await page.getByText('Announcement is live').waitFor();
+    if (calls.at(-2)?.action !== 'announce' && !calls.some((c) => c.action === 'announce' && c.message === 'New: easy payments are here')) throw new Error('announce not sent');
+    // Everyone sees it on Home, and can close it.
+    await go('/');
+    const note = page.getByTestId('announcement');
+    await note.getByText('New: easy payments are here').waitFor({ timeout: 8000 });
+    await note.getByRole('button', { name: 'Close' }).click();
+    await note.waitFor({ state: 'detached' });
+  } finally { await page.unroute('**/functions/v1/admin'); await page.unroute('**/rest/v1/announcements*'); }
+});
+
 await step('easy payments: the owner types a mobile money number and is ready to receive', async () => {
   // Stand-in for the Kopor server (the real one needs Kopor's Monime account): records what the app asked for.
   const calls = [];

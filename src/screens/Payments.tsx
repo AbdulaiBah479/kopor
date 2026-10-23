@@ -49,7 +49,8 @@ export function Payments() {
               {can('business') && (
                 <label className="check"><input type="checkbox" checked={status.auto !== false} onChange={(e) => {
                   const auto = e.target.checked;
-                  connectEasy(ctx.orgId, { auto }).then(() => setStatus({ ...status, auto })).catch(fail);
+                  setStatus({ ...status, auto });   // show the change at once; undo it if the server refuses
+                  connectEasy(ctx.orgId, { auto }).catch((err) => { setStatus({ ...status, auto: !auto }); fail(err); });
                 }} /> {t('easy.auto')}</label>
               )}
               {status.auto === false && <div className="small muted">{t('easy.autoOff')}</div>}

@@ -231,6 +231,12 @@
   .alert .ic { color: var(--warning); margin-top: 1px; }
   .alert.bad { background: var(--danger-soft); }
   .alert.bad .ic { color: var(--danger); }
+  .alert.info { background: var(--primary-soft); }
+  .alert.info .ic { color: var(--primary); }
+  /* Owner dashboard: many tabs, so they scroll sideways on a phone. */
+  .owner-tabs { overflow-x: auto; scrollbar-width: none; margin-inline: -2px; padding-inline: 2px; }
+  .owner-tabs .seg { width: max-content; min-width: 100%; }
+  .owner-tabs .seg button { flex: 1 0 auto; padding-inline: 12px; white-space: nowrap; }
 
   /* ---------- Fintech home: balance, action circles, insight carousel ---------- */
   .balance-head { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0 2px; text-align: center; }

@@ -19,6 +19,7 @@ import { health } from '@/domain/health';
 import { insights } from '@/domain/insights';
 import { SaleSheet, ExpenseSheet } from './Cash';
 import { NewCreditSheet, useReminderText } from './Credit';
+import { Announcements } from '@/ui/Announcements';
 
 // AI tools (and their validation library) download only when first used.
 const VoiceSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.VoiceSheet })));
@@ -87,6 +88,7 @@ export function Home() {
         <button className="icon-btn" onClick={search} aria-label={t('ux.searchTitle')} data-testid="search"><Icon name="search" size={22} /></button>
         <Link className="icon-btn" to="/settings" aria-label={t('settings.title')}><Icon name="sliders" size={22} /></Link>
       </>}>
+      <Announcements />
       {canPickBranch && (
         <select className="input" aria-label={t('home.branch')} value={session?.branchId ?? ''}
           onChange={(e) => switchSession({ ...session!, branchId: e.target.value || null })}>
