@@ -18,7 +18,8 @@
     "test:a11y": "node tools/a11y.mjs",
     "test:crawl": "node tests/e2e/crawl.mjs",
     "knip": "knip --no-progress",
-    "size": "node tools/size-budget.mjs"
+    "size": "node tools/size-budget.mjs",
+    "typecheck:server": "npx -y deno@2.5.4 check supabase/functions/*/index.ts"
   },
   "dependencies": {
     "@capacitor-community/bluetooth-le": "^8.3.0",

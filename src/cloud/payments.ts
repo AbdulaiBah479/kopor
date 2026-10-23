@@ -1,6 +1,6 @@
-// Mobile money / card payments through Monime (licensed by the Bank of Sierra Leone).
-// Kopor never holds funds: each business connects its OWN Monime account. Secrets live only in the
-// Supabase Edge Function (supabase/functions/monime); the phone never sees them.
+// Mobile money / card payments through Monime (licensed by the Bank of Sierra Leone). Either the business connects its
+// own Monime account, or (easy payments) it just gives a mobile money number and each payment is sent on to it.
+// Secrets live only in the Supabase Edge Function (supabase/functions/monime); the phone never sees them.
 import { getSupabase } from './supabase';
 
 async function call<T>(body: Record<string, unknown>): Promise<T> {
@@ -13,7 +13,12 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
 }
 
 export const connectMonime = (orgId: string, spaceId: string, token: string) => call<{ ok: true }>({ action: 'connect', orgId, spaceId, token });
-export const monimeStatus = (orgId: string) => call<{ connected: boolean; mode?: string }>({ action: 'status', orgId });
+export interface MonimeStatus { connected: boolean; mode: 'own' | 'easy' | null; easyAvailable: boolean; phone?: string; providerId?: string; auto?: boolean }
+export const monimeStatus = (orgId: string) => call<MonimeStatus>({ action: 'status', orgId });
+
+/** Easy payments: connect with just a mobile money number (also changes the number or the automatic sending). */
+export const connectEasy = (orgId: string, args: { phone?: string; providerId?: string; auto?: boolean }) =>
+  call<{ ok: true; phone: string; providerId: string }>({ action: 'easy', orgId, ...args });
 export const disconnectMonime = (orgId: string) => call<{ ok: true }>({ action: 'disconnect', orgId });
 
 /** Hosted checkout link (mobile money, card, bank) for an invoice. */

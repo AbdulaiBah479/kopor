@@ -369,6 +369,17 @@ const v3: V3Dict = {
     sell: 'Sɛl',
     stockAdded: '{{qty}} {{name}} dɔn ad to stɔk',
   },
+  easy: {
+    title: 'Gɛt pe na yu mobile mɔni',
+    help: 'Rayt di nɔmba we yu want yu mɔni go. Kɔstɔma dɛn kin pe wit Orange Money, Afrimoney, kad ɔ bank, ɛn Kopor go sɛn ɛni pe dairekt to dis nɔmba.',
+    phone: 'Yu mobile mɔni nɔmba', network: 'Nɛtwɔk', orange: 'Orange Money', afri: 'Afrimoney', pickNetwork: 'Pik di nɛtwɔk',
+    connect: 'Bigin fɔ gɛt pe', connected: 'Pe dɛn de go to {{phone}} ({{network}})', change: 'Chenj nɔmba',
+    auto: 'Sɛn ɛni pe to mi nɔmba wantɛm', autoOff: 'Kip di pe dɛn na Kopor te a sɛn dɛn',
+    fees: 'Monime kin tek smɔl fi fɔ ɛni pe ɛn ɛni tɛm i sɛn mɔni to yu nɔmba. Nɔ fi fɔ bigin, nɔ fi ɛvri mɔnt.',
+    soon: 'Fɔ gɛt pe wit jɔs yu nɔmba de kam kwik. Yu kin kɔnɛkt yu yon Monime biznɛs akawnt naw.',
+    own: 'A gɛt mi yon Monime biznɛs akawnt', ownHide: 'Go bak to di izi we', saved: 'I dɔn. Pe dɛn go go to {{phone}}',
+    badNumber: 'Rayt Salone mobile nɔmba, lɛk 076 123 456',
+  },
   daily: {
     title: '{{name}}: tide',
     help: 'Nɔtifikeshɔn na 8:00 ɛvri mɔnin wit wetin fɔ du. I de mek am pan dis fon frɔm yu rɛkɔd, so i de wok ɔflayn.',

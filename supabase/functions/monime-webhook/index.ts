@@ -1,8 +1,8 @@
 // Receives Monime events. Deploy with --no-verify-jwt (Monime has no Supabase token).
 // Security: (1) a per-business secret header set when the webhook was registered, and
 // (2) the status is re-fetched from Monime's API, so a forged body can never mark anything paid.
-import { admin, json, nowMs, today, env } from '../_shared/util.ts';
-import { credsFor, monime } from '../_shared/monime.ts';
+import { admin, json, nowMs, today } from '../_shared/util.ts';
+import { credsFor, monime, platformCreds, sweepToOwner, type MonimeCreds } from '../_shared/monime.ts';
 
 const PATH: Record<string, string> = { payment_code: '/payment-codes/', checkout_session: '/checkout-sessions/', payout: '/payouts/' };
 
@@ -18,11 +18,12 @@ Deno.serve(async (req) => {
 
     const db = admin();
     const subscription = meta.kind === 'subscription';
-    // Kopor Pro payments arrive on Kopor's own Monime account; business payments on the business's account.
-    const expected = subscription ? Deno.env.get('KOPOR_WEBHOOK_SECRET')
+    // Kopor Pro payments and easy payments arrive on Kopor's own Monime account; other business payments on the business's account.
+    const creds: MonimeCreds = subscription ? platformCreds() : await credsFor(orgId);
+    const easy = !subscription && !!creds.fac;
+    const expected = subscription || easy ? Deno.env.get('KOPOR_WEBHOOK_SECRET')
       : (await db.from('org_secrets').select('webhook_secret').eq('org_id', orgId).maybeSingle()).data?.webhook_secret;
     if (!expected || req.headers.get('x-kopor-secret') !== expected) return json({ error: 'Unauthorized' }, 401);
-    const creds = subscription ? { spaceId: env('KOPOR_MONIME_SPACE_ID'), token: env('KOPOR_MONIME_TOKEN') } : await credsFor(orgId);
 
     // Trust Monime's API, not the webhook body.
     const fresh = await monime<{ status: string }>(creds, 'GET', PATH[type] + encodeURIComponent(objectId));
@@ -74,6 +75,11 @@ Deno.serve(async (req) => {
         id: crypto.randomUUID(), org_id: orgId, created_at: now, updated_at: now, member_name: 'Monime', action: 'create', entity: 'transactions',
         entity_id: pr.id, summary: `Received ${pr.amount / 100} online`, at: now,
       });
+    }
+    // Easy payments: send the money straight on to the owner's mobile money number (unless they turned that off).
+    if (easy && status === 'completed' && pr.kind !== 'payout') {
+      const { data: s } = await db.from('org_secrets').select('easy_auto').eq('org_id', orgId).maybeSingle();
+      if (s?.easy_auto !== false) await sweepToOwner(orgId, pr.id).catch((e) => console.error('sweep', e));
     }
     return json({ ok: true });
   } catch (e) {

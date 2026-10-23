@@ -21,6 +21,8 @@ jobs:
       - name: Unused code and packages (knip)
         run: npm run knip
       - run: npm run typecheck
+      - name: Type-check the server (Supabase Edge Functions, Deno)
+        run: npm run typecheck:server
       - run: npm test
       - run: npm run test:db
       - run: npm run build

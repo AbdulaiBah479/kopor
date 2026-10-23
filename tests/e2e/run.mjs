@@ -573,6 +573,34 @@ await step('close the day', async () => {
   await page.getByText('Day closed').waitFor();
 });
 
+await step('easy payments: the owner types a mobile money number and is ready to receive', async () => {
+  // Stand-in for the Kopor server (the real one needs Kopor's Monime account): records what the app asked for.
+  const calls = [];
+  let st = { connected: false, mode: null, easyAvailable: true };
+  await page.route('**/functions/v1/monime', async (r) => {
+    const b = JSON.parse(r.request().postData() || '{}');
+    calls.push(b);
+    if (b.action === 'easy') st = { connected: true, mode: 'easy', easyAvailable: true, phone: '076 *** 456', providerId: b.providerId || 'm17', auto: b.auto ?? st.auto ?? true };
+    await r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b.action === 'easy' ? { ok: true, phone: '076 *** 456', providerId: 'm17' } : st) });
+  });
+  try {
+    await go('/payments');
+    await Promise.race([page.getByTestId('easy-form').waitFor(), page.getByText('Payments need a Kopor cloud account').waitFor()]);
+    if (!(await page.getByTestId('easy-form').count())) { console.log('   (no cloud in this build: checked the message instead)'); return; }
+    const form = page.getByTestId('easy-form');
+    await form.locator('input[type=tel]').fill('076 123 456');
+    await form.getByText('Network: Orange Money').waitFor();          // worked out from the number
+    await form.getByRole('button', { name: 'Start receiving payments' }).click();
+    await page.getByTestId('easy-on').getByText('Payments go to 076 *** 456 (Orange Money)').waitFor();
+    const sent = calls.find((c) => c.action === 'easy');
+    if (sent.phone !== '+23276123456' || sent.providerId) throw new Error('sent ' + JSON.stringify(sent));
+    await shot('07c-easy-payments');
+    await page.getByTestId('easy-on').locator('input[type=checkbox]').uncheck();  // keep payments until I send them
+    await page.getByText('Keep payments in Kopor until I send them').waitFor();
+    if (calls.at(-1).auto !== false || calls.at(-1).phone) throw new Error('auto off sent ' + JSON.stringify(calls.at(-1)));
+  } finally { await page.unroute('**/functions/v1/monime'); }
+});
+
 await step('money: receive with QR code, then record a debt payment', async () => {
   await go('/');
   await page.getByTestId('home-receive').click();

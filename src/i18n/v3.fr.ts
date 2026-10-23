@@ -369,6 +369,17 @@ const v3: V3Dict = {
     sell: 'Vendre',
     stockAdded: '{{qty}} {{name}} ajouté(s) au stock',
   },
+  easy: {
+    title: 'Recevez vos paiements sur votre mobile money',
+    help: 'Entrez le numéro où vous voulez recevoir votre argent. Les clients paient par Orange Money, Afrimoney, carte ou banque, et Kopor envoie chaque paiement directement à ce numéro.',
+    phone: 'Votre numéro mobile money', network: 'Réseau', orange: 'Orange Money', afri: 'Afrimoney', pickNetwork: 'Choisissez le réseau',
+    connect: 'Commencer à recevoir des paiements', connected: 'Les paiements vont au {{phone}} ({{network}})', change: 'Changer de numéro',
+    auto: 'Envoyer chaque paiement à mon numéro tout de suite', autoOff: 'Garder les paiements dans Kopor jusqu’à ce que je les envoie',
+    fees: 'Monime prend une petite commission sur chaque paiement et chaque envoi vers votre numéro. Pas de frais d’ouverture ni d’abonnement.',
+    soon: 'Recevoir des paiements avec seulement votre numéro arrive bientôt. Vous pouvez déjà connecter votre propre compte Monime.',
+    own: 'J’ai mon propre compte professionnel Monime', ownHide: 'Revenir à la méthode simple', saved: 'C’est fait. Les paiements iront au {{phone}}',
+    badNumber: 'Entrez un numéro mobile de Sierra Leone, comme 076 123 456',
+  },
   daily: {
     title: '{{name}} : aujourd’hui',
     help: 'Une notification à 8 h chaque matin avec ce qui demande votre attention. Faite sur ce téléphone à partir de vos données, donc hors ligne aussi.',
