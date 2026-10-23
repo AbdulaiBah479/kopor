@@ -8,9 +8,9 @@ import { setSession } from './org';
 const BackupSchema = z.object({
   app: z.literal('kopor'),
   version: z.literal(2),
-  orgId: z.string().uuid(),
+  orgId: z.guid(), // any 8-4-4-4-12 id (zod 4 .uuid() is stricter)
   exportedAt: z.string(),
-  tables: z.record(z.array(z.object({ id: z.string(), org_id: z.string() }).passthrough())),
+  tables: z.record(z.string(), z.array(z.looseObject({ id: z.string(), org_id: z.string() }))),
 });
 
 export async function exportOrg(orgId: string, password?: string): Promise<string> {
