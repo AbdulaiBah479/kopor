@@ -11,6 +11,7 @@ import { useOverlay } from '@/ui/overlay';
 import { AppearancePanel } from '@/ui/Appearance';
 import { useEffect, useState } from 'react';
 import { isAppAdmin } from '@/cloud/admin';
+import { Copyright } from '@/ui/Copyright';
 import { Suspense } from 'react';
 import { lazyRetry } from '@/ui/lazy';
 const ReportSheet = lazyRetry(() => import('./Report').then((m) => ({ default: m.ReportSheet })));
@@ -92,6 +93,7 @@ export function More() {
         </button>
       </div>
       <p className="px-4 text-[13px] text-muted-foreground">{t('more.offlineNote')}</p>
+      <Copyright />
     </Page>
   );
 }

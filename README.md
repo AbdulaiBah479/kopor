@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/AbdulaiBah479/kopor/actions/workflows/ci.yml/badge.svg)](https://github.com/AbdulaiBah479/kopor/actions/workflows/ci.yml)
 [![Deploy](https://github.com/AbdulaiBah479/kopor/actions/workflows/pages.yml/badge.svg)](https://github.com/AbdulaiBah479/kopor/actions/workflows/pages.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-047857.svg)](LICENSE)
+[![License: proprietary](https://img.shields.io/badge/license-all%20rights%20reserved-047857.svg)](LICENSE)
 [![CodeQL](https://github.com/AbdulaiBah479/kopor/actions/workflows/codeql.yml/badge.svg)](https://github.com/AbdulaiBah479/kopor/actions/workflows/codeql.yml)
 
 **Running the service after launch:** see [docs/OPERATIONS.md](docs/OPERATIONS.md) (owner dashboard, support, updates, costs).
@@ -211,6 +211,13 @@ offline at the same time never overwrite each other's sales.
 - QMoney is recorded as a payment method. Online collection through QMoney depends on Monime adding it.
 - Next: native-speaker review of Krio and French, Temne/Mende, barcode scanning, Pro billing.
 
-## License
+## Copyright and licence
 
-[MIT](LICENSE). Krio data credits are listed under *Krio language data* above.
+**© 2026 Abdulai Bah. All rights reserved.** Kopor™ and the Kopor logo are trademarks of Abdulai Bah.
+
+This is **not open-source software**. The code is public so it can be reviewed and built automatically, but no
+permission is given to copy, change, publish, sell or reuse any of it, or the Kopor name and designs. See
+[LICENSE](LICENSE). For permission, email babdulai225.2@gmail.com.
+
+Third-party open-source components keep their own licences (listed in the app at `licenses.txt`).
+Krio data credits are listed under *Krio language data* above.

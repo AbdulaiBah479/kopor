@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "eslint .",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node tools/licenses.mjs",
     "preview": "vite preview --port 4173",
     "typecheck": "tsc -b",
     "test": "vitest run",
@@ -80,7 +80,7 @@
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^4.1.11"
   },
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
     "url": "https://github.com/AbdulaiBah479/kopor.git"
@@ -90,5 +90,6 @@
     "xcode": {
       "uuid": "^11.1.1"
     }
-  }
+  },
+  "author": "Abdulai Bah <babdulai225.2@gmail.com>"
 }

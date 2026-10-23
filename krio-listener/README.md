@@ -6,7 +6,7 @@ colorTo: yellow
 sdk: docker
 app_port: 7860
 pinned: false
-license: apache-2.0
+license: other
 short_description: Krio speech to text for the Kopor shop app
 ---
 
@@ -22,3 +22,6 @@ Krio and also knows Mende, Temne and 1,600+ other languages.
   `KRIO_KEY`. Returns `{"text": "..."}`.
 
 Only Kopor's server holds the key. Recordings are not stored.
+
+© 2026 Abdulai Bah. All rights reserved (see the LICENSE of the Kopor repository). The Omnilingual ASR model it runs is
+by Meta, under the Apache 2.0 licence.

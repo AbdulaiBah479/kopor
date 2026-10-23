@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useState } from 'react';
+import { Copyright } from '@/ui/Copyright';
 import { lazyRetry } from '@/ui/lazy';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook, useLocalOrgs } from '@/state/app';
@@ -139,6 +140,7 @@ export function Settings() {
         <Link className="btn ghost sm" to="/legal/terms">{t('legal.terms')}</Link>
       </div>
       <div className="small muted" style={{ textAlign: 'center' }}>{t('settings.about')} · {isPro(book.org) ? 'PRO' : 'FREE'}</div>
+      <Copyright />
     </Page>
   );
 }

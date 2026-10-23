@@ -9,6 +9,7 @@ import { LANGUAGES } from '@/i18n';
 import { createOrg, setPin, getSession } from '@/domain/org';
 import { createDemo } from '@/domain/demo';
 import { ORG_TYPES } from './More';
+import { Copyright } from '@/ui/Copyright';
 
 const CloudSignIn = lazyRetry(() => import('./CloudSignIn'));
 
@@ -76,6 +77,7 @@ export function Welcome() {
           <button className="btn ghost" disabled={busy} onClick={demo} data-testid="demo">{busy ? t('common.loading') : t('welcome.demo')}</button>
         </div>
         <div className="small muted" style={{ textAlign: 'center' }}>{t('welcome.free')}</div>
+        <Copyright />
       </div>
     </main>
   );

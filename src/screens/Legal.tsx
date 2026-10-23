@@ -2,6 +2,7 @@
 // URL can be given to Google Play. TEMPLATE: have a Sierra Leone lawyer review before launch.
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { COPYRIGHT, Copyright, OWNER } from '@/ui/Copyright';
 
 const EMAIL = import.meta.env.VITE_SUPPORT_EMAIL as string | undefined;
 const WHATSAPP = import.meta.env.VITE_SUPPORT_WHATSAPP as string | undefined;
@@ -39,6 +40,10 @@ const TERMS: [string, string[]][] = [
   ['Using Kopor', ['By using Kopor you agree to these terms. Kopor is provided to help you keep business records; you are responsible for the accuracy of what you enter.']],
   ['Not financial or tax advice', ['Reports, health scores, tax calculations and AI suggestions are tools to help you. They are not professional financial, legal or tax advice. Check important decisions and tax filings with a qualified adviser and the National Revenue Authority.']],
   ['Payments and money', ['Kopor does not hold, transfer or store money. Payments are made through your own Monime account and are subject to Monime’s terms and fees. Kopor Pro subscriptions are paid in advance and renew only when you pay again.']],
+  ['Ownership of Kopor', [
+    `Kopor (the app, website, source code, designs, screens, text and translations), the name “Kopor” and the Kopor logo belong to ${OWNER} and are protected by copyright and trademark law, including the Copyright Act 2011 of Sierra Leone. ${COPYRIGHT}`,
+    'You may use the official Kopor app for your business under these terms. You may not copy, change, resell, rebrand or publish Kopor or its code, take it apart to make a similar product, or use the Kopor name or logo for anything else, without written permission.',
+  ]],
   ['Your data', ['You own the records you enter. You give Kopor permission to store and process them only to provide the service. Keep backups; we are not responsible for data lost on a phone that is lost, damaged or reset without a backup.']],
   ['Acceptable use', ['Do not use Kopor for fraud, money laundering, harassment of customers, or anything illegal in Sierra Leone or where you live. Reminders must be polite and lawful.']],
   ['Availability', ['We work to keep Kopor available but the service is provided “as is”. Offline features keep working without internet; cloud features may sometimes be unavailable.']],
@@ -64,6 +69,7 @@ export function Legal() {
             {ps.map((p, i) => <p key={i} className="small" style={{ margin: '6px 0' }}>{p}</p>)}
           </section>
         ))}
+        <Copyright />
       </div>
     </main>
   );

@@ -1,21 +1,40 @@
-MIT License
+Kopor™ — Proprietary Software Licence
 
-Copyright (c) 2026 AbdulaiBah479 and Kopor contributors
+Copyright © 2026 Abdulai Bah. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This repository and everything in it — the source code, the Android and web apps built from it, the database design,
+the designs, screens, text, translations (English, Krio and French), the name "Kopor", the logo and icons, and all
+documentation (together, "the Software") — are the property of Abdulai Bah and are protected by copyright law,
+including the Copyright Act 2011 of Sierra Leone and international treaties (the Berne Convention).
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. NO LICENCE IS GRANTED. You may view this repository on GitHub. You may NOT, without the prior written permission of
+   Abdulai Bah:
+   a. copy, reproduce or download the Software or any part of it, except as GitHub's own terms of service require
+      for viewing;
+   b. modify, translate, adapt or create works based on the Software;
+   c. distribute, publish, sell, rent, lend, sublicense or otherwise make the Software or any part of it available
+      to anyone, including as a hosted service, an app in any app store, or under another name;
+   d. use the Software, its code or its designs to build, train or improve another product or service;
+   e. remove or change any copyright, trademark or other notice.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. USING THE OFFICIAL APP. Businesses and people may use the official Kopor app and website, published by Abdulai Bah,
+   under its Terms of Use (https://abdulaibah479.github.io/kopor/#/legal/terms). That permission covers using the app
+   only, not the source code.
+
+3. TRADEMARKS. "Kopor", the Kopor logo and the Kopor name in Krio are trademarks of Abdulai Bah. They may not be used
+   for any other product, service, app or business name, or in a way that suggests a connection with Kopor.
+
+4. CONTRIBUTIONS. Anything you send to this repository (code, issues, translations, ideas) may be used by Abdulai Bah
+   freely and without payment, and you confirm you have the right to send it.
+
+5. THIRD-PARTY COMPONENTS. The Software uses open-source components owned by others. Each stays under its own licence
+   (MIT, Apache-2.0, BSD, ISC and similar), listed in the app (licenses.txt) and in package-lock.json. This licence
+   does not change those licences and does not claim ownership of those components.
+
+6. NO WARRANTY. The Software is provided "as is", without warranty of any kind. To the extent allowed by law, Abdulai
+   Bah is not liable for any damage arising from unauthorised use of the Software.
+
+Earlier versions of this repository were published under the MIT licence. Copies made under that licence before this
+change keep only the rights it gave for that earlier code; this licence applies to every version from this point on.
+
+Permission requests: babdulai225.2@gmail.com or WhatsApp +232 72 082 348.
