@@ -44,6 +44,8 @@ export async function signIn(phone: string, pin: string) {
   return pinAuth({ action: 'signin', email: phoneToEmail(phone), pin });
 }
 export async function signOut() { (await getSupabase())?.auth.signOut(); }
+/** Lost or stolen phone: end the account's sessions on every phone (each must sign in again with the PIN). */
+export async function signOutEverywhere() { await (await getSupabase())?.auth.signOut({ scope: 'global' }); }
 
 export async function currentUser() {
   const sb = await getSupabase();

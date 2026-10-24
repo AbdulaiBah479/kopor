@@ -15,7 +15,7 @@ import type { LineItem, Method, Txn } from '@/db/schema';
 import { recordSale, recordExpense, deleteTxn, summary, topProducts, itemsLabel, itemsTotal, EXPENSE_CATEGORIES, METHODS } from '@/domain/cash';
 import { computeTotals, taxSettings } from '@/domain/tax';
 import { recordReturn, returnedQty } from '@/domain/returns';
-import { expectedCash, closeDay, lastClosing } from '@/domain/closing';
+import { expectedCash, expectedMomo, closeDay, lastClosing } from '@/domain/closing';
 import { DeleteButton, useEntryConfirm } from './Credit';
 import { creditTotals } from '@/domain/credit';
 
@@ -280,11 +280,14 @@ function CloseDaySheet() {
   const [note, setNote] = useState('');
   const x = expectedCash(book, today(), float);
   const diff = counted - x.expected;
+  const momoExp = expectedMomo(book);
+  const [momo, setMomo] = useState<Record<string, number>>({});
   return (
     <form className="form" data-testid="close-form" onSubmit={async (e) => {
       e.preventDefault();
       try {
-        await closeDay(ctx, { openingFloat: float, counted, expected: x.expected, note });
+        const checked = Object.fromEntries(Object.entries(momoExp).filter(([k]) => momo[k] !== undefined).map(([k, v]) => [k, { expected: v ?? 0, counted: momo[k] }]));
+        await closeDay(ctx, { openingFloat: float, counted, expected: x.expected, note, momo: checked });
         // A day summary the owner can send to themselves or a partner on WhatsApp.
         const d = today(), s = summary(book, d, d), owed = creditTotals(book).get, top = topProducts(book, d, d, 3);
         const text = t('closing.summary', {
@@ -308,6 +311,24 @@ function CloseDaySheet() {
         <div className={`alert ${diff < 0 ? 'bad' : ''}`} style={diff === 0 ? { background: 'var(--good-soft)' } : undefined}>
           <Icon name={diff === 0 ? 'check' : 'alert'} />
           <div>{diff === 0 ? t('closing.balanced') : diff > 0 ? t('closing.over', { amount: formatMoney(diff) }) : t('closing.short', { amount: formatMoney(-diff) })}</div>
+        </div>
+      )}
+      {Object.keys(momoExp).length > 0 && (
+        <div className="card flat stack" data-testid="momo-check">
+          <b className="small">{t('momo.title')}</b>
+          <div className="small muted">{t('momo.help')}</div>
+          {Object.entries(momoExp).map(([k, v]) => {
+            const got = momo[k];
+            const d = got === undefined ? 0 : got - (v ?? 0);
+            return (
+              <div key={k} className="stack" style={{ gap: 4 }}>
+                <Field label={t('momo.received', { network: t(`methods.${k}`), amount: formatMoney(v ?? 0) })}>
+                  <MoneyInput name={`momo_${k}`} value={got ?? 0} onChange={(n) => setMomo({ ...momo, [k]: n })} />
+                </Field>
+                {got !== undefined && d !== 0 && <div className={`small ${d < 0 ? 'bad' : ''}`} data-testid="momo-diff">{d < 0 ? t('momo.short', { amount: formatMoney(-d) }) : t('momo.over', { amount: formatMoney(d) })}</div>}
+              </div>
+            );
+          })}
         </div>
       )}
       <Field label={t('common.note')}><input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('common.optional')} /></Field>

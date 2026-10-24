@@ -44,10 +44,10 @@ jobs:
           VITE_APP_BUILD: ${{ github.run_number }} # the app compares it with the newest test build to offer updates
       - name: Create Android project if missing
         run: test -d android || npx cap add android
-      - name: Declare microphone and camera permissions (voice entry, receipt photos, barcode scanning)
+      - name: Declare microphone, camera and location permissions (voice entry, receipt photos, barcodes, staff tap-in at the shop)
         run: |
           M=android/app/src/main/AndroidManifest.xml
-          for p in RECORD_AUDIO MODIFY_AUDIO_SETTINGS CAMERA; do
+          for p in RECORD_AUDIO MODIFY_AUDIO_SETTINGS CAMERA ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION; do
             grep -q "android.permission.$p" "$M" || sed -i "s#</manifest>#    <uses-permission android:name=\"android.permission.$p\" />\n</manifest>#" "$M"
           done
           grep -q 'android.hardware.camera' "$M" || sed -i 's#</manifest>#    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>#' "$M"

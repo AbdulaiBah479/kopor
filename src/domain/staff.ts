@@ -36,21 +36,40 @@ function assertMayMark(ctx: Ctx, memberId: string) {
   throw new PermissionError('edit');
 }
 
-export async function markDay(ctx: Ctx, member: Member, date: string, patch: Partial<Pick<Attendance, 'status' | 'time_in' | 'time_out' | 'note'>>) {
+export async function markDay(ctx: Ctx, member: Member, date: string, patch: Partial<Pick<Attendance, 'status' | 'time_in' | 'time_out' | 'note' | 'where_m'>>) {
   assertMayMark(ctx, member.id);
   if (patch.status && !STATUSES.includes(patch.status)) throw new AppError('err.generic');
   const id = await attendanceId(ctx.orgId, member.id, date);
   const cur = await db.attendance.get(id);
   const summary = `${member.name}: ${patch.status ?? (patch.time_out ? 'left' : 'arrived')} ${date}`;
   if (cur) return update(ctx, 'attendance', id, { ...patch, deleted: 0 }, summary);
-  return insert(ctx, 'attendance', { id, member_id: member.id, date, status: patch.status ?? 'present', time_in: patch.time_in ?? null, time_out: patch.time_out ?? null, note: patch.note ?? '' }, summary);
+  return insert(ctx, 'attendance', { id, member_id: member.id, date, status: patch.status ?? 'present', time_in: patch.time_in ?? null, time_out: patch.time_out ?? null, note: patch.note ?? '', where_m: patch.where_m ?? null }, summary);
 }
 
+/** Staff further than this from the shop when tapping in are flagged for the owner. */
+export const AWAY_M = 200;
+
 /** Arriving now: present, or late after LATE_AFTER. Keeps the first arrival time if already tapped in. */
-export async function tapIn(ctx: Ctx, book: Book, member: Member, now = new Date()) {
+export async function tapIn(ctx: Ctx, book: Book, member: Member, now = new Date(), whereM: number | null = null) {
   const date = today(), time = hhmm(now), cur = dayOf(book, member.id, date);
   if (cur?.time_in) return cur;
-  return markDay(ctx, member, date, { status: time > LATE_AFTER ? 'late' : 'present', time_in: time });
+  return markDay(ctx, member, date, { status: time > LATE_AFTER ? 'late' : 'present', time_in: time, where_m: whereM });
+}
+
+/**
+ * Why a tap-in looks doubtful: away from the shop, location unknown (when the shop has a location set), or the server
+ * got it long after the time it claims (phone offline then, or its clock was changed).
+ */
+export function attendanceFlags(book: Book, a: Attendance): ('away' | 'noPlace' | 'late')[] {
+  const out: ('away' | 'noPlace' | 'late')[] = [];
+  if (!a.time_in) return out;
+  if (a.where_m != null && a.where_m > AWAY_M) out.push('away');
+  else if (a.where_m == null && book.org.shop_lat != null && a.created_by === a.member_id) out.push('noPlace');
+  if (a.seen_at) {
+    const claimed = new Date(`${a.date}T${a.time_in}:00`).getTime();
+    if (new Date(a.seen_at).getTime() - claimed > 45 * 60_000) out.push('late');
+  }
+  return out;
 }
 export async function tapOut(ctx: Ctx, book: Book, member: Member, now = new Date()) {
   const date = today(), cur = dayOf(book, member.id, date);

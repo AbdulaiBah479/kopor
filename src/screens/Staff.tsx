@@ -12,7 +12,9 @@ import { formatMoney } from '@/lib/money';
 import { shareText } from '@/lib/share';
 import { today } from '@/lib/dates';
 import type { Member, StaffPay } from '@/db/schema';
-import { STATUSES, dayOf, markDay, monthCounts, monthOf, payFor, recordPay, saveTerms, staffOf, tapIn, tapOut, termsOf, workingDays, type Status } from '@/domain/staff';
+import { updateOrg } from '@/domain/org';
+import { currentPosition, distanceM } from '@/lib/geo';
+import { STATUSES, attendanceFlags, dayOf, markDay, monthCounts, monthOf, payFor, recordPay, saveTerms, staffOf, tapIn, tapOut, termsOf, workingDays, type Status } from '@/domain/staff';
 
 type Tab = 'today' | 'month' | 'pay';
 const STATUS_CLASS: Record<Status, string> = { present: 'good', late: 'warn', half: 'warn', absent: 'bad', leave: '', off: '' };
@@ -42,6 +44,19 @@ function Today() {
   const staff = staffOf(book);
   const mine = me ? dayOf(book, me.id, today()) : undefined;
   const run = (p: Promise<unknown>, msg: string) => p.then(() => toast(msg)).catch(fail);
+  const shop = book.org.shop_lat != null && book.org.shop_lng != null ? { lat: book.org.shop_lat, lng: book.org.shop_lng } : null;
+  // How far from the shop this phone is (only the distance is saved). Unknown if location is off or refused.
+  const arrive = async () => {
+    if (!me) return;
+    const pos = shop ? await currentPosition() : null;
+    const whereM = pos && shop ? distanceM(pos, shop) : null;
+    await run(tapIn(ctx, book, me, new Date(), whereM), whereM != null && whereM > 200 ? t('staff.tappedAway', { m: whereM }) : t('staff.tappedIn'));
+  };
+  const setShop = async () => {
+    const pos = await currentPosition(12000);
+    if (!pos) return fail(new Error(t('staff.noLocation')));
+    await updateOrg(ctx, { shop_lat: Math.round(pos.lat * 1e5) / 1e5, shop_lng: Math.round(pos.lng * 1e5) / 1e5 }).then(() => toast(t('staff.shopSet'))).catch(fail);
+  };
   return (
     <>
       {me && can('record') && (
@@ -50,9 +65,15 @@ function Today() {
             {mine && <span className={`badge ${STATUS_CLASS[mine.status]}`}>{t(`staff.st.${mine.status}`)}</span>}</div>
           <div className="small muted">{mine?.time_in ? t('staff.arrived', { time: mine.time_in }) : t('staff.notIn')}{mine?.time_out ? ` · ${t('staff.left', { time: mine.time_out })}` : ''}</div>
           <div className="btn-row">
-            {!mine?.time_in && <button className="btn primary" data-testid="tap-in" onClick={() => run(tapIn(ctx, book, me), t('staff.tappedIn'))}><Icon name="check" size={18} /> {t('staff.tapIn')}</button>}
+            {!mine?.time_in && <button className="btn primary" data-testid="tap-in" onClick={arrive}><Icon name="check" size={18} /> {t('staff.tapIn')}</button>}
             {mine?.time_in && !mine.time_out && <button className="btn" data-testid="tap-out" onClick={() => run(tapOut(ctx, book, me), t('staff.tappedOut'))}><Icon name="up" size={18} /> {t('staff.tapOut')}</button>}
           </div>
+        </div>
+      )}
+      {can('team') && (
+        <div className="card flat small row between" style={{ gap: 8, flexWrap: 'wrap' }} data-testid="shop-location">
+          <span>{shop ? t('staff.shopIsSet') : t('staff.shopNotSet')}</span>
+          <button type="button" className="btn sm" onClick={setShop}><Icon name="store" size={16} /> {t(shop ? 'staff.shopReset' : 'staff.shopSetHere')}</button>
         </div>
       )}
       {can('edit') && <Field label={t('staff.date')}><input type="date" value={date} max={today()} onChange={(e) => e.target.value && setDate(e.target.value)} /></Field>}
@@ -65,7 +86,12 @@ function Today() {
               <div key={m.id} className="item" data-member={m.name} style={{ flexWrap: 'wrap' }}>
                 <div className="main">
                   <div className="t with-badge"><span className="trunc">{m.name}</span>{d ? <span className={`badge ${STATUS_CLASS[d.status]}`}>{t(`staff.st.${d.status}`)}</span> : <span className="badge">{t('staff.notMarked')}</span>}</div>
-                  <div className="s">{t(`roles.${m.role}`)}{d?.time_in ? ` · ${t('staff.arrived', { time: d.time_in })}` : ''}{d?.time_out ? ` · ${t('staff.left', { time: d.time_out })}` : ''}</div>
+                  <div className="s">{t(`roles.${m.role}`)}{d?.time_in ? ` · ${t('staff.arrived', { time: d.time_in })}` : ''}{d?.time_out ? ` · ${t('staff.left', { time: d.time_out })}` : ''}
+                    {d?.where_m != null && d.where_m <= 200 ? ` · ${t('staff.atShop')}` : ''}</div>
+                  {d && can('edit') && attendanceFlags(book, d).map((f) => (
+                    <span key={f} className="badge warn" data-testid="att-flag" style={{ marginRight: 4 }}>
+                      {f === 'away' ? t('watch.att.awayM', { m: d.where_m }) : f === 'late' ? t('watch.att.lateAt', { time: new Date(d.seen_at!).toTimeString().slice(0, 5) }) : t('watch.att.noPlace')}</span>
+                  ))}
                 </div>
                 {mayMark && can('edit') && (
                   <div className="chips" style={{ width: '100%' }}>

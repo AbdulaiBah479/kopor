@@ -25,6 +25,8 @@ export interface Org extends Base {
   tax_inclusive?: 0 | 1;        // 1 = prices already include tax
   tax_id?: string;              // TIN shown on invoices
   receipt_footer?: string;
+  shop_lat?: number | null;     // the shop's location, to check staff tap in at the shop (Staff & attendance)
+  shop_lng?: number | null;
 }
 export interface Branch extends Base { name: string; address: string }
 export interface Member extends Base {
@@ -75,6 +77,8 @@ export interface SavingsMove extends Base { goal_id: string; amount: number; dat
 export interface Attendance extends Base {
   member_id: string; date: string; status: 'present' | 'late' | 'half' | 'absent' | 'leave' | 'off';
   time_in: string | null; time_out: string | null; note: string;
+  where_m?: number | null;      // metres from the shop when tapping in (only the distance is kept)
+  seen_at?: string | null;      // when Kopor's server first got it (set by the server, so a changed phone clock shows)
 }
 /** How a staff member is paid. Only managers and owners can read it (server rule in 0022). */
 export interface StaffTerms extends Base { member_id: string; pay_type: 'monthly' | 'daily'; amount: number; work_days: number; start_date: string | null }
@@ -100,6 +104,8 @@ export interface Invoice extends Base {
 /** End-of-day cash count: what the drawer should hold vs what was counted. */
 export interface Closing extends Base {
   branch_id: string | null; date: string; opening_float: number; expected: number; counted: number; difference: number; note: string;
+  /** Mobile money check: per network, what the books expect and what the owner's phone messages show. */
+  momo?: Partial<Record<'orange' | 'afrimoney' | 'qmoney', { expected: number; counted: number }>>;
 }
 export interface PaymentRequest extends Base {
   kind: 'checkout' | 'ussd' | 'payout'; invoice_id: string | null; group_id: string | null; amount: number;

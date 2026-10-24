@@ -84,7 +84,7 @@ await step('first-use guided tour shows and can be finished', async () => {
   await shot('02-home');
 });
 
-for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/wallet', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl', '/staff', '/gst']) {
+for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/wallet', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl', '/staff', '/gst', '/watch']) {
   await step(`screen ${r} renders at phone width`, async () => { await go(r); await noOverflow(); });
 }
 
@@ -675,9 +675,28 @@ await step('close the day', async () => {
   await page.getByTestId('close-day').click();
   const f = page.getByTestId('close-form');
   await f.locator('[name=counted]').fill('100');
+  // Mobile money check: earlier sales were paid by Orange Money; the phone's messages show Le 1 less arrived.
+  const momo = f.getByTestId('momo-check');
+  await momo.waitFor();
+  await momo.locator('[name=momo_orange]').fill('1');
+  await f.getByTestId('momo-diff').getByText(/missing/).waitFor();
   await shot('11-close-day');
   await tapInSheet(f.getByRole('button', { name: 'Save day close' }));
   await page.getByText('Day closed').waitFor();
+});
+
+await step('fraud watch: mobile money shortfall, refunds and unconfirmed payments listed; safety tips', async () => {
+  await go('/watch');
+  await page.getByTestId('watch-people').waitFor();
+  await page.getByRole('tab', { name: /^All/ }).click();
+  const list = page.getByTestId('watch-flags');
+  await list.locator('[data-kind=momoShort]').first().waitFor();
+  await list.locator('[data-kind=refund]').first().waitFor();
+  await page.getByText(/not confirmed by Monime/).waitFor();
+  await noOverflow();
+  await shot('13-fraud-watch');
+  await page.getByRole('tab', { name: 'Stay safe' }).click();
+  if ((await page.getByTestId('safety-tips').locator('.card').count()) !== 6) throw new Error('tips');
 });
 
 await step('owner dashboard: every user and business, a business page, money, AI and an announcement on Home', async () => {

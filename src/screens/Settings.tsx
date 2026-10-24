@@ -14,7 +14,7 @@ import { updateOrg, setPin, hasPin, getSession, createOrg, removeOrgFromDevice }
 import { exportOrg, importOrg, isEncrypted } from '@/domain/backup';
 import { createDemo } from '@/domain/demo';
 import { getCloudConfig, setCloudConfig } from '@/cloud/supabase';
-import { signOut, currentUser } from '@/cloud/auth';
+import { signOut, signOutEverywhere, currentUser } from '@/cloud/auth';
 import { syncNow } from '@/cloud/sync';
 import { connectOrg } from '@/cloud/account';
 import { ORG_TYPES } from './More';
@@ -237,6 +237,7 @@ export function CloudCard() {
           <div className="btn-row">
             <button className="btn" onClick={() => syncNow(ctx.orgId)}><Icon name="cloud" size={18} /> {t('settings.syncNow')}</button>
             <button className="btn ghost" onClick={() => signOut().then(refresh)}>{t('settings.signOut')}</button>
+            <button className="btn ghost" data-testid="signout-all" onClick={() => confirm(t('safe.everywhereWarn')) && signOutEverywhere().then(refresh).catch(fail)}>{t('safe.everywhere')}</button>
           </div>
           <button className="btn tinted block" data-testid="new-recovery" onClick={async () => {
             try {

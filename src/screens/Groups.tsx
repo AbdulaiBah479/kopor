@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { checkPin, hasPin } from '@/domain/org';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
@@ -413,6 +414,9 @@ export function PayoutSheet({ amount: initial, phone: initialPhone = '', note: i
   const { closeSheet, toast, fail } = useOverlay();
   const [f, setF] = useState({ amount: initial, phone: initialPhone, note: initialNote, providerId: '' });
   const [providers, setProviders] = useState<{ id: string; name: string }[] | null>(null);
+  const [pin, setPin] = useState('');
+  const [needPin, setNeedPin] = useState(false);
+  useEffect(() => { if (ctx.memberId) hasPin(ctx.memberId).then(setNeedPin).catch(() => {}); }, [ctx.memberId]);
   useEffect(() => {
     momoProviders(ctx.orgId)
       .then((r) => { setProviders(r.providers); setF((x) => ({ ...x, providerId: r.providers[0]?.id ?? '' })); })
@@ -422,7 +426,10 @@ export function PayoutSheet({ amount: initial, phone: initialPhone = '', note: i
     <form className="form" onSubmit={async (e) => {
       e.preventDefault();
       if (!confirm(`${t('pay.payout')}: ${formatMoney(f.amount)} → ${f.phone}?`)) return;
-      try { await createPayout(ctx.orgId, f); await onDone?.(); closeSheet(); toast(t('pay.sent')); } catch (err) { fail(err); }
+      try {
+        // Money leaving the business: the owner's own PIN, so nobody else holding this phone can send it.
+        if (needPin && !(await checkPin(ctx.memberId!, pin))) { setPin(''); throw new Error(t('err.login')); }
+        await createPayout(ctx.orgId, f); await onDone?.(); closeSheet(); toast(t('pay.sent')); } catch (err) { fail(err); }
     }}>
       <div className="small muted">{t('pay.payoutHelp')}</div>
       <Field label={t('common.amount')}><MoneyInput big required value={f.amount} onChange={(amount) => setF({ ...f, amount })} /></Field>
@@ -431,6 +438,8 @@ export function PayoutSheet({ amount: initial, phone: initialPhone = '', note: i
         <select required value={f.providerId} onChange={(e) => setF({ ...f, providerId: e.target.value })}>{(providers ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
       </Field>
       <Field label={t('common.note')}><input value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></Field>
+      {needPin ? <Field label={t('safe.pinToSend')}><input type="password" inputMode="numeric" autoComplete="off" required name="payout_pin" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} /></Field>
+        : <div className="small muted">{t('safe.setPinFirst')}</div>}
       <button className="btn primary block" disabled={!providers?.length}><Icon name="send" size={18} /> {t('pay.payout')}</button>
     </form>
   );

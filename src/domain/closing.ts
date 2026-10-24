@@ -20,15 +20,28 @@ export function expectedCash(book: Book, date = today(), openingFloat = 0) {
   return { openingFloat, sales, out, repaid, expected: openingFloat + sales - out };
 }
 
+export const MOMO = ['orange', 'afrimoney', 'qmoney'] as const;
+
+/** Mobile money the books say came in today, per network: sales paid that way, less money paid out that way. */
+export function expectedMomo(book: Book, date = today()) {
+  const out: Partial<Record<(typeof MOMO)[number], number>> = {};
+  for (const t of book.txns) {
+    if (t.date !== date || !(MOMO as readonly string[]).includes(t.method)) continue;
+    const k = t.method as (typeof MOMO)[number];
+    out[k] = (out[k] ?? 0) + (t.type === 'in' ? t.amount : -t.amount);
+  }
+  return out;
+}
+
 export const lastClosing = (book: Book) =>
   [...book.closings].sort((a, b) => b.date.localeCompare(a.date) || b.created_at - a.created_at)[0] as Closing | undefined;
 
-export async function closeDay(ctx: Ctx, input: { date?: string; openingFloat: number; counted: number; expected: number; note?: string }): Promise<Closing> {
+export async function closeDay(ctx: Ctx, input: { date?: string; openingFloat: number; counted: number; expected: number; note?: string; momo?: Closing['momo'] }): Promise<Closing> {
   assertCan(ctx.role, 'close');
   if (input.counted < 0) throw new AppError('err.amount');
   const difference = Math.round(input.counted - input.expected);
   return insert(ctx, 'closings', {
     branch_id: ctx.branchId, date: input.date || today(), opening_float: Math.round(input.openingFloat), expected: Math.round(input.expected),
-    counted: Math.round(input.counted), difference, note: input.note?.trim() ?? '',
+    counted: Math.round(input.counted), difference, note: input.note?.trim() ?? '', momo: input.momo ?? {},
   }, `Day closed: counted ${input.counted / 100}, difference ${difference / 100}`);
 }
