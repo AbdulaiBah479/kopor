@@ -33,6 +33,7 @@ const PublicStatement = lazyRetry(() => import('./screens/PublicStatement').then
 const PublicGroup = lazyRetry(() => import('./screens/PublicGroup').then((m) => ({ default: m.PublicGroup })));
 const Savings = lazyRetry(() => import('./screens/Savings').then((m) => ({ default: m.Savings })));
 const Staff = lazyRetry(() => import('./screens/Staff').then((m) => ({ default: m.Staff })));
+const Gst = lazyRetry(() => import('./screens/Gst').then((m) => ({ default: m.Gst })));
 const Wallet = lazyRetry(() => import('./screens/Money').then((m) => ({ default: m.Wallet })));
 const Help = lazyRetry(() => import('./screens/Help').then((m) => ({ default: m.Help })));
 const Legal = lazyRetry(() => import('./screens/Legal').then((m) => ({ default: m.Legal })));
@@ -90,6 +91,7 @@ function Gate() {
         <Route path="/pnl" element={<ProfitLoss />} />
         <Route path="/savings" element={<Savings />} />
         <Route path="/staff" element={<Staff />} />
+        <Route path="/gst" element={<Gst />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

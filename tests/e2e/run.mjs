@@ -84,7 +84,7 @@ await step('first-use guided tour shows and can be finished', async () => {
   await shot('02-home');
 });
 
-for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/wallet', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl', '/staff']) {
+for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/wallet', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl', '/staff', '/gst']) {
   await step(`screen ${r} renders at phone width`, async () => { await go(r); await noOverflow(); });
 }
 
@@ -644,6 +644,19 @@ await step('sale with discount shows subtotal, tax and total', async () => {
   await shot('10-sale-tax');
   await tapInSheet(form.getByRole('button', { name: /Save sale/ }));
   await page.getByText('Sale saved').waitFor();
+});
+
+await step('GST report for the NRA: GST charged this month, net to pay, Excel download', async () => {
+  await go('/gst');
+  await page.locator('input[type=month]').fill(new Date().toISOString().slice(0, 7));
+  const r = page.getByTestId('gst-report');
+  await r.getByText('GST charged on sales (15%)').waitFor();
+  const net = await page.getByTestId('gst-net').textContent();
+  if (!/GST to pay/.test(net) || /\b0\.00\b|Le 0$/.test(net.trim())) throw new Error('net: ' + net);
+  await noOverflow();
+  await shot('12-gst-report');
+  const [dl] = await Promise.all([page.waitForEvent('download'), r.getByRole('button', { name: 'Excel' }).click()]);
+  if (!/kopor-gst-\d{4}-\d{2}\.xlsx/.test(dl.suggestedFilename())) throw new Error('file ' + dl.suggestedFilename());
 });
 
 await step('return items from a sale', async () => {
