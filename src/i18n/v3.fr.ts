@@ -542,6 +542,14 @@ const v3: V3Dict = {
     doneProducts_one: '{{count}} produit ajouté',
     doneProducts_other: '{{count}} produits ajoutés',
   },
+  upd: {
+    title: 'Nouvelle version de Kopor',
+    build: 'version {{n}}',
+    whatsNew: 'Nouveautés :',
+    help: 'Touchez Mettre à jour, ouvrez le téléchargement et touchez Installer. Vos données restent sur le téléphone.',
+    update: 'Mettre à jour',
+    later: 'Plus tard',
+  },
   daily: {
     title: '{{name}} : aujourd’hui',
     help: 'Une notification à 8 h chaque matin avec ce qui demande votre attention. Faite sur ce téléphone à partir de vos données, donc hors ligne aussi.',

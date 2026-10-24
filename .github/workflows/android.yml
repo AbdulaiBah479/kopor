@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0 # the change history, for the "What's new" notes
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
@@ -39,6 +41,7 @@ jobs:
           VITE_SUPPORT_WHATSAPP: ${{ vars.VITE_SUPPORT_WHATSAPP }}
           VITE_SUPPORT_EMAIL: ${{ vars.VITE_SUPPORT_EMAIL }}
           VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          VITE_APP_BUILD: ${{ github.run_number }} # the app compares it with the newest test build to offer updates
       - name: Create Android project if missing
         run: test -d android || npx cap add android
       - name: Declare microphone and camera permissions (voice entry, receipt photos, barcode scanning)
@@ -93,5 +96,18 @@ jobs:
           cp "$APK" kopor-test.apk
           gh release view test-latest >/dev/null 2>&1 || gh release create test-latest --prerelease --title "Kopor test app (latest)"             --notes "Android test build of Kopor. Install kopor-test.apk; newer builds install over it and keep your records."
           gh release upload test-latest kopor-test.apk "$APK" --clobber
-          gh release edit test-latest --notes "Android test build ${{ github.run_number }} of Kopor ($(date -u +%F)). Install kopor-test.apk; newer builds install over it and keep your records."
+          # "What's new" for the app's update card: the changes since the previous published build (the app shows the
+          # lines starting with "- "). The previous build's commit is kept in a hidden marker in the notes.
+          PREV=$(gh release view test-latest --json body --jq .body | grep -oE 'kopor-build-sha: [0-9a-f]{40}' | awk '{print $2}' || true)
+          RANGE=$([ -n "$PREV" ] && git cat-file -e "$PREV" 2>/dev/null && echo "$PREV..HEAD" || echo "-15")
+          CHANGES=$(git log $RANGE --no-merges --format='- %s' | grep -viE '^- (bump|merge|ignore|ci|chore|test)' | head -12)
+          {
+            echo "Android test build ${{ github.run_number }} of Kopor ($(date -u +%F)). Install kopor-test.apk; newer builds install over it and keep your records."
+            echo
+            echo "What's new:"
+            echo "${CHANGES:-- Improvements and fixes}"
+            echo
+            echo "<!-- kopor-build-sha: ${{ github.sha }} -->"
+          } > notes.md
+          gh release edit test-latest --notes-file notes.md
           echo "Download: https://github.com/${{ github.repository }}/releases/download/test-latest/kopor-test.apk" >> "$GITHUB_STEP_SUMMARY"

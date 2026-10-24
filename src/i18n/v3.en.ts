@@ -540,6 +540,14 @@ const v3 = {
     doneProducts_one: '{{count}} product added',
     doneProducts_other: '{{count}} products added',
   },
+  upd: {
+    title: 'New version of Kopor',
+    build: 'build {{n}}',
+    whatsNew: 'What’s new:',
+    help: 'Tap Update, open the download and tap Install. Your records stay on the phone.',
+    update: 'Update',
+    later: 'Later',
+  },
   daily: {
     title: '{{name}}: today',
     help: 'A notification at 8:00 each morning with what needs attention. Made on this phone from your records, so it works offline.',

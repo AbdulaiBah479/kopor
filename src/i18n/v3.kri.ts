@@ -542,6 +542,14 @@ const v3: V3Dict = {
     doneProducts_one: '{{count}} prɔdak dɔn ad',
     doneProducts_other: '{{count}} prɔdak dɔn ad',
   },
+  upd: {
+    title: 'Nyu vɛshɔn fɔ Kopor',
+    build: 'bild {{n}}',
+    whatsNew: 'Wetin nyu:',
+    help: 'Tap Apdet, opin di download ɛn tap Instɔl. Yu rɛkɔd dɛn go de na di fon.',
+    update: 'Apdet',
+    later: 'Leta',
+  },
   daily: {
     title: '{{name}}: tide',
     help: 'Nɔtifikeshɔn na 8:00 ɛvri mɔnin wit wetin fɔ du. I de mek am pan dis fon frɔm yu rɛkɔd, so i de wok ɔflayn.',
