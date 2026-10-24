@@ -48,7 +48,7 @@ export async function recordReturn(ctx: Ctx, saleId: string, lines: ReturnLine[]
       discount: 0, tax, refund_of: sale.id,
     }, `Refund ${amount / 100}`);
     for (const i of items) {
-      if (i.product_id) await insert(ctx, 'stock_moves', { branch_id: ctx.branchId, product_id: i.product_id, qty: i.qty, reason: 'return', ref_id: refund.id, date }, `Returned ${i.qty} ${i.name}`);
+      if (i.product_id) await insert(ctx, 'stock_moves', { branch_id: ctx.branchId, product_id: i.product_id, qty: i.qty * (i.per ?? 1), reason: 'return', ref_id: refund.id, date }, `Returned ${i.qty} ${i.name}`);
     }
     if (onCredit && sale.contact_id) {
       await addEntry(ctx, { contactId: sale.contact_id, type: 'got', amount, note: `Return: ${refund.note}`, refType: 'transaction', refId: refund.id });

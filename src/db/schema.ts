@@ -37,7 +37,8 @@ export interface LedgerEntry extends Base {
   note: string; date: string; due_date: string | null; ref_type: string | null; ref_id: string | null;
   verified_ref?: string | null; // set only by the server when Monime confirmed the money
 }
-export interface LineItem { product_id: string | null; name: string; qty: number; price: number; cost: number }
+/** per = pieces in one unit sold (a carton of 24 is per 24); stock goes down by qty × per. */
+export interface LineItem { product_id: string | null; name: string; qty: number; price: number; cost: number; per?: number }
 export interface Txn extends Base {
   branch_id: string | null; type: 'in' | 'out'; category: string; amount: number; method: Method;
   contact_id: string | null; note: string; date: string; items: LineItem[];
@@ -47,10 +48,14 @@ export interface Txn extends Base {
   refund_of?: string | null;    // for category 'refund': the sale being returned
   verified_ref?: string | null; // set only by the server when Monime confirmed the money ("Confirmed by Monime")
 }
-export interface Product extends Base { name: string; sku: string; unit: string; price: number; cost: number; low_at: number }
+export interface Product extends Base {
+  name: string; sku: string; unit: string; price: number; cost: number; low_at: number;
+  pack_size?: number | null; pack_price?: number | null; pack_name?: string | null; // also sold by the carton: pack_size pieces at pack_price
+}
 export interface StockMove extends Base {
   branch_id: string | null; product_id: string; qty: number;
   reason: 'opening' | 'sale' | 'restock' | 'adjust' | 'reversal' | 'return'; ref_id: string | null; date: string;
+  expiry?: string | null; // expiry date of the goods received (restock / opening)
 }
 export interface GroupMember { id: string; name: string; phone: string }
 export interface Group extends Base {

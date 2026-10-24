@@ -342,7 +342,7 @@ export function ScanSheet({ prefill, prefer }: { prefill?: ScanResult; prefer?: 
           {mode === 'purchase' && newCount > 0 && <div className="small muted">{t('rscan.newCount', { n: newCount })}</div>}
           {mode !== 'sale' && <Field label={t(mode === 'purchase' ? 'rscan.supplier' : 'rscan.note')}><input value={supplier} onChange={(e) => setSupplier(e.target.value)} /></Field>}
           {mode === 'expense' && <Field label={t('cash.category')}><select value={category} onChange={(e) => setCategory(e.target.value)}>{EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{t(`categories.${c}`)}</option>)}</select></Field>}
-          <Field label={t('cash.paidWith')}><select value={method} onChange={(e) => setMethod(e.target.value as Method)}>{METHODS.filter((m) => m !== 'credit').map((m) => <option key={m} value={m}>{t(`methods.${m}`)}</option>)}</select></Field>
+          <Field label={t('cash.paidWith')}><select value={method} onChange={(e) => setMethod(e.target.value as Method)}>{METHODS.filter((m) => m !== 'credit' || mode === 'purchase').map((m) => <option key={m} value={m}>{m === 'credit' ? t('pack.onCredit') : t(`methods.${m}`)}</option>)}</select></Field>
           {mode !== 'sale'
             ? <Field label={t('rscan.total')}><MoneyInput value={total || lineSum} onChange={setTotal} /></Field>
             : <div className="row between"><b>{t('common.total')}</b><b className="num">{formatMoney(lineSum)}</b></div>}

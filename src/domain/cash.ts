@@ -24,6 +24,9 @@ export async function saleTotals(orgId: string, items: LineItem[], amount = 0, d
   return items.length ? computeTotals(itemsTotal(items), discount, tax) : computeTotals(amount, discount, { ...tax, inclusive: true });
 }
 
+/** "Milk tin (carton of 24)": the name of a carton line. */
+export const packLabel = (p: { name: string; pack_size?: number | null; pack_name?: string | null }) => `${p.name} (${p.pack_name || 'carton'} of ${p.pack_size})`;
+
 /** Records a sale: cash book entry, stock deduction, and a credit-book debt if sold on credit. */
 export async function recordSale(ctx: Ctx, input: SaleInput): Promise<Txn> {
   assertCan(ctx.role, 'record');
@@ -32,9 +35,12 @@ export async function recordSale(ctx: Ctx, input: SaleInput): Promise<Txn> {
   for (const i of input.items ?? []) {
     if (!i.name?.trim() || !((i.qty ?? 0) > 0)) continue;
     const p = (i.product_id && products.find((x) => x.id === i.product_id)) || findByName(products, i.name);
-    const line = { product_id: p?.id ?? null, name: p?.name ?? i.name.trim(), qty: i.qty!, price: Math.round(i.price ?? p?.price ?? 0), cost: p?.cost ?? 0 };
+    // A carton line: "Milk tin (carton of 24)" at the carton price; stock goes down by 24 per carton sold.
+    const per = p && p.pack_size && i.per === p.pack_size ? p.pack_size : 1;
+    const name = p ? (per > 1 ? packLabel(p) : p.name) : i.name.trim();
+    const line: LineItem = { product_id: p?.id ?? null, name, qty: i.qty!, price: Math.round(i.price ?? (per > 1 ? p?.pack_price ?? 0 : p?.price ?? 0)), cost: (p?.cost ?? 0) * per, ...(per > 1 ? { per } : {}) };
     // The same product at the same price on two lines becomes one line (clearer receipts, exact returns later).
-    const same = items.find((x) => x.name === line.name && x.product_id === line.product_id && x.price === line.price);
+    const same = items.find((x) => x.name === line.name && x.product_id === line.product_id && x.price === line.price && (x.per ?? 1) === per);
     if (same) same.qty += line.qty; else items.push(line);
   }
   const totals = await saleTotals(ctx.orgId, items, input.amount, input.discount);
@@ -53,7 +59,7 @@ export async function recordSale(ctx: Ctx, input: SaleInput): Promise<Txn> {
     }, `Sale ${total / 100} (${input.method})`);
     for (const i of items) {
       if (!i.product_id) continue;
-      await insert(ctx, 'stock_moves', { branch_id: ctx.branchId, product_id: i.product_id, qty: -i.qty, reason: 'sale', ref_id: txn.id, date }, `Sold ${i.qty} ${i.name}`);
+      await insert(ctx, 'stock_moves', { branch_id: ctx.branchId, product_id: i.product_id, qty: -i.qty * (i.per ?? 1), reason: 'sale', ref_id: txn.id, date }, `Sold ${i.qty} ${i.name}`);
     }
     if (input.method === 'credit' && contact) {
       const entry = await addEntry(ctx, {

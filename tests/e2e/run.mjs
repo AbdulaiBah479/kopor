@@ -358,6 +358,44 @@ await step('import: a customer spreadsheet (with what they owe) and a stock list
   if (qty !== '30') throw new Error('Gari stock ' + qty);
 });
 
+await step('cartons and expiry: sell a carton (stock down by 12), restock with an expiry date, see the warning', async () => {
+  await go('/stock');
+  await page.locator('.fab').click();
+  const form = page.getByTestId('product-form');
+  await form.locator('[name=name]').fill('Malta Guinness');
+  await form.locator('[name=price]').fill('15');
+  await form.locator('[name=qty]').fill('48');
+  await form.locator('summary').click();
+  await form.locator('[name=pack_size]').fill('12');
+  await form.locator('[name=pack_price]').fill('170');
+  await tapInSheet(form.getByRole('button', { name: 'Save' }));
+  await page.locator('[data-product="Malta Guinness"]').waitFor();
+  // Sell one carton.
+  await go('/cash');
+  await page.getByTestId('new-sale').click();
+  const sale = page.getByTestId('sale-form');
+  await sale.locator('[name=item_name]').fill('Malta Guinness');
+  await sale.getByTestId('pack-toggle').getByRole('button', { name: /carton of 12/ }).click();
+  await tapInSheet(sale.getByRole('button', { name: /Save sale/ }));
+  await page.locator('.list .item', { hasText: 'Malta Guinness (carton of 12)' }).first().waitFor();
+  await go('/stock');
+  const qty = await page.locator('[data-product="Malta Guinness"] [data-qty]').getAttribute('data-qty');
+  if (qty !== '36') throw new Error('Malta stock ' + qty);
+  // Restock 2 cartons that expire in 10 days.
+  await page.locator('[data-product="Malta Guinness"]').click();
+  const adj = page.getByTestId('adjust-form');
+  await adj.getByRole('tab', { name: /carton of 12/ }).click();
+  await adj.locator('[name=change]').fill('2');
+  const soon = new Date(Date.now() + 10 * 864e5).toISOString().slice(0, 10);
+  await adj.locator('[name=expiry]').fill(soon);
+  await tapInSheet(adj.getByRole('button', { name: 'Update stock' }));
+  await page.waitForFunction(() => document.querySelector('[data-product="Malta Guinness"] [data-qty]')?.getAttribute('data-qty') === '60');
+  await page.getByTestId('expiry-alert').waitFor();
+  await page.locator('[data-product="Malta Guinness"]').getByTestId('expiry-badge').waitFor();
+  await noOverflow();
+  await shot('06b-stock-expiry');
+});
+
 if (LIVE_AI) await step('microphone: record, transcribe with Whisper, understand', async () => {
   await go('/');
   await page.getByRole('button', { name: 'Speak' }).click();

@@ -136,7 +136,7 @@ export function ItemsEditor({ items, onChange, products, subtotal }: { items: Pa
           <input list="dl-products" placeholder={t('common.item')} aria-label={t('common.item')} value={r.name ?? ''} autoComplete="off" name="item_name"
             onChange={(e) => {
               const p = products.find((x) => x.name.toLowerCase() === e.target.value.trim().toLowerCase());
-              set(k, p ? { name: e.target.value, product_id: p.id, price: p.price } : { name: e.target.value, product_id: null });
+              set(k, p ? { name: e.target.value, product_id: p.id, price: p.price, per: undefined } : { name: e.target.value, product_id: null, per: undefined });
             }} />
           <input inputMode="decimal" placeholder={t('common.qty')} aria-label={t('common.qty')} value={r.qty ?? ''} name="item_qty"
             onChange={(e) => set(k, { qty: Number(e.target.value) || 0 })} />
@@ -144,6 +144,19 @@ export function ItemsEditor({ items, onChange, products, subtotal }: { items: Pa
             value={r.price !== undefined ? toMajor(r.price) : ''} onChange={(e) => set(k, { price: parseMoney(e.target.value) })} />
           <button type="button" className="icon-btn" aria-label={t('common.delete')}
             onClick={() => onChange(rows.length > 1 ? rows.filter((_, i) => i !== k) : [{ qty: 1 }])}><Icon name="x" size={18} /></button>
+          {(() => {
+            // Products sold by the carton too: switch this line between pieces and cartons (price follows).
+            const p = r.product_id ? products.find((x) => x.id === r.product_id) : undefined;
+            if (!p?.pack_size) return null;
+            const carton = (r.per ?? 1) > 1;
+            return (
+              <div className="seg" style={{ gridColumn: '1 / -1' }} data-testid="pack-toggle">
+                <button type="button" className={carton ? '' : 'on'} onClick={() => set(k, { per: undefined, price: p.price })}>{p.unit}</button>
+                <button type="button" className={carton ? 'on' : ''} onClick={() => set(k, { per: p.pack_size!, price: p.pack_price ?? p.price * p.pack_size! })}>
+                  {t('pack.of', { name: p.pack_name || t('pack.carton'), n: p.pack_size, unit: p.unit })}</button>
+              </div>
+            );
+          })()}
         </div>
       ))}
       <button type="button" className="btn sm ghost" onClick={() => onChange([...rows, { qty: 1 }])}><Icon name="plus" size={16} /> {t('common.addItem')}</button>
