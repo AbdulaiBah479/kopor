@@ -65,6 +65,7 @@ export function More() {
         {can('reports') && <MenuItem to="/health" icon="pulse" tile="pink" title={t('health.title')} sub={t('more.healthSub', { score: h.score })} />}
       </div>
       <div className="list">
+        {can('record') && <MenuItem to="/staff" icon="users" tile="indigo" title={t('staff.title')} sub={t('staff.menuSub')} />}
         <MenuItem to="/team" icon="store" tile="teal" title={t('team.title')} sub={t('more.teamSub', { count: book.members.filter((m) => m.active).length })} />
         <MenuItem to="/plan" icon="crown" tile="yellow" title={t('plan.title')} sub={isPro(book.org) ? t('plan.proActive') : t('plan.freeSub')} />
         <button className="item" onClick={() => openSheet(t('look.title'), <AppearancePanel />)} data-testid="appearance-row">

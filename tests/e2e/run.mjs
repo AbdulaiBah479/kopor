@@ -84,7 +84,7 @@ await step('first-use guided tour shows and can be finished', async () => {
   await shot('02-home');
 });
 
-for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/wallet', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl']) {
+for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/wallet', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl', '/staff']) {
   await step(`screen ${r} renders at phone width`, async () => { await go(r); await noOverflow(); });
 }
 
@@ -300,6 +300,41 @@ await step('team: add staff; a second branch on the free plan explains the limit
   await b.locator('input').first().fill('Lumley shop');
   await tapInSheet(b.getByRole('button', { name: 'Save' }));
   await page.getByText('The free plan includes 1 branch').waitFor();
+});
+
+await step('staff: tap in, mark absent, set pay, give an advance, pay the salary (a Cash book expense)', async () => {
+  await go('/staff');
+  // The owner taps in for themselves.
+  const tap = page.getByTestId('tap-card');
+  await tap.getByTestId('tap-in').click();
+  await tap.getByTestId('tap-out').waitFor();
+  // Mark Kadiatu (added in the team step) absent today.
+  const kadi = page.getByTestId('register').locator('[data-member="Kadiatu Kamara"]');
+  await kadi.locator('[data-status=absent]').click();
+  await kadi.getByText('Absent', { exact: true }).first().waitFor();
+  await noOverflow();
+  await shot('11-staff-today');
+  // Pay: Le 2,700 a month, advance Le 500, then pay what is left.
+  await page.getByRole('tab', { name: 'Pay' }).click();
+  const card = page.getByTestId('pay-card').filter({ has: page.locator('b', { hasText: 'Kadiatu Kamara' }) });
+  await card.getByTestId('set-pay').click();
+  const terms = page.getByTestId('terms-form');
+  await terms.locator('[name=amount]').fill('2700');
+  await tapInSheet(terms.getByRole('button', { name: 'Save' }));
+  await card.getByTestId('give-advance').click();
+  const adv = page.getByTestId('pay-form');
+  await adv.locator('[name=amount]').fill('500');
+  await tapInSheet(adv.getByRole('button', { name: 'Save' }));
+  await page.waitForFunction(() => !document.querySelector('[data-testid=pay-form]'));
+  await card.getByTestId('pay-salary').click();
+  await tapInSheet(page.getByTestId('pay-form').getByRole('button', { name: 'Save' }));  // the amount still owed is filled in
+  await page.waitForFunction(() => !document.querySelector('[data-testid=pay-form]'));
+  const balance = await card.getByTestId('pay-balance').textContent();
+  if (!/^\D*0(\.00)?$/.test(balance.trim())) throw new Error('still owed: ' + balance);
+  await shot('11b-staff-pay');
+  await go('/cash');
+  await page.getByText('Advance · Kadiatu Kamara').first().waitFor();
+  await page.getByText('Salary · Kadiatu Kamara').first().waitFor();
 });
 
 if (LIVE_AI) await step('microphone: record, transcribe with Whisper, understand', async () => {

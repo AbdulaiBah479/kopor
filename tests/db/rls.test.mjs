@@ -104,6 +104,29 @@ await test('cashier records sales, can undo only fresh own entries, cannot manag
   assert.equal(rows[0].role, 'cashier');
 });
 
+await test('attendance: staff mark only themselves; pay is private to managers and owners', async () => {
+  const day = (member, status) => q(`insert into attendance (id, org_id, created_at, updated_at, created_by, member_id, date, status, time_in)
+    values (gen_random_uuid(), $1, $2, $2, $3, $4, current_date, $5, '08:10') returning id`, [ORG, now(), CASHIER_M, member, status]);
+  await as('cashier');
+  const mine = (await day(CASHIER_M, 'present')).rows[0].id;
+  await q(`update attendance set time_out = '17:00', updated_at = $2 where id = $1`, [mine, now() + 1]);   // tapping out
+  await rejects(day(OWNER_M, 'absent'), /row-level security/);                                               // not someone else
+  await rejects(q(`insert into staff_pay (id, org_id, created_at, updated_at, created_by, member_id, kind, amount, month, date)
+    values (gen_random_uuid(), $1, 1, 1, $2, $2, 'advance', 1000, '2026-10', current_date)`, [ORG, CASHIER_M]), /row-level security/);
+  await as('owner');
+  await q(`insert into staff_terms (id, org_id, created_at, updated_at, created_by, member_id, pay_type, amount, work_days)
+    values (gen_random_uuid(), $1, $2, $2, $3, $4, 'monthly', 2700000, 6)`, [ORG, now(), OWNER_M, CASHIER_M]);
+  await q(`insert into staff_pay (id, org_id, created_at, updated_at, created_by, member_id, kind, amount, month, date)
+    values (gen_random_uuid(), $1, $2, $2, $3, $4, 'advance', 50000, '2026-10', current_date)`, [ORG, now(), OWNER_M, CASHIER_M]);
+  await q(`update attendance set status = 'late', updated_at = $2 where id = $1`, [mine, now() + 2]);           // the owner corrects anyone
+  await as('cashier');
+  assert.equal((await q('select * from attendance')).rows.length, 1);                                          // the register is visible
+  assert.equal((await q('select * from staff_terms')).rows.length, 0, 'cashiers cannot see salaries');
+  assert.equal((await q('select * from staff_pay')).rows.length, 0, 'cashiers cannot see advances');
+  await as('stranger');
+  assert.equal((await q('select * from attendance')).rows.length, 0);
+});
+
 await test("cashier cannot edit the owner's records", async () => {
   await as('owner');
   const id = (await q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date) values (gen_random_uuid(), $1, $2, $2, $3, 'out', 'rent', 9000, 'cash', current_date) returning id`, [ORG, now(), OWNER_M])).rows[0].id;
