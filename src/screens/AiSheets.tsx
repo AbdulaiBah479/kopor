@@ -1,5 +1,6 @@
 // Voice/text entry and receipt scanning.
 import { useEffect, useRef, useState } from 'react';
+import { toDataUrl } from '@/lib/image';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
 import { haptic, useOverlay } from '@/ui/overlay';
@@ -224,15 +225,6 @@ export function VoiceSheet() {
       ) : <div className="alert"><Icon name="alert" /><div>{t('ai.notSure')}</div></div>)}
     </form>
   );
-}
-
-/** Downscale a photo before sending it to the AI (saves data on slow networks). */
-async function toDataUrl(file: File, max = 1280): Promise<string> {
-  const img = await createImageBitmap(file);
-  const scale = Math.min(1, max / Math.max(img.width, img.height));
-  const canvas = Object.assign(document.createElement('canvas'), { width: Math.round(img.width * scale), height: Math.round(img.height * scale) });
-  canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL('image/jpeg', 0.8);
 }
 
 interface ScanRow { name: string; productId: string; qty: number; price: number; sellPrice: number }

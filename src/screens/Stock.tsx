@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ImportSheet } from './ImportSheet';
 import { useTranslation } from 'react-i18next';
 import { shareText } from '@/lib/share';
 import { useApp, useBook } from '@/state/app';
@@ -41,6 +42,7 @@ export function StockList() {
     <Page guide="stock" title={t('stock.title')} sub={t('stock.sub', { count: book.products.length, value: formatMoney(stockValue(book)) })}
       right={<>
         {can('record') && <ScanButton prefer="purchase" />}
+        {can('stock') && <button className="icon-btn" aria-label={t('imp.products')} data-testid="import-products" onClick={() => openSheet(t('imp.products'), <ImportSheet kind="products" />)}><Icon name="upload" size={22} /></button>}
         {book.products.length > 0 && <button className="icon-btn" aria-label={t('catalog.share')} data-testid="share-catalog" onClick={() => shareText(catalogText())}><Icon name="share" size={22} /></button>}
       </>}
       fab={can('stock') && <button className="fab" onClick={() => openSheet(t('stock.newProduct'), <ProductSheet />)}><Icon name="plus" /> {t('stock.product')}</button>}>

@@ -68,7 +68,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
         // Mobile data is expensive: precache only the core app. Heavy optional tools (scanner, PDF, Excel,
         // printer, cloud, crash reporting) are cached the first time someone uses them.
-        globIgnores: ['**/Scanner-*', '**/pdf-*', '**/excel-*', '**/html2canvas*', '**/purify*', '**/index.es-*', '**/printer-*', '**/cloud-*', '**/sentry-*', '**/tour-*',
+        globIgnores: ['**/Scanner-*', '**/pdf-*', '**/excel-*', '**/xlsx-*', '**/html2canvas*', '**/purify*', '**/index.es-*', '**/printer-*', '**/cloud-*', '**/sentry-*', '**/tour-*',
           '**/tesseract/**', '**/inter-cyrillic*', '**/inter-greek*', '**/inter-vietnamese*', '**/og.*'],
         runtimeCaching: [{
           urlPattern: ({ url }) => url.pathname.includes('/tesseract/'),

@@ -337,6 +337,27 @@ await step('staff: tap in, mark absent, set pay, give an advance, pay the salary
   await page.getByText('Salary · Kadiatu Kamara').first().waitFor();
 });
 
+await step('import: a customer spreadsheet (with what they owe) and a stock list', async () => {
+  await go('/credit');
+  await page.getByTestId('import-customers').click();
+  const csv = 'Name,Phone,Owes\nHaja Mansaray,076 900 111,"1,250"\nAlimamy Turay,,300\n';
+  await page.getByTestId('import-file').setInputFiles({ name: 'customers.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+  const review = page.getByTestId('import-review');
+  await review.getByText('Haja Mansaray').waitFor();
+  await tapInSheet(review.getByTestId('import-save'));
+  await page.getByText('2 customers added').waitFor();
+  await page.locator('#contacts .item', { hasText: 'Haja Mansaray' }).waitFor();
+  await go('/stock');
+  await page.getByTestId('import-products').click();
+  const stock = 'Item,Selling price,Cost price,Stock,Unit\nGari 1kg,15,11,30,bag\nTomato paste,8,6,24,tin\n';
+  await page.getByTestId('import-file').setInputFiles({ name: 'stock.csv', mimeType: 'text/csv', buffer: Buffer.from(stock) });
+  await page.getByTestId('import-review').getByText('Gari 1kg').waitFor();
+  await tapInSheet(page.getByTestId('import-review').getByTestId('import-save'));
+  await page.getByText('2 products added').waitFor();
+  const qty = await page.locator('[data-product="Gari 1kg"] [data-qty]').getAttribute('data-qty');
+  if (qty !== '30') throw new Error('Gari stock ' + qty);
+});
+
 if (LIVE_AI) await step('microphone: record, transcribe with Whisper, understand', async () => {
   await go('/');
   await page.getByRole('button', { name: 'Speak' }).click();

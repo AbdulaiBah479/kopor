@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ImportSheet } from './ImportSheet';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
@@ -86,6 +87,7 @@ export function CreditList() {
 
   return (
     <Page guide="credit" title={t('credit.title')} sub={t('credit.sub', { count: book.contacts.length })}
+      right={can('record') && <button className="icon-btn" aria-label={t('imp.customers')} data-testid="import-customers" onClick={() => openSheet(t('imp.customers'), <ImportSheet kind="customers" />)}><Icon name="upload" size={22} /></button>}
       fab={can('record') && <button className="fab" onClick={() => openSheet(t('credit.addEntry'), <NewCreditSheet />)}><Icon name="plus" /> {t('credit.addEntry')}</button>}>
       <div className="grid2">
         <div className="stat"><div className="k">{t('credit.willGet')}</div><div className="v"><Money v={totals.get} className="good" /></div></div>
