@@ -9,7 +9,9 @@ export async function initMonitoring() {
   const Sentry = await import('@sentry/browser');
   Sentry.init({
     dsn,
-    release: `kopor@${import.meta.env.VITE_APP_VERSION ?? '2.1.0'}`,
+    // Which build sent it: the Android test build number, or the web app.
+    release: `kopor@${import.meta.env.VITE_APP_BUILD ? `android-${import.meta.env.VITE_APP_BUILD}` : import.meta.env.VITE_APP_VERSION ?? 'web'}`,
+    environment: import.meta.env.VITE_APP_BUILD ? 'android' : 'web',
     // Sentry v11 collects no personal data by default; beforeSend below scrubs anything left.
     tracesSampleRate: 0,
     beforeSend(event) {
