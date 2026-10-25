@@ -64,6 +64,7 @@ export function More() {
         {can('reports') && <MenuItem to="/pnl" icon="trendUp" tile="green" title={t('pnl.title')} sub={t('pnl.sub')} />}
         {can('reports') && <MenuItem to="/gst" icon="receipt" tile="blue" title={t('gst.title')} sub={t('gst.menuSub')} />}
         {can('reports') && <MenuItem to="/watch" icon="shield" tile="red" title={t('watch.title')} sub={t('watch.menuSub')} />}
+        {can('business') && <MenuItem to="/passport" icon="shield" tile="green" title={t('pass.title')} sub={t('pass.menuSub')} />}
         {can('reports') && <MenuItem to="/health" icon="pulse" tile="pink" title={t('health.title')} sub={t('more.healthSub', { score: h.score })} />}
       </div>
       <div className="list">

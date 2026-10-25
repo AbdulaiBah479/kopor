@@ -30,6 +30,8 @@ const Settings = lazyRetry(() => import('./screens/Settings').then((m) => ({ def
 const Account = lazyRetry(() => import('./screens/Settings').then((m) => ({ default: m.Account })));
 const PublicInvoice = lazyRetry(() => import('./screens/PublicInvoice').then((m) => ({ default: m.PublicInvoice })));
 const PublicStatement = lazyRetry(() => import('./screens/PublicStatement').then((m) => ({ default: m.PublicStatement })));
+const PublicPassport = lazyRetry(() => import('./screens/Passport').then((m) => ({ default: m.PublicPassport })));
+const Passport = lazyRetry(() => import('./screens/Passport').then((m) => ({ default: m.Passport })));
 const PublicGroup = lazyRetry(() => import('./screens/PublicGroup').then((m) => ({ default: m.PublicGroup })));
 const Savings = lazyRetry(() => import('./screens/Savings').then((m) => ({ default: m.Savings })));
 const Staff = lazyRetry(() => import('./screens/Staff').then((m) => ({ default: m.Staff })));
@@ -54,6 +56,7 @@ function Gate() {
     <Suspense fallback={<Boot />}><Routes>
       <Route path="/i/:token" element={<PublicInvoice />} />
       <Route path="/s/:token" element={<PublicStatement />} />
+      <Route path="/p/:token" element={<PublicPassport />} />
       <Route path="/g/:token" element={<PublicGroup />} />
       <Route path="/legal/:doc" element={<Legal />} />
       <Route path="/pay/:data" element={<PayPage />} />
@@ -94,6 +97,7 @@ function Gate() {
         <Route path="/staff" element={<Staff />} />
         <Route path="/gst" element={<Gst />} />
         <Route path="/watch" element={<Watch />} />
+        <Route path="/passport" element={<Passport />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { QrCode } from '@/ui/QrCode';
 import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
@@ -234,16 +235,6 @@ export function WalletsSheet() {
       <button className="btn primary block"><Icon name="check" size={18} /> {t('money.saveWallets')}</button>
     </form>
   );
-}
-
-function QrCode({ text }: { text: string }) {
-  const [src, setSrc] = useState('');
-  useEffect(() => {
-    let live = true;
-    import('qrcode').then((q) => q.toDataURL(text, { margin: 1, width: 260, errorCorrectionLevel: 'M' })).then((u) => live && setSrc(u)).catch(() => {});
-    return () => { live = false; };
-  }, [text]);
-  return src ? <img className="qr" src={src} alt="" width={260} height={260} /> : <div className="qr" />;
 }
 
 function ReceiveSheet({ monime }: { monime: boolean }) {

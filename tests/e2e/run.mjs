@@ -84,7 +84,7 @@ await step('first-use guided tour shows and can be finished', async () => {
   await shot('02-home');
 });
 
-for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/wallet', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl', '/staff', '/gst', '/watch']) {
+for (const r of ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings', '/wallet', '/invoices', '/payments', '/reminders', '/assistant', '/health', '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl', '/staff', '/gst', '/watch', '/passport']) {
   await step(`screen ${r} renders at phone width`, async () => { await go(r); await noOverflow(); });
 }
 
@@ -395,6 +395,26 @@ await step('cartons and expiry: sell a carton (stock down by 12), restock with a
   await page.locator('[data-product="Malta Guinness"]').getByTestId('expiry-badge').waitFor();
   await noOverflow();
   await shot('06b-stock-expiry');
+});
+
+await step('Credit Passport: the lender’s page shows the server-made record', async () => {
+  const months = Array.from({ length: 6 }, (_, i) => ({ month: `2026-${String(5 + i).padStart(2, '0')}`, sales: 2_000_000 + i * 300_000, expenses: 1_200_000, days: 20 + i, records: 120 + i * 10 }));
+  const passport = { id: '12345678-aaaa-4aaa-8aaa-aaaaaaaaaaaa', created_at: new Date().toISOString(), expires_at: new Date(Date.now() + 90 * 864e5).toISOString(),
+    data: { business: { name: 'Mama Fatu Store', type: 'shop', owner_name: 'Fatmata Kamara', phone: '076123456', address: 'Kissy Road' }, since: '2026-03-01', months,
+      sales_6m: 16_500_000, expenses_6m: 7_200_000, active_days_6m: 135, records_6m: 870, credit_given_6m: 3_000_000, credit_repaid_6m: 2_700_000,
+      customers_owe_now: 450_000, customers: 42, monime_confirmed_6m: 4_000_000, staff: 3, branches: 1 } };
+  await page.route('**/rest/v1/rpc/public_passport*', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(passport) }));
+  try {
+    await go('/p/' + 'a'.repeat(40));
+    await Promise.race([page.getByTestId('public-passport').waitFor({ timeout: 15000 }), page.getByTestId('load-failed').waitFor({ timeout: 15000 })]);
+    if (!(await page.getByTestId('public-passport').count())) { console.log('   (no cloud in this build: skipped)'); return; }
+    const doc = page.getByTestId('public-passport');
+    await doc.getByText('Mama Fatu Store').waitFor();
+    await doc.getByText(/\(90%\)/).waitFor();                // customers repaid 90% of credit
+    await doc.getByText(/Figures worked out by Kopor/).waitFor();
+    await noOverflow();
+    await shot('14-credit-passport');
+  } finally { await page.unroute('**/rest/v1/rpc/public_passport*'); }
 });
 
 if (LIVE_AI) await step('microphone: record, transcribe with Whisper, understand', async () => {

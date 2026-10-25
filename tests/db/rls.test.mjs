@@ -435,4 +435,35 @@ await test('phone check: codes are server-only; an account learns only whether i
   assert.equal(users.find((x) => x.phone === '23278555777').verified, false);
 });
 
+await test('Credit Passport: only the owner makes one; figures come from the server; the link opens until revoked', async () => {
+  await as('cashier');
+  await rejects(q('select kopor_make_passport($1)', [ORG]), /Only the owner/);
+  await as('stranger');
+  await rejects(q('select kopor_make_passport($1)', [ORG]), /Only the owner/);
+  await as('owner');
+  const tok = (await q('select kopor_make_passport($1) as t', [ORG])).rows[0].t;
+  assert.ok(tok.length >= 32);
+  await rejects(q('select kopor_passport_data($1)', [ORG]), /permission denied/);           // raw figures: server only
+  // (the test setup grants every table to everyone; re-apply the migration's column grant, as on the real server)
+  await q('reset role');
+  await q('revoke all on passports from anon, authenticated');
+  await q('grant select (id, org_id, token, created_at, expires_at, revoked) on passports to authenticated');
+  await as(null);
+  const p = (await q('select public_passport($1) as p', [tok])).rows[0].p;
+  assert.equal(p.data.months.length, 6);
+  assert.ok(Number(p.data.sales_6m) > 0 && p.data.business.name);
+  assert.equal((await q('select public_passport($1) as p', ['x'.repeat(40)])).rows[0].p, null);
+  await rejects(q('select * from passports'), /permission denied/);
+  await as('stranger');
+  assert.equal((await q('select id from passports')).rows.length, 0);
+  await as('owner');
+  const id = (await q('select id from passports')).rows[0].id;
+  await as('cashier');
+  await rejects(q('select kopor_revoke_passport($1)', [id]), /not found/);
+  await as('owner');
+  await q('select kopor_revoke_passport($1)', [id]);
+  await as(null);
+  assert.equal((await q('select public_passport($1) as p', [tok])).rows[0].p, null);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);
