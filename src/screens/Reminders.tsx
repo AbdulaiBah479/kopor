@@ -71,6 +71,11 @@ export function Reminders() {
   const { fmt } = useDate();
   const remind = useReminderText();
   const [sent, setSent] = useState<Set<string>>(new Set());
+  const [sms, setSms] = useState(false);
+  const { toast } = useOverlay();
+  const mayText = can('edit');
+  useEffect(() => { if (mayText) import('@/cloud/sms').then((m) => m.smsStatus(ctx.orgId)).then((s) => setSms(s.connected)).catch(() => {}); }, [ctx.orgId, mayText]);
+  const text = (j: Job) => import('@/cloud/sms').then((m) => m.smsRemind(ctx.orgId, j.id.slice(1))).then(() => { toast(t('sms.sent', { name: j.name })); setSent(new Set(sent).add(j.id)); }).catch(fail);
   const cc = book.org.country_code;
 
   const jobs: Job[] = [
@@ -106,6 +111,7 @@ export function Reminders() {
             <div className="avatar">{initials(j.name)}</div>
             <div className="main"><div className="t">{j.name}</div><div className={`s ${j.tone}`}>{j.tag}</div></div>
             <Money v={j.amount} />
+            {sms && /^[os]/.test(j.id) && <button className="tick" aria-label={t('sms.textTo', { name: j.name })} data-testid="sms-remind" onClick={() => text(j)}><Icon name="sms" /></button>}
             <button className={`tick ${sent.has(j.id) ? 'on' : ''}`} aria-label={`WhatsApp ${j.name}`} onClick={() => send(j)}><Icon name={sent.has(j.id) ? 'check' : 'chat'} /></button>
           </div>
         )) : <Empty icon="bell" title={t('rem.none')} />}

@@ -466,4 +466,14 @@ await test('Credit Passport: only the owner makes one; figures come from the ser
   assert.equal((await q('select public_passport($1) as p', [tok])).rows[0].p, null);
 });
 
+await test('text messages: the phone login, signing key and text log are server-only', async () => {
+  // (the test setup grants every table to everyone; re-apply the migration's revokes, as on the real server)
+  await q('reset role');
+  for (const tbl of ['sms_log', 'sms_runs', 'org_secrets']) await q(`revoke all on ${tbl} from anon, authenticated`);
+  for (const who of [null, 'owner', 'cashier']) {
+    await as(who);
+    for (const tbl of ['sms_log', 'sms_runs', 'org_secrets']) await rejects(q(`select * from ${tbl}`), /permission denied/, tbl);
+  }
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

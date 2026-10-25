@@ -64,5 +64,6 @@ jobs:
             [ "$fn" = "_shared" ] && continue
             flags=""
             [ "$fn" = "monime-webhook" ] && flags="--no-verify-jwt"   # Monime calls it without a Supabase login
+            [ "$fn" = "sms-webhook" ] && flags="--no-verify-jwt"      # the shop's phone calls it without a Supabase login
             npx supabase functions deploy "$fn" --project-ref "$PROJECT" --use-api $flags
           done

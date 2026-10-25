@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Copyright } from '@/ui/Copyright';
 import { PhoneCheckRow } from './PhoneCheck';
+import { SmsCard } from './SmsCard';
 import { canSpeak } from '@/lib/speak';
 import { lazyRetry } from '@/ui/lazy';
 import { useTranslation } from 'react-i18next';
@@ -130,6 +131,7 @@ export function Settings() {
       </div>
       {can('business') && <BusinessCard />}
       {can('business') && <TaxCard />}
+      {can('business') && <SmsCard />}
       <PreferencesCard />
       <PrinterCard />
       <SecurityCard />
