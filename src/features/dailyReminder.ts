@@ -7,16 +7,21 @@ import { overdueContacts } from '@/domain/credit';
 import { lowStock } from '@/domain/stock';
 import { loanReminders, pendingClaims } from '@/domain/groups';
 import { getMeta, setMeta } from '@/db/repo';
+import { expiring } from '@/domain/expiry';
+import { watchFlags } from '@/domain/watch';
+import { today } from '@/lib/dates';
 
-export interface Digest { overdue: number; claims: number; loans: number; low: number }
+export interface Digest { overdue: number; claims: number; loans: number; low: number; expiring: number; signs: number }
 
-/** What needs attention today (pure: unit tested). */
-export function dailyDigest(book: Book, now?: string): Digest {
+/** What needs attention today (pure: unit tested). Warning signs (Fraud watch, last 2 days) only for owners and managers. */
+export function dailyDigest(book: Book, now?: string, opts: { owner?: boolean } = {}): Digest {
   return {
     overdue: overdueContacts(book, now).length,
     claims: pendingClaims(book).length,
     loans: loanReminders(book, 0, now).length,
     low: lowStock(book).length,
+    expiring: expiring(book, 7, now).length,
+    signs: opts.owner ? watchFlags(book, [], 2, now).filter((f) => f.kind !== 'unconfirmed').length : 0,
   };
 }
 
@@ -25,6 +30,7 @@ export function digestText(t: TFunction, d: Digest): string | null {
   const parts = [
     d.overdue && t('daily.overdue', { count: d.overdue }), d.claims && t('daily.claims', { count: d.claims }),
     d.loans && t('daily.loans', { count: d.loans }), d.low && t('daily.low', { count: d.low }),
+    d.expiring && t('daily.expiring', { count: d.expiring }), d.signs && t('daily.signs', { count: d.signs }),
   ].filter(Boolean);
   return parts.length ? parts.join(' · ') : null;
 }
@@ -40,6 +46,9 @@ export function nextMorning(from = new Date(), hour = 8): Date {
 const isNative = () => !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
 export const localRemindersSupported = isNative;
 const IDS = [7001, 7002, 7003, 7004, 7005, 7006, 7007];
+/** Evening "Close the day" reminders for the next week. */
+const CLOSE_IDS = [7101, 7102, 7103, 7104, 7105, 7106, 7107];
+export const CLOSE_HOUR = 19;
 
 export const dailyReminderOn = () => getMeta<boolean>('dailyReminder', false);
 
@@ -57,16 +66,28 @@ export async function disableDailyReminder() {
   await setMeta('dailyReminder', false);
   if (!isNative()) return;
   const { LocalNotifications } = await import('@capacitor/local-notifications');
-  await LocalNotifications.cancel({ notifications: IDS.map((id) => ({ id })) });
+  await LocalNotifications.cancel({ notifications: [...IDS, ...CLOSE_IDS].map((id) => ({ id })) });
 }
 
 /** (Re)schedule from the current records. Called when the app opens and after changes. Silent if off or not the app. */
-export async function scheduleDailyReminder(book: Book, t: TFunction) {
+export async function scheduleDailyReminder(book: Book, t: TFunction, opts: { owner?: boolean; closes?: boolean } = {}) {
   if (!isNative() || !(await dailyReminderOn())) return;
   const { LocalNotifications } = await import('@capacitor/local-notifications');
   if ((await LocalNotifications.checkPermissions()).display !== 'granted') return;
-  await LocalNotifications.cancel({ notifications: IDS.map((id) => ({ id })) });
-  const body = digestText(t, dailyDigest(book));
+  await LocalNotifications.cancel({ notifications: [...IDS, ...CLOSE_IDS].map((id) => ({ id })) });
+  // Every evening at 19:00: count the cash and check mobile money (skipped today if the day is already closed).
+  if (opts.closes) {
+    const closedToday = book.closings.some((c) => c.date === today());
+    const evening = nextMorning(new Date(), CLOSE_HOUR);
+    if (closedToday && evening.toDateString() === new Date().toDateString()) evening.setDate(evening.getDate() + 1);
+    await LocalNotifications.schedule({
+      notifications: CLOSE_IDS.map((id, i) => {
+        const at = new Date(evening); at.setDate(at.getDate() + i);
+        return { id, title: t('daily.closeTitle'), body: t('daily.closeBody'), schedule: { at, allowWhileIdle: true }, extra: { url: '#/cash' } };
+      }),
+    });
+  }
+  const body = digestText(t, dailyDigest(book, undefined, { owner: opts.owner }));
   if (!body) return;
   const first = nextMorning();
   await LocalNotifications.schedule({

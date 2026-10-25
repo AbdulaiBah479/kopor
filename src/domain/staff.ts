@@ -53,7 +53,7 @@ export const AWAY_M = 200;
 export async function tapIn(ctx: Ctx, book: Book, member: Member, now = new Date(), whereM: number | null = null) {
   const date = today(), time = hhmm(now), cur = dayOf(book, member.id, date);
   if (cur?.time_in) return cur;
-  return markDay(ctx, member, date, { status: time > LATE_AFTER ? 'late' : 'present', time_in: time, where_m: whereM });
+  return markDay(ctx, member, date, { status: time > (book.org.late_after || LATE_AFTER) ? 'late' : 'present', time_in: time, where_m: whereM });
 }
 
 /**
@@ -63,7 +63,7 @@ export async function tapIn(ctx: Ctx, book: Book, member: Member, now = new Date
 export function attendanceFlags(book: Book, a: Attendance): ('away' | 'noPlace' | 'late')[] {
   const out: ('away' | 'noPlace' | 'late')[] = [];
   if (!a.time_in) return out;
-  if (a.where_m != null && a.where_m > AWAY_M) out.push('away');
+  if (a.where_m != null && a.where_m > (book.org.away_m || AWAY_M)) out.push('away');
   else if (a.where_m == null && book.org.shop_lat != null && a.created_by === a.member_id) out.push('noPlace');
   if (a.seen_at) {
     const claimed = new Date(`${a.date}T${a.time_in}:00`).getTime();
@@ -123,8 +123,9 @@ export async function saveTerms(ctx: Ctx, book: Book, member: Member, i: TermsIn
   if (!(i.amount >= 0)) throw new AppError('err.amount');
   const data = { pay_type: i.pay_type, amount: Math.round(i.amount), work_days: Math.min(7, Math.max(1, Math.round(i.work_days || 6))) };
   const cur = termsOf(book, member.id);
-  if (cur) return update(ctx, 'staff_terms', cur.id, data, `Pay for ${member.name}`);
-  return insert(ctx, 'staff_terms', { member_id: member.id, start_date: today(), ...data }, `Pay for ${member.name}`);
+  // The activity log is visible to the whole team, so it never names a person's pay.
+  if (cur) return update(ctx, 'staff_terms', cur.id, data, 'Changed staff pay settings');
+  return insert(ctx, 'staff_terms', { member_id: member.id, start_date: today(), ...data }, 'Set staff pay');
 }
 
 /**
@@ -137,8 +138,8 @@ export async function recordPay(ctx: Ctx, member: Member, kind: StaffPay['kind']
   const month = opts.month ?? monthOf(today());
   const cash = kind === 'advance' || kind === 'salary';
   return atomic(async () => {
-    const txn = cash ? await recordExpense(ctx, { amount, category: 'salaries', method: opts.method ?? 'cash', note: `${kind === 'advance' ? 'Advance' : 'Salary'} · ${member.name} · ${month}${opts.note ? ` · ${opts.note}` : ''}` }) : null;
+    const txn = cash ? await recordExpense(ctx, { amount, category: 'salaries', method: opts.method ?? 'cash', note: `${kind === 'advance' ? 'Staff advance' : 'Staff salary'} · ${month}` }) : null; // no name: staff can read the cash book
     return insert(ctx, 'staff_pay', { member_id: member.id, kind, amount: Math.round(amount), month, date: today(), note: (opts.note ?? '').trim().slice(0, 200), txn_id: txn?.id ?? null },
-      `${kind} ${amount / 100} for ${member.name}`);
+      'Recorded staff pay');
   });
 }

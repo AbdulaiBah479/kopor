@@ -27,6 +27,8 @@ export interface Org extends Base {
   receipt_footer?: string;
   shop_lat?: number | null;     // the shop's location, to check staff tap in at the shop (Staff & attendance)
   shop_lng?: number | null;
+  late_after?: string | null;   // HH:MM, tapping in later counts as late (default 08:30)
+  away_m?: number | null;       // metres from the shop that still count as "at the shop" (default 200)
 }
 export interface Branch extends Base { name: string; address: string }
 export interface Member extends Base {

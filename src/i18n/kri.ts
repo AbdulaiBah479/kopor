@@ -177,9 +177,9 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     productExists: 'Prɔdak wit dis nem dɔn de', contactExists: 'Ɔda kɔntak dɔn get dis nem', qty: 'Put ɔmɔs', notFound: 'A nɔ si am', lastOwner: 'Biznɛs fɔ get wan ɔna atlis',
     removeSelf: 'Yu nɔ kin rimov yusɛf', pinFormat: 'PIN fɔ bi 4 to 8 nɔmba', pinLocked: 'Tumɔs rɔng PIN. Tray bak afta {{seconds}} sɛkɔn.',
     backupFile: 'Dis nɔto Kopor bakɔp', backupPassword: 'Bakɔp paswɔd nɔ rayt', phone: 'Put kɔrɛkt fon nɔmba', cloudPin: 'Akawnt PIN fɔ bi 6 nɔmba',
-    noCloud: 'Klawd nɔ sɛt yet. Ad Supabase tin dɛn na Sɛtin.', phoneTaken: 'Dis fon dɔn get akawnt. Sayn in.',
-    confirmDisabled: 'Ɔf imel kɔnfɔmeshɔn na Supabase Auth sɛtin (luk README).', login: 'Fon nɔmba ɔ PIN nɔ rayt', notMember: 'Yu nɔto mɛmba fɔ dis biznɛs',
-    cloudUrl: 'Supabase URL fɔ tan lɛk https://xxxx.supabase.co', noAi: 'Dis nid intanɛt. Tray bak we yu ɔnlayn.', generic: 'Sɔntin rɔng',
+    noCloud: 'Ɔnlayn bakɔp nɔ de naw. Yu rɛkɔd dɛn de sef pan dis fon; tray bak leta.', phoneTaken: 'Dis fon dɔn get akawnt. Sayn in.',
+    confirmDisabled: 'A nɔ ebul mek di akawnt naw. Tray bak leta ɔ kɔntakt Kopor sɔpɔt.', login: 'Fon nɔmba ɔ PIN nɔ rayt', notMember: 'Yu nɔto mɛmba fɔ dis biznɛs',
+    cloudUrl: 'Da sɛva adrɛs nɔ rayt.', noAi: 'Dis nid intanɛt. Tray bak we yu ɔnlayn.', generic: 'Sɔntin rɔng',
     permission: 'Yu wok nɔ gri fɔ du dis. Aks di ɔna.',
   },
 };

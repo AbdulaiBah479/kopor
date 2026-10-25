@@ -94,10 +94,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!book) return;
     const timer = window.setTimeout(() => {
-      import('@/features/dailyReminder').then((m) => m.scheduleDailyReminder(book, i18n.t)).catch(() => {});
+      const role = book.members.find((m) => m.id === session?.memberId)?.role ?? 'viewer';
+      import('@/features/dailyReminder').then((m) => m.scheduleDailyReminder(book, i18n.t, { owner: canRole(role, 'reports'), closes: canRole(role, 'close') })).catch(() => {});
     }, 3000);
     return () => window.clearTimeout(timer);
-  }, [book]);
+  }, [book, session?.memberId]);
   const member = book?.members.find((m) => m.id === session?.memberId);
   const role: Role = member?.active ? member.role : 'viewer';
   if (book) setCurrencySymbol(book.org.currency);

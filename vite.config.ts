@@ -17,6 +17,26 @@ function securityHeaders(): Plugin {
     name: 'kopor-csp',
     apply: 'build',
     transformIndexHtml: (html) => html.replace('<title>', `<meta http-equiv="Content-Security-Policy" content="${CSP}">\n  <title>`),
+    // Hosts that read a _headers file (Cloudflare Pages) also send real security headers: the same policy, plus
+    // never inside another site's frame, HTTPS only, and camera/microphone/location for Kopor itself only.
+    generateBundle() {
+      this.emitFile({
+        type: 'asset', fileName: '_headers', source: [
+          '/*',
+          `  Content-Security-Policy: ${CSP}; frame-ancestors 'none'`,
+          '  X-Frame-Options: DENY',
+          '  X-Content-Type-Options: nosniff',
+          '  Referrer-Policy: strict-origin-when-cross-origin',
+          '  Strict-Transport-Security: max-age=31536000; includeSubDomains',
+          '  Permissions-Policy: camera=(self), microphone=(self), geolocation=(self), payment=(), usb=(), interest-cohort=()',
+          '/assets/*',
+          '  Cache-Control: public, max-age=31536000, immutable',
+          '/sw.js',
+          '  Cache-Control: no-cache',
+          '',
+        ].join('\n'),
+      });
+    },
   };
 }
 

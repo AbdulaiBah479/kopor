@@ -50,7 +50,7 @@ function Today() {
     if (!me) return;
     const pos = shop ? await currentPosition() : null;
     const whereM = pos && shop ? distanceM(pos, shop) : null;
-    await run(tapIn(ctx, book, me, new Date(), whereM), whereM != null && whereM > 200 ? t('staff.tappedAway', { m: whereM }) : t('staff.tappedIn'));
+    await run(tapIn(ctx, book, me, new Date(), whereM), whereM != null && whereM > (book.org.away_m || 200) ? t('staff.tappedAway', { m: whereM }) : t('staff.tappedIn'));
   };
   const setShop = async () => {
     const pos = await currentPosition(12000);
@@ -74,6 +74,12 @@ function Today() {
         <div className="card flat small row between" style={{ gap: 8, flexWrap: 'wrap' }} data-testid="shop-location">
           <span>{shop ? t('staff.shopIsSet') : t('staff.shopNotSet')}</span>
           <button type="button" className="btn sm" onClick={setShop}><Icon name="store" size={16} /> {t(shop ? 'staff.shopReset' : 'staff.shopSetHere')}</button>
+          <div className="row" style={{ gap: 8, width: '100%' }}>
+            <Field label={t('staff.startTime')}><input type="time" name="late_after" defaultValue={book.org.late_after || '08:30'}
+              onBlur={(e) => e.target.value && e.target.value !== (book.org.late_after || '08:30') && updateOrg(ctx, { late_after: e.target.value }).then(() => toast(t('common.saved'))).catch(fail)} /></Field>
+            <Field label={t('staff.radius')}><select name="away_m" value={book.org.away_m || 200} onChange={(e) => updateOrg(ctx, { away_m: Number(e.target.value) }).then(() => toast(t('common.saved'))).catch(fail)}>
+              {[100, 200, 500, 1000].map((m) => <option key={m} value={m}>{t('staff.withinM', { m })}</option>)}</select></Field>
+          </div>
         </div>
       )}
       {can('edit') && <Field label={t('staff.date')}><input type="date" value={date} max={today()} onChange={(e) => e.target.value && setDate(e.target.value)} /></Field>}
@@ -87,7 +93,7 @@ function Today() {
                 <div className="main">
                   <div className="t with-badge"><span className="trunc">{m.name}</span>{d ? <span className={`badge ${STATUS_CLASS[d.status]}`}>{t(`staff.st.${d.status}`)}</span> : <span className="badge">{t('staff.notMarked')}</span>}</div>
                   <div className="s">{t(`roles.${m.role}`)}{d?.time_in ? ` · ${t('staff.arrived', { time: d.time_in })}` : ''}{d?.time_out ? ` · ${t('staff.left', { time: d.time_out })}` : ''}
-                    {d?.where_m != null && d.where_m <= 200 ? ` · ${t('staff.atShop')}` : ''}</div>
+                    {d?.where_m != null && d.where_m <= (book.org.away_m || 200) ? ` · ${t('staff.atShop')}` : ''}</div>
                   {d && can('edit') && attendanceFlags(book, d).map((f) => (
                     <span key={f} className="badge warn" data-testid="att-flag" style={{ marginRight: 4 }}>
                       {f === 'away' ? t('watch.att.awayM', { m: d.where_m }) : f === 'late' ? t('watch.att.lateAt', { time: new Date(d.seen_at!).toTimeString().slice(0, 5) }) : t('watch.att.noPlace')}</span>

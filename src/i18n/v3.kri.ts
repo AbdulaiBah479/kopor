@@ -451,6 +451,9 @@ const v3: V3Dict = {
     badNumber: 'Rayt Salone mobile nɔmba, lɛk 076 123 456',
   },
   staff: {
+    startTime: 'Wok de bigin na (afta dat = leyt)',
+    radius: 'Kɔnt as na di shɔp',
+    withinM: 'insay {{m}} m',
     tappedAway: 'Dɛn mak se yu de, bɔt yu de {{m}} m frɔm di shɔp. Di ona go si dis.',
     noLocation: 'A nɔ si usay dis fon de. Ɔn lokeshɔn ɛn tray bak na di shɔp.',
     shopSet: 'Shɔp lokeshɔn dɔn sev',
@@ -690,6 +693,12 @@ const v3: V3Dict = {
     never: 'Nɔ ɛva gi dis kod to ɛnibɔdi. Kopor nɔ go ɛva kɔl ɔ tɛks yu fɔ aks am.',
   },
   daily: {
+    expiring_one: '{{count}} tin go ɛkspayr dis wik',
+    expiring_other: '{{count}} tin dɛn go ɛkspayr dis wik',
+    signs_one: '{{count}} wɔnin sayn na Wach fɔ tif',
+    signs_other: '{{count}} wɔnin sayn dɛn na Wach fɔ tif',
+    closeTitle: 'Na tɛm fɔ klos di de',
+    closeBody: 'Kɔnt di kesh ɛn chɛk mobayl mɔni wit di mɛsej dɛn pan yu fon.',
     title: '{{name}}: tide',
     help: 'Nɔtifikeshɔn na 8:00 ɛvri mɔnin wit wetin fɔ du. I de mek am pan dis fon frɔm yu rɛkɔd, so i de wok ɔflayn.',
     nudge: 'Opin Kopor fɔ si wetin fɔ du tide.',

@@ -37,7 +37,7 @@ export function Team() {
             <div className="avatar">{initials(m.name)}</div>
             <div className="main">
               <div className="t with-badge"><span className="trunc">{m.name}</span> {m.id === member?.id && <span className="badge good">{t('team.you')}</span>} {!m.active && <span className="badge">{t('team.inactive')}</span>}</div>
-              <div className="s">{t(`roles.${m.role}`)} · {branchName(m.branch_id)}{m.phone && ` · ${m.phone}`}{pins.has(m.id) && ' · 🔒'}{m.user_id && ' · ☁'}</div>
+              <div className="s">{t(`roles.${m.role}`)} · {branchName(m.branch_id)}{m.phone && (can('team') || m.id === member?.id) && ` · ${m.phone}`}{pins.has(m.id) && ' · 🔒'}{m.user_id && ' · ☁'}</div>
             </div>
             <Icon name="chev" />
           </button>

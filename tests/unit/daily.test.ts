@@ -21,7 +21,7 @@ beforeEach(async () => {
 describe('Android daily reminder', () => {
   it('says nothing when nothing needs attention', async () => {
     const d = dailyDigest((await loadBook(ctx.orgId))!);
-    expect(d).toEqual({ overdue: 0, claims: 0, loans: 0, low: 0 });
+    expect(d).toEqual({ overdue: 0, claims: 0, loans: 0, low: 0, expiring: 0, signs: 0 });
     expect(digestText(i18n.t, d)).toBeNull();
   });
   it('counts overdue customers and low stock, in plain words', async () => {

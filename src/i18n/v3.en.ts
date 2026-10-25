@@ -449,6 +449,9 @@ const v3 = {
     badNumber: 'Enter a Sierra Leone mobile number, like 076 123 456',
   },
   staff: {
+    startTime: 'Work starts at (later = late)',
+    radius: 'Counts as at the shop',
+    withinM: 'within {{m}} m',
     tappedAway: 'Marked as here, but {{m}} m from the shop. The owner will see this.',
     noLocation: 'Could not find this phone’s location. Turn on location and try again at the shop.',
     shopSet: 'Shop location saved',
@@ -688,6 +691,12 @@ const v3 = {
     never: 'Never give this code to anyone. Kopor will never call or text you to ask for it.',
   },
   daily: {
+    expiring_one: '{{count}} item expires this week',
+    expiring_other: '{{count}} items expire this week',
+    signs_one: '{{count}} warning sign in Fraud watch',
+    signs_other: '{{count}} warning signs in Fraud watch',
+    closeTitle: 'Time to close the day',
+    closeBody: 'Count the cash and check mobile money against your phone’s messages.',
     title: '{{name}}: today',
     help: 'A notification at 8:00 each morning with what needs attention. Made on this phone from your records, so it works offline.',
     nudge: 'Open Kopor to see what needs attention today.',

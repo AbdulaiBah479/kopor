@@ -178,9 +178,9 @@ const base = {
     productExists: 'A product with this name already exists', contactExists: 'Another contact already has this name', qty: 'Enter a quantity', notFound: 'Not found', lastOwner: 'A business must keep at least one owner',
     removeSelf: 'You cannot remove yourself', pinFormat: 'PIN must be 4 to 8 digits', pinLocked: 'Too many wrong PINs. Try again in {{seconds}} seconds.',
     backupFile: 'This is not a valid Kopor backup', backupPassword: 'Wrong backup password', phone: 'Enter a valid phone number', cloudPin: 'Account PIN must be exactly 6 digits',
-    noCloud: 'Cloud is not set up yet. Add Supabase details in Settings.', phoneTaken: 'This phone already has an account. Sign in instead.',
-    confirmDisabled: 'Turn off email confirmation in Supabase Auth settings (see README).', login: 'Wrong phone number or PIN', notMember: 'You are not a member of this business',
-    cloudUrl: 'Supabase URL should look like https://xxxx.supabase.co', noAi: 'This needs an internet connection. Try again when you are online.', generic: 'Something went wrong',
+    noCloud: 'Online backup is not available right now. Your records are safe on this phone; try again later.', phoneTaken: 'This phone already has an account. Sign in instead.',
+    confirmDisabled: 'Could not create the account right now. Please try again later or contact Kopor support.', login: 'Wrong phone number or PIN', notMember: 'You are not a member of this business',
+    cloudUrl: 'That server address is not valid.', noAi: 'This needs an internet connection. Try again when you are online.', generic: 'Something went wrong',
     permission: 'Your role is not allowed to do this. Ask the owner.',
   },
 };

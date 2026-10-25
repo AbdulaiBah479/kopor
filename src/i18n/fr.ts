@@ -177,9 +177,9 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     productExists: 'Un produit porte déjà ce nom', contactExists: 'Un autre contact porte déjà ce nom', qty: 'Saisissez une quantité', notFound: 'Introuvable', lastOwner: 'Un commerce doit garder au moins un propriétaire',
     removeSelf: 'Vous ne pouvez pas vous retirer vous-même', pinFormat: 'Le PIN doit comporter 4 à 8 chiffres', pinLocked: 'Trop d’essais. Réessayez dans {{seconds}} secondes.',
     backupFile: 'Ce n’est pas une sauvegarde Kopor valide', backupPassword: 'Mot de passe de sauvegarde incorrect', phone: 'Numéro de téléphone invalide', cloudPin: 'Le PIN du compte doit comporter 6 chiffres',
-    noCloud: 'Le cloud n’est pas configuré. Ajoutez Supabase dans Réglages.', phoneTaken: 'Ce numéro a déjà un compte. Connectez-vous.',
-    confirmDisabled: 'Désactivez la confirmation e-mail dans Supabase Auth (voir README).', login: 'Numéro ou PIN incorrect', notMember: 'Vous n’êtes pas membre de ce commerce',
-    cloudUrl: 'L’URL Supabase doit ressembler à https://xxxx.supabase.co', noAi: 'Ceci a besoin d’une connexion Internet. Réessayez une fois en ligne.', generic: 'Une erreur est survenue',
+    noCloud: 'La sauvegarde en ligne n’est pas disponible pour le moment. Vos données sont en sécurité sur ce téléphone ; réessayez plus tard.', phoneTaken: 'Ce numéro a déjà un compte. Connectez-vous.',
+    confirmDisabled: 'Impossible de créer le compte pour le moment. Réessayez plus tard ou contactez le support Kopor.', login: 'Numéro ou PIN incorrect', notMember: 'Vous n’êtes pas membre de ce commerce',
+    cloudUrl: 'Cette adresse de serveur n’est pas valide.', noAi: 'Ceci a besoin d’une connexion Internet. Réessayez une fois en ligne.', generic: 'Une erreur est survenue',
     permission: 'Votre rôle ne permet pas cette action. Demandez au propriétaire.',
   },
 };

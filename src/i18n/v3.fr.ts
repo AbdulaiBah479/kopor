@@ -451,6 +451,9 @@ const v3: V3Dict = {
     badNumber: 'Entrez un numéro mobile de Sierra Leone, comme 076 123 456',
   },
   staff: {
+    startTime: 'Le travail commence à (après = en retard)',
+    radius: 'Compte comme à la boutique',
+    withinM: 'à moins de {{m}} m',
     tappedAway: 'Présence notée, mais à {{m}} m de la boutique. Le propriétaire le verra.',
     noLocation: 'Impossible de trouver la position du téléphone. Activez la localisation et réessayez à la boutique.',
     shopSet: 'Position de la boutique enregistrée',
@@ -690,6 +693,12 @@ const v3: V3Dict = {
     never: 'Ne donnez jamais ce code à personne. Kopor ne vous appellera ni ne vous écrira jamais pour le demander.',
   },
   daily: {
+    expiring_one: '{{count}} article expire cette semaine',
+    expiring_other: '{{count}} articles expirent cette semaine',
+    signs_one: '{{count}} signe d’alerte dans Surveillance',
+    signs_other: '{{count}} signes d’alerte dans Surveillance',
+    closeTitle: 'C’est l’heure de clôturer la journée',
+    closeBody: 'Comptez la caisse et vérifiez le mobile money avec les messages de votre téléphone.',
     title: '{{name}} : aujourd’hui',
     help: 'Une notification à 8 h chaque matin avec ce qui demande votre attention. Faite sur ce téléphone à partir de vos données, donc hors ligne aussi.',
     nudge: 'Ouvrez Kopor pour voir ce qui demande votre attention aujourd’hui.',

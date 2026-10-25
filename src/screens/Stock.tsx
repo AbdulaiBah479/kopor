@@ -45,7 +45,7 @@ export function StockList() {
   };
 
   return (
-    <Page guide="stock" title={t('stock.title')} sub={t('stock.sub', { count: book.products.length, value: formatMoney(stockValue(book)) })}
+    <Page guide="stock" title={t('stock.title')} sub={can('reports') ? t('stock.sub', { count: book.products.length, value: formatMoney(stockValue(book)) }) : undefined}
       right={<>
         {can('record') && <ScanButton prefer="purchase" />}
         {can('stock') && <button className="icon-btn" aria-label={t('imp.products')} data-testid="import-products" onClick={() => openSheet(t('imp.products'), <ImportSheet kind="products" />)}><Icon name="upload" size={22} /></button>}
@@ -53,7 +53,7 @@ export function StockList() {
       </>}
       fab={can('stock') && <button className="fab" onClick={() => openSheet(t('stock.newProduct'), <ProductSheet />)}><Icon name="plus" /> {t('stock.product')}</button>}>
       <div className="grid2">
-        <div className="stat"><div className="k">{t('stock.value')}</div><div className="v"><Money v={stockValue(book)} /></div></div>
+        {can('reports') && <div className="stat"><div className="k">{t('stock.value')}</div><div className="v"><Money v={stockValue(book)} /></div></div>}
         <button className="stat" style={{ border: 0, textAlign: 'left', font: 'inherit', cursor: 'pointer' }} onClick={() => setFilter(filter === 'low' ? 'all' : 'low')}>
           <div className="k">{t('stock.low')}</div><div className={`v num ${lowCount ? 'warn' : ''}`}>{lowCount}</div>
         </button>
@@ -77,7 +77,7 @@ export function StockList() {
               <div className="main">
                 <div className="t">{p.name} {isLow(p, qty) && <span className={`badge ${qty <= 0 ? 'bad' : 'warn'}`}>{qty <= 0 ? t('stock.out') : t('stock.lowBadge')}</span>}
                   {soonOf(p.id) && <span className={`badge ${soonOf(p.id)!.expired ? 'bad' : 'warn'}`} data-testid="expiry-badge">{soonOf(p.id)!.expired ? t('pack.expired') : t('pack.expires', { date: fmt(soonOf(p.id)!.expiry) })}</span>}</div>
-                <div className="s">{formatMoney(p.price)}{p.cost > 0 && ` · ${t('stock.margin', { pct: Math.round((1 - p.cost / (p.price || 1)) * 100) })}`}{f.daysLeft !== null && qty > 0 && ` · ${t('stock.daysLeft', { days: f.daysLeft })}`}</div>
+                <div className="s">{formatMoney(p.price)}{p.cost > 0 && can('reports') && ` · ${t('stock.margin', { pct: Math.round((1 - p.cost / (p.price || 1)) * 100) })}`}{f.daysLeft !== null && qty > 0 && ` · ${t('stock.daysLeft', { days: f.daysLeft })}`}</div>
               </div>
               <div className="amt num" data-qty={qty}>{qty}<small>{p.unit}</small></div>
             </button>

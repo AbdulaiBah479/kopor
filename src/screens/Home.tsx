@@ -43,7 +43,8 @@ export function Home() {
   const credit = creditTotals(book);
   const h = health(book, now);
   const month = summary(book, monthStart(now), now);
-  const tips = insights(book, now).slice(0, 5);
+  // Losses and where the money goes are for owners and managers.
+  const tips = insights(book, now).filter((i) => can('reports') || !['loss', 'expense'].includes(i.id)).slice(0, 5);
   const hour = new Date().getHours();
   const greet = t(hour < 12 ? 'home.greetMorning' : hour < 17 ? 'home.greetAfternoon' : 'home.greetEvening');
   const bal = balances(book.ledger);
@@ -105,12 +106,17 @@ export function Home() {
         {/* One money card (Revolut / Monzo style): the number that matters, its two parts, and the money buttons. */}
         <div className="hero balance-card">
           <div className="balance-head">
-            <span className="label">{period === 'today' ? t('home.todayProfit') : t('ux.profitFor', { period: periodLabel })}</span>
-            <span className="amount">{formatMoney(s.profit)}</span>
-            <span className="split">
+            {can('reports') ? <>
+              <span className="label">{period === 'today' ? t('home.todayProfit') : t('ux.profitFor', { period: periodLabel })}</span>
+              <span className="amount">{formatMoney(s.profit)}</span>
+            </> : <>
+              <span className="label">{t('ux.salesFor')}</span>
+              <span className="amount" data-testid="hero-sales">{formatMoney(s.sales)}</span>
+            </>}
+            {can('reports') && <span className="split">
               <span><Icon name="down" size={14} className="mr-0.5 inline" />{t('ux.salesFor')} <b>{formatMoney(s.sales)}</b></span>
               <span><Icon name="up" size={14} className="mr-0.5 inline" />{t('ux.expensesFor')} <b>{formatMoney(s.expenses)}</b></span>
-            </span>
+            </span>}
           </div>
           {can('record') && (
             <div className="money-actions" data-tour="money">
