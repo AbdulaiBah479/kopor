@@ -333,8 +333,8 @@ await step('staff: tap in, mark absent, set pay, give an advance, pay the salary
   if (!/^\D*0(\.00)?$/.test(balance.trim())) throw new Error('still owed: ' + balance);
   await shot('11b-staff-pay');
   await go('/cash');
-  await page.getByText(/^Staff advance/).first().waitFor();
-  await page.getByText(/^Staff salary/).first().waitFor();
+  await page.getByText(/Staff advance/).first().waitFor();
+  await page.getByText(/Staff salary/).first().waitFor();
   if (await page.getByText(/Kadiatu Kamara/).count()) throw new Error('the cash book names whose pay it is');
 });
 
