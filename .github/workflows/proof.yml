@@ -1,0 +1,54 @@
+name: Proof of authorship
+# Free, permanent proof that this code existed at a given time (evidence for copyright). After every change, the
+# exact contents of the code (git commit and tree ids) are stamped with OpenTimestamps (opentimestamps.org), which
+# records a fingerprint in the Bitcoin blockchain at no cost. Proofs are kept on the "proof-of-authorship" release.
+# Once a week, pending proofs are completed ("upgraded") after the Bitcoin confirmation.
+# Check one: pip install opentimestamps-client && ots verify kopor-<commit>.txt.ots
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 5 * * 0' # Sundays: complete pending proofs
+  workflow_dispatch:
+
+permissions:
+  contents: write # to keep the proofs on a release
+
+concurrency: { group: proof, cancel-in-progress: false }
+
+jobs:
+  stamp:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - run: pip install --quiet opentimestamps-client==0.7.2
+      - name: Stamp this version
+        if: github.event_name != 'schedule'
+        run: |
+          set -euo pipefail
+          f="kopor-${GITHUB_SHA}.txt"
+          {
+            echo "Kopor source code. Copyright (c) Abdulai Bah. All rights reserved."
+            echo "Repository: https://github.com/${GITHUB_REPOSITORY}"
+            echo "Commit: ${GITHUB_SHA}"
+            echo "Tree: $(git rev-parse HEAD^{tree})"
+            echo "Date (UTC): $(git log -1 --format=%cI)"
+          } > "$f"
+          ots stamp "$f"
+          gh release view proof-of-authorship >/dev/null 2>&1 || gh release create proof-of-authorship --title "Proof of authorship" \
+            --notes "OpenTimestamps proofs that each version of Kopor existed at its date. Each .txt names a commit; its .ots file is the proof. Verify with: ots verify <file>.ots"
+          gh release upload proof-of-authorship "$f" "$f.ots" --clobber
+          echo "Stamped $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+      - name: Complete pending proofs (after Bitcoin confirms them)
+        if: github.event_name != 'push'
+        run: |
+          set -uo pipefail
+          mkdir -p proofs && cd proofs
+          gh release download proof-of-authorship --pattern '*.ots' --pattern '*.txt' --clobber || exit 0
+          n=0
+          for p in *.ots; do
+            if ots upgrade "$p" 2>&1 | grep -q 'Success'; then n=$((n+1)); gh release upload proof-of-authorship "$p" --clobber; fi
+          done
+          echo "Completed $n proofs" >> "$GITHUB_STEP_SUMMARY"

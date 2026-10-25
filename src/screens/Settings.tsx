@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Copyright } from '@/ui/Copyright';
+import { PhoneCheckRow } from './PhoneCheck';
 import { lazyRetry } from '@/ui/lazy';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook, useLocalOrgs } from '@/state/app';
@@ -233,6 +234,7 @@ export function CloudCard() {
       {user ? (
         <>
           <div className="row between small"><span>{t('settings.signedInAs', { phone: user.user_metadata?.phone ?? user.email })}</span></div>
+          <PhoneCheckRow />
           <div className="small"><i className={`sync-dot ${sync.status}`} />{sync.status === 'syncing' ? t('settings.syncing') : sync.status === 'error' ? t('settings.syncError', { error: sync.error }) : sync.lastSync ? t('settings.lastSync', { time: new Date(sync.lastSync).toLocaleTimeString() }) : t('settings.syncOff')}</div>
           <div className="btn-row">
             <button className="btn" onClick={() => syncNow(ctx.orgId)}><Icon name="cloud" size={18} /> {t('settings.syncNow')}</button>

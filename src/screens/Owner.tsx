@@ -27,7 +27,7 @@ interface Account {
   has_recovery_code: boolean; banned_until?: string | null; businesses: Biz[];
 }
 interface LogRow { at: string; admin_phone: string; action: string; target: string; detail: string }
-interface UserRow { id: string; phone: string | null; name: string | null; created_at: string; last_sign_in_at: string | null; banned_until: string | null; businesses: { id: string; name: string; role: string }[] }
+interface UserRow { id: string; phone: string | null; name: string | null; created_at: string; last_sign_in_at: string | null; banned_until: string | null; verified?: boolean; businesses: { id: string; name: string; role: string }[] }
 interface OrgRow {
   id: string; name: string; type: string; owner_name: string; owner_phone: string | null; phone: string; plan: string; plan_until: number | null; created_at: number;
   staff: number; branches: number; records: number; records_30d: number; money_in_30d: number; last_record: number | null; payments: 'own' | 'easy' | null;
@@ -245,7 +245,7 @@ function Users({ onPick, onOrg }: { onPick: (phone: string) => void; onOrg: (id:
         {rows.map((u) => (
           <div key={u.id} className="item">
             <button type="button" className="main" style={{ textAlign: 'left', background: 'none', border: 0, padding: 0, color: 'inherit' }} onClick={() => u.phone && onPick(u.phone)}>
-              <div className="t with-badge"><span className="trunc">{u.name || (u.phone ? `+${u.phone}` : '—')}</span>{isOn(u.banned_until) && <span className="badge bad">{t('admin.suspended')}</span>}</div>
+              <div className="t with-badge"><span className="trunc">{u.name || (u.phone ? `+${u.phone}` : '—')}</span>{isOn(u.banned_until) && <span className="badge bad">{t('admin.suspended')}</span>}{u.verified && <span className="badge good">{t('phone.verifiedShort')}</span>}</div>
               <div className="s">{u.phone ? `+${u.phone} · ` : ''}{t('admin.joined', { date: day(u.created_at) })} · {t('admin.lastSeen', { date: day(u.last_sign_in_at, t('admin.never')) })}</div>
             </button>
             <div className="btn-row" style={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>

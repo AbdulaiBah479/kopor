@@ -416,4 +416,23 @@ await test('full owner dashboard: lists and business details for the server only
   }
 });
 
+await test('phone check: codes are server-only; an account learns only whether its own number is verified', async () => {
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  await q(`insert into phone_checks (user_id, code_hash, verified_at, verified_phone) values ($1, 'x', now(), '23276000000'), ($2, 'secret-hash', null, null)`, [U.owner, U.cashier]);
+  // (the test setup grants every table to everyone; re-apply the migration's revoke, as on the real server)
+  await q('revoke all on phone_checks from anon, authenticated');
+  for (const who of [null, 'owner', 'cashier']) {
+    await as(who);
+    await rejects(q('select * from phone_checks'), /permission denied/);
+  }
+  await as('owner');
+  assert.equal((await q('select kopor_phone_verified() as v')).rows[0].v, true);
+  await as('cashier');
+  assert.equal((await q('select kopor_phone_verified() as v')).rows[0].v, false);
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  const users = (await q(`select kopor_admin_users('', 50, 0) as r`)).rows[0].r.rows;
+  assert.equal(users.find((x) => x.phone === '23276000000').verified, true);
+  assert.equal(users.find((x) => x.phone === '23278555777').verified, false);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);
