@@ -734,6 +734,23 @@ const v3: V3Dict = {
     teamN: '{{staff}} personnes · {{branches}} boutiques',
     note: 'Les ventes et dépenses sont saisies par le commerce dans Kopor ; les montants confirmés par Monime sont des paiements traités par Monime. Vérifiez les chiffres importants avec les relevés bancaires ou mobile money du commerce.',
   },
+  season: {
+    title: '{{event}} dans {{days}} jours : préparez-vous',
+    more: 'Tout voir',
+    why: 'Vendu {{times}}× plus avant l’an dernier · besoin d’environ {{need}}, vous avez {{have}} {{unit}}',
+    buy: 'Acheter {{n}}',
+    enough: 'Suffisant',
+    ev: {
+      christmas: 'Noël',
+      newyear: 'Nouvel An',
+      easter: 'Pâques',
+      independence: 'Fête de l’Indépendance',
+      school: 'Rentrée scolaire',
+      ramadan: 'Ramadan',
+      eidFitr: 'Aïd el-Fitr',
+      eidAdha: 'Aïd el-Kébir (Tabaski)',
+    },
+  },
   daily: {
     expiring_one: '{{count}} article expire cette semaine',
     expiring_other: '{{count}} articles expirent cette semaine',

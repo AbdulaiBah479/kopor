@@ -732,6 +732,23 @@ const v3 = {
     teamN: '{{staff}} people · {{branches}} branches',
     note: 'Sales and expenses are recorded by the business in Kopor; amounts confirmed by Monime are payments Monime processed. Check important figures with the business’s bank or mobile money statements.',
   },
+  season: {
+    title: '{{event}} in {{days}} days: get ready',
+    more: 'See all',
+    why: 'Sold {{times}}× more before it last year · need about {{need}}, you have {{have}} {{unit}}',
+    buy: 'Buy {{n}}',
+    enough: 'Enough',
+    ev: {
+      christmas: 'Christmas',
+      newyear: 'New Year',
+      easter: 'Easter',
+      independence: 'Independence Day',
+      school: 'School reopening',
+      ramadan: 'Ramadan',
+      eidFitr: 'Eid al-Fitr (Pray Day)',
+      eidAdha: 'Eid al-Adha (Tabaski)',
+    },
+  },
   daily: {
     expiring_one: '{{count}} item expires this week',
     expiring_other: '{{count}} items expire this week',

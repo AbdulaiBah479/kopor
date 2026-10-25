@@ -2,7 +2,7 @@
 // permissions, auto-lock and background cloud sync.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import i18n from '@/i18n';
+import i18n, { setLanguage } from '@/i18n';
 import { db, type Member, type Role } from '@/db/schema';
 import { getMeta, setMeta, type Ctx } from '@/db/repo';
 import { can as canRole, type Perm } from '@/db/permissions';
@@ -79,7 +79,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (async () => {
       const d = { ...DEVICE_DEFAULTS, ...(await getMeta<Partial<DeviceSettings>>('device', {})) };
       setDeviceState(d);
-      await i18n.changeLanguage(d.lang);
+      await setLanguage(d.lang);
       document.documentElement.lang = d.lang === 'kri' ? 'kri' : d.lang;
       applyAppearance({ theme: d.theme, accent: d.accent, text: d.text });
       setSess(await getSession());
@@ -108,7 +108,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setDeviceState(next);
     // Apply first so the change is instant; saving to the device database can follow.
     if (p.theme || p.accent || p.text) applyAppearance({ theme: next.theme, accent: next.accent, text: next.text });
-    if (p.lang) { document.documentElement.lang = p.lang; await i18n.changeLanguage(p.lang); }
+    if (p.lang) { document.documentElement.lang = p.lang; await setLanguage(p.lang); }
     await setMeta('device', next);
   }, [device]);
 

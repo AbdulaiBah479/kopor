@@ -21,6 +21,7 @@ import { SaleSheet, ExpenseSheet } from './Cash';
 import { NewCreditSheet, useReminderText } from './Credit';
 import { Announcements } from '@/ui/Announcements';
 import { UpdateCard } from '@/ui/UpdateCard';
+import { SeasonCard } from '@/ui/SeasonCard';
 
 // AI tools (and their validation library) download only when first used.
 const VoiceSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.VoiceSheet })));
@@ -137,6 +138,7 @@ export function Home() {
         </div>
       )}
 
+      {can('stock') && <SeasonCard book={book} />}
       {tips.length > 0 && (
         <section className="carousel" aria-label={t('home.insights')} data-tour="insights">
           {tips.map((i) => (

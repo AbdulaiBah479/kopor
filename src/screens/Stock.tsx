@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ImportSheet } from './ImportSheet';
+import { SeasonCard } from '@/ui/SeasonCard';
 import { batchesLeft, expiring, supplierDebts } from '@/domain/expiry';
 import { useTranslation } from 'react-i18next';
 import { shareText } from '@/lib/share';
@@ -66,6 +67,7 @@ export function StockList() {
       <Seg value={filter} onChange={setFilter} options={[['all', t('common.all')], ['low', t('stock.lowTab')], ...(soon.length ? [['expiring', t('pack.expiringTab')] as [typeof filter, string]] : [])]} />
       <Search value={q} onChange={setQ} placeholder={t('stock.searchPh')} />
       <ScanToggle onCode={setQ} label={t('scan.find')} />
+      {can('stock') && <SeasonCard book={book} full />}
       <div className="list" id="products">
         {rows.length ? rows.map((p) => {
           const qty = levels.get(p.id) ?? 0;

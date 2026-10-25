@@ -734,6 +734,23 @@ const v3: V3Dict = {
     teamN: '{{staff}} pipul · {{branches}} branch',
     note: 'Na di biznɛs rayt di sɛl ɛn ɛkspens na Kopor; di mɔni we Monime kɔnfam na pe we Monime pas. Chɛk impɔtant nɔmba dɛn wit di biznɛs in bank ɔ mobayl mɔni stetmɛnt.',
   },
+  season: {
+    title: '{{event}} na {{days}} de: rɛdi',
+    more: 'Si ɔl',
+    why: 'I sɛl {{times}}× mɔ bifo am las ia · yu go nid lɛk {{need}}, yu gɛt {{have}} {{unit}}',
+    buy: 'Bay {{n}}',
+    enough: 'I du',
+    ev: {
+      christmas: 'Krismɔs',
+      newyear: 'Nyu Ia',
+      easter: 'Ista',
+      independence: 'Indipɛndɛns De',
+      school: 'Skul opin',
+      ramadan: 'Ramadan',
+      eidFitr: 'Pre De (Ramadan Ed)',
+      eidAdha: 'Tabaski (Layya)',
+    },
+  },
   daily: {
     expiring_one: '{{count}} tin go ɛkspayr dis wik',
     expiring_other: '{{count}} tin dɛn go ɛkspayr dis wik',

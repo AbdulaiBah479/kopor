@@ -12,6 +12,7 @@ import { health } from '@/domain/health';
 import { currentRound, roundStatus } from '@/domain/groups';
 import { parseLocal, type Parsed } from './parser';
 import { expiring, supplierDebts } from '@/domain/expiry';
+import { seasonPlan } from '@/domain/seasons';
 import { gstMonth } from '@/domain/gst';
 import { monthCounts, monthOf, payFor, staffOf } from '@/domain/staff';
 import { byPerson, watchFlags } from '@/domain/watch';
@@ -132,6 +133,7 @@ export function bookContext(book: Book, now = today(), opts: { private?: boolean
     `Groups: ${book.groups.map((g) => { const r = currentRound(g, now); const st = roundStatus(book, g, r); return `${g.name} (${g.kind}) round ${r}, ${st.unpaid.length} unpaid`; }).join('; ') || 'none'}.`,
     `Health score ${h.score}/100 (${h.label}).`,
     `Expiring within 30 days: ${expiring(book, 30, now).slice(0, 10).map((x) => `${x.product.name} ${x.qty} ${x.product.unit} ${x.expired ? 'EXPIRED' : 'on'} ${x.expiry}`).join('; ') || 'none'}.`,
+    `Coming big dates (from last year's sales): ${seasonPlan(book, now).slice(0, 6).map((x) => `${x.event.key} in ${x.days} days: ${x.product.name} sold ${x.times}x more last year; need ~${x.need}, have ${x.have}`).join('; ') || 'none'}.`,
     `Suppliers the business owes: ${supplierDebts(book).slice(0, 8).map((x) => `${x.contact.name} ${m(x.owed)}`).join('; ') || 'none'}.`,
     ...(book.org.tax_rate ? [(() => { const g = gstMonth(book, monthOf(now)); return `GST this month so far (${g.rate}%): charged ${m(g.outputTax)} on sales of ${m(g.taxableSales)}; to pay ~${m(g.net)} before input tax.`; })()] : []),
     ...(opts.private ? privateContext(book, now) : []),
