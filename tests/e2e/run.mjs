@@ -405,7 +405,7 @@ await step('Credit Passport: the lender’s page shows the server-made record', 
       customers_owe_now: 450_000, customers: 42, monime_confirmed_6m: 4_000_000, staff: 3, branches: 1 } };
   await page.route('**/rest/v1/rpc/public_passport*', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(passport) }));
   try {
-    await go('/p/' + 'a'.repeat(40));
+    await page.goto(BASE + '#/p/' + 'a'.repeat(40));        // a public page: no app layout around it
     await Promise.race([page.getByTestId('public-passport').waitFor({ timeout: 15000 }), page.getByTestId('load-failed').waitFor({ timeout: 15000 })]);
     if (!(await page.getByTestId('public-passport').count())) { console.log('   (no cloud in this build: skipped)'); return; }
     const doc = page.getByTestId('public-passport');
