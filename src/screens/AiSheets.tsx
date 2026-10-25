@@ -1,6 +1,7 @@
 // Voice/text entry and receipt scanning.
 import { useEffect, useRef, useState } from 'react';
 import { toDataUrl } from '@/lib/image';
+import { canSpeak, sayMoney, speak } from '@/lib/speak';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
 import { haptic, useOverlay } from '@/ui/overlay';
@@ -30,7 +31,7 @@ const EXAMPLES = ['Sold 3 bags rice 2550 cash', 'A sɛl tu bag rɛs 1700', 'Amin
 export function VoiceSheet() {
   const { t, i18n } = useTranslation();
   const book = useBook();
-  const { ctx, can } = useApp();
+  const { ctx, can, device } = useApp();
   const { closeSheet, openSheet, toast, fail } = useOverlay();
   const [text, setText] = useState('');
   const [voice, setVoice] = useState<'idle' | 'rec' | 'stt' | 'browser'>('idle');
@@ -74,7 +75,10 @@ export function VoiceSheet() {
     setFromPrice(!!(p && p.price > 0));
     setResult(r);
     setBusy(false);
+    // Picture and voice mode: say what was understood, so it can be checked without reading.
+    if (device.simple && device.voice && r.action !== 'unknown') readBack(r);
   };
+  const readBack = (r: Parsed) => speak([t(`ai.actions.${r.action}`), r.amount ? sayMoney(formatMoney(r.amount)) : '', r.qty && r.item ? `${r.qty} ${r.item}` : r.item, r.name].filter(Boolean).join(', '), i18n.language);
 
   // Fallback: the browser's own speech recognition (Chrome, Edge, Safari) when recording or transcription is unavailable.
   const browserListen = () => {
@@ -209,6 +213,7 @@ export function VoiceSheet() {
             result.action === 'sale' && [t('cash.method'), t(`methods.${result.method}`)], result.action === 'expense' && [t('cash.category'), t(`categories.${result.category}`)],
           ].filter(Boolean) as [string, string][]).map(([k, v]) => <div key={k} className="row between"><span className="muted">{k}</span><b>{v}</b></div>)}
           {fromPrice && <div className="small muted" data-testid="from-price">{t('ai.fromPrice')}</div>}
+          {canSpeak() && <button type="button" className="btn sm ghost" style={{ alignSelf: 'flex-start' }} onClick={() => readBack(result)}><Icon name="mic" size={16} /> {t('simple.hear')}</button>}
           {/* Ask where it goes: one tap saves it there. The AI's guess is highlighted. */}
           <div className="small"><b>{t('aix.saveAs')}</b> <span className="muted">{t('aix.saveAsHelp')}</span></div>
           <div className="save-as" role="group" aria-label={t('aix.saveAs')}>

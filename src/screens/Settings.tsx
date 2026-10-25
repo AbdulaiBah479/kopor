@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Copyright } from '@/ui/Copyright';
 import { PhoneCheckRow } from './PhoneCheck';
+import { canSpeak } from '@/lib/speak';
 import { lazyRetry } from '@/ui/lazy';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook, useLocalOrgs } from '@/state/app';
@@ -182,6 +183,9 @@ function PreferencesCard() {
     <div className="card stack">
       <h2><Icon name="globe" size={18} /> {t('settings.language')}</h2>
       <div className="lang-pick">{LANGUAGES.map((l) => <button key={l.code} className={device.lang === l.code ? 'on' : ''} aria-pressed={device.lang === l.code} onClick={() => setDevice({ lang: l.code })}>{l.label}</button>)}</div>
+      <label className="check"><input type="checkbox" data-testid="simple-mode" checked={device.simple} onChange={(e) => setDevice({ simple: e.target.checked })} /> {t('simple.setting')}</label>
+      <div className="small muted">{t('simple.settingHelp')}</div>
+      {canSpeak() && <label className="check"><input type="checkbox" checked={device.voice} onChange={(e) => setDevice({ voice: e.target.checked })} /> {t('simple.voiceSetting')}</label>}
     </div>
   );
 }

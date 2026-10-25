@@ -417,6 +417,22 @@ await step('Credit Passport: the lender’s page shows the server-made record', 
   } finally { await page.unroute('**/rest/v1/rpc/public_passport*'); }
 });
 
+await step('picture and voice mode: big pictures on Home, record a sale from a picture, back to the full app', async () => {
+  await go('/settings');
+  await page.getByTestId('simple-mode').check();
+  await go('/');
+  const home = page.getByTestId('simple-home');
+  await home.waitFor();
+  await noOverflow();
+  await shot('15-picture-mode');
+  await home.getByTestId('simple-sold').click();
+  await page.getByTestId('sale-form').waitFor();
+  await page.keyboard.press('Escape');
+  await page.locator('[data-vaul-drawer]').waitFor({ state: 'detached', timeout: 3000 }).catch(() => {});
+  await home.getByTestId('simple-exit').click();
+  await page.getByTestId('search').waitFor();          // the full Home is back
+});
+
 if (LIVE_AI) await step('microphone: record, transcribe with Whisper, understand', async () => {
   await go('/');
   await page.getByRole('button', { name: 'Speak' }).click();

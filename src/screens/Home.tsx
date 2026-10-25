@@ -22,6 +22,7 @@ import { NewCreditSheet, useReminderText } from './Credit';
 import { Announcements } from '@/ui/Announcements';
 import { UpdateCard } from '@/ui/UpdateCard';
 import { SeasonCard } from '@/ui/SeasonCard';
+import { SimpleHome } from '@/ui/SimpleHome';
 
 // AI tools (and their validation library) download only when first used.
 const VoiceSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.VoiceSheet })));
@@ -32,7 +33,7 @@ type Period = 'today' | 'week' | 'month';
 export function Home() {
   const { t } = useTranslation();
   const book = useBook();
-  const { member, can, session, switchSession } = useApp();
+  const { member, can, session, switchSession, device } = useApp();
   const { openSheet } = useOverlay();
   const { fmt } = useDate();
   const remind = useReminderText();
@@ -61,11 +62,11 @@ export function Home() {
     let cancelled = false;
     let stop: (() => void) | undefined;
     getMeta('tourDone', false).then((done) => {
-      if (!done && !cancelled) setTimeout(() => { if (!cancelled) import('@/features/tour').then((m) => { if (!cancelled) stop = m.startTour(t); }); }, 600);
+      if (!done && !cancelled && !device.simple) setTimeout(() => { if (!cancelled) import('@/features/tour').then((m) => { if (!cancelled) stop = m.startTour(t); }); }, 600);
     });
     // Leaving Home ends the tour so its overlay never sits on top of another screen.
     return () => { cancelled = true; stop?.(); };
-  }, [t]);
+  }, [t, device.simple]);
 
   const fmtIns = (params: Record<string, string | number>) =>
     Object.fromEntries(Object.entries(params).map(([k, v]) => [k, k === 'amount' && typeof v === 'number' ? formatMoney(v) : k === 'cat' ? t(`categories.${v}`) : v]));
@@ -84,6 +85,15 @@ export function Home() {
   const canPickBranch = book.branches.length > 1 && member && !member.branch_id;
   const periodLabel = t(period === 'today' ? 'ux.periodToday' : period === 'week' ? 'ux.periodWeek' : 'ux.periodMonth');
   const tone = (x: { tone: string; key: string }) => (x.tone === 'bad' ? 'alert' : x.tone === 'good' ? 'trendUp' : x.key === 'ins.salesDown' ? 'trendDown' : x.key === 'ins.runningOut' ? 'box' : 'spark');
+
+  // Picture and voice mode (Settings → Language & reading): big pictures, everything read aloud.
+  if (device.simple) return (
+    <Page title={book.org.name} sub={`${greet}${member ? ', ' + member.name.split(' ')[0] : ''}`}>
+      <UpdateCard />
+      <Announcements />
+      <SimpleHome />
+    </Page>
+  );
 
   return (
     <Page guide="home" title={book.org.name} sub={`${greet}${member ? ', ' + member.name.split(' ')[0] : ''}`}

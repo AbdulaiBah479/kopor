@@ -232,6 +232,12 @@
   .alert.bad { background: var(--danger-soft); }
   .alert.bad .ic { color: var(--danger); }
   .alert.info { background: var(--primary-soft); }
+  /* Picture and voice mode: two big picture buttons per row. */
+  .simple-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .simple-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 150px; padding: 16px 8px; border-radius: 20px; border: 1px solid var(--separator); background: var(--elevated); color: var(--foreground); font: inherit; cursor: pointer; }
+  .simple-tile:active { transform: scale(.98); }
+  .simple-icon { display: grid; place-items: center; width: 76px; height: 76px; border-radius: 22px; color: #fff; }
+  .simple-label { font-size: 18px; font-weight: 700; text-align: center; line-height: 1.2; }
   .alert.info .ic { color: var(--primary); }
   /* Owner dashboard: many tabs, so they scroll sideways on a phone. */
   .owner-tabs { overflow-x: auto; scrollbar-width: none; margin-inline: -2px; padding-inline: 2px; }

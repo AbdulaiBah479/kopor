@@ -14,8 +14,9 @@ import { syncNow, onSyncState, type SyncState } from '@/cloud/sync';
 export type Accent = 'emerald' | 'ocean' | 'royal' | 'sunset' | 'rose' | 'graphite';
 export type TextSize = 'normal' | 'large' | 'xl';
 export interface Appearance { theme: 'auto' | 'light' | 'dark'; accent: Accent; text: TextSize }
-export interface DeviceSettings extends Appearance { lang: string; autoLockMin: number }
-const DEVICE_DEFAULTS: DeviceSettings = { lang: 'en', theme: 'auto', accent: 'emerald', text: 'normal', autoLockMin: 5 };
+/** simple: picture and voice mode on Home; voice: read things aloud. */
+export interface DeviceSettings extends Appearance { lang: string; autoLockMin: number; simple: boolean; voice: boolean }
+const DEVICE_DEFAULTS: DeviceSettings = { lang: 'en', theme: 'auto', accent: 'emerald', text: 'normal', autoLockMin: 5, simple: false, voice: true };
 
 interface AppState {
   ready: boolean;
