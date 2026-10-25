@@ -51,8 +51,8 @@ const Boot = () => <div className="boot"><div className="boot-logo">K</div></div
 function Gate() {
   const { ready, session, book, locked } = useApp();
   const { pathname } = useLocation();
-  // Public pages work without a business or sign-in (customer invoice and statement links, legal pages for app stores).
-  if (pathname.startsWith('/i/') || pathname.startsWith('/s/') || pathname.startsWith('/g/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/')) return (
+  // Public pages work without a business or sign-in (customer invoice, statement and Credit Passport links, legal pages).
+  if (pathname.startsWith('/i/') || pathname.startsWith('/s/') || pathname.startsWith('/p/') || pathname.startsWith('/g/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/')) return (
     <Suspense fallback={<Boot />}><Routes>
       <Route path="/i/:token" element={<PublicInvoice />} />
       <Route path="/s/:token" element={<PublicStatement />} />

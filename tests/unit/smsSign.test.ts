@@ -4,7 +4,7 @@ import { leones, sameHex, signature } from '../../supabase/functions/_shared/sms
 
 describe('texts from the shop phone: webhook signature', () => {
   it('matches HMAC-SHA256 over the raw body + timestamp (as SMS Gateway signs it)', async () => {
-    const body = '{"event":"sms:received","payload":{"message":"BAL","sender":"+23276123456"}}', ts = '1761400000', key = 'k3y-from-the-app';
+    const body = '{"event":"sms:received","payload":{"message":"BAL","sender":"+23276123456"}}', ts = '1761400000', key = 'test';
     const expected = createHmac('sha256', key).update(body + ts).digest('hex');
     expect(await signature(key, body, ts)).toBe(expected);
     expect(sameHex(expected, await signature(key, body, ts))).toBe(true);
