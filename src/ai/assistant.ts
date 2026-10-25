@@ -11,6 +11,10 @@ import { stockLevels, forecast } from '@/domain/stock';
 import { health } from '@/domain/health';
 import { currentRound, roundStatus } from '@/domain/groups';
 import { parseLocal, type Parsed } from './parser';
+import { expiring, supplierDebts } from '@/domain/expiry';
+import { gstMonth } from '@/domain/gst';
+import { monthCounts, monthOf, payFor, staffOf } from '@/domain/staff';
+import { byPerson, watchFlags } from '@/domain/watch';
 
 type Msg = { role: 'system' | 'user' | 'assistant'; content: string | { type: string; text?: string; image_url?: { url: string } }[] };
 
@@ -105,8 +109,11 @@ Known products: ${book.products.slice(0, 80).map((p) => p.name).join(', ') || 'n
   return { ...out, amount: Math.round(out.amount * 100) };
 }
 
-/** Compact, privacy-conscious snapshot of the books for the assistant (no phone numbers). */
-export function bookContext(book: Book, now = today()) {
+/**
+ * Compact, privacy-conscious snapshot of the books for the assistant (no phone numbers). `private` (owners and
+ * managers) adds staff attendance and pay, and Fraud watch's warning signs; cashiers never get those.
+ */
+export function bookContext(book: Book, now = today(), opts: { private?: boolean } = {}) {
   const m = (x: number) => formatMoney(x);
   const s7 = summary(book, addDays(now, -6), now), s30 = summary(book, addDays(now, -29), now), sp30 = summary(book, addDays(now, -59), addDays(now, -30));
   const bal = balances(book.ledger);
@@ -124,16 +131,39 @@ export function bookContext(book: Book, now = today()) {
     `Stock: ${book.products.slice(0, 40).map((p) => { const f = forecast(book, p.id, 14, now); return `${p.name}: ${levels.get(p.id) ?? 0} ${p.unit}${f.daysLeft !== null ? ` (~${f.daysLeft} days left)` : ''}, price ${m(p.price)}, cost ${m(p.cost)}`; }).join('; ')}.`,
     `Groups: ${book.groups.map((g) => { const r = currentRound(g, now); const st = roundStatus(book, g, r); return `${g.name} (${g.kind}) round ${r}, ${st.unpaid.length} unpaid`; }).join('; ') || 'none'}.`,
     `Health score ${h.score}/100 (${h.label}).`,
+    `Expiring within 30 days: ${expiring(book, 30, now).slice(0, 10).map((x) => `${x.product.name} ${x.qty} ${x.product.unit} ${x.expired ? 'EXPIRED' : 'on'} ${x.expiry}`).join('; ') || 'none'}.`,
+    `Suppliers the business owes: ${supplierDebts(book).slice(0, 8).map((x) => `${x.contact.name} ${m(x.owed)}`).join('; ') || 'none'}.`,
+    ...(book.org.tax_rate ? [(() => { const g = gstMonth(book, monthOf(now)); return `GST this month so far (${g.rate}%): charged ${m(g.outputTax)} on sales of ${m(g.taxableSales)}; to pay ~${m(g.net)} before input tax.`; })()] : []),
+    ...(opts.private ? privateContext(book, now) : []),
   ].join('\n');
 }
 
-export async function askAssistant(question: string, history: { role: 'user' | 'assistant'; content: string }[], book: Book, lang: string): Promise<string> {
+/** Owners and managers only: staff this month and the warning signs from Fraud watch. */
+function privateContext(book: Book, now: string): string[] {
+  const m = (x: number) => formatMoney(x);
+  const month = monthOf(now);
+  const staff = staffOf(book).map((s) => {
+    const c = monthCounts(book, s.id, month);
+    const p = book.staffTerms.length ? payFor(book, s.id, month) : null;
+    return `${s.name} (${s.role}): here ${c.present + c.late} (late ${c.late}), absent ${c.absent}${p?.terms ? `, still owed ${m(p.balance)} of ${m(p.due)}` : ''}`;
+  });
+  const flags = watchFlags(book, [], 30, now);
+  const people = byPerson(flags).slice(0, 6).map((p) => `${p.who}: ${Object.entries(p.kinds).map(([k, n]) => `${k} x${n}`).join(', ')} (${m(p.amount)})`);
+  const unconfirmed = flags.filter((f) => f.kind === 'unconfirmed');
+  return [
+    `Staff this month: ${staff.join('; ') || 'none'}.`,
+    `Fraud watch, last 30 days (warning signs, not proof): ${people.join('; ') || 'none'}. Mobile money sales not confirmed by Monime: ${unconfirmed.length} (${m(unconfirmed.reduce((s, f) => s + f.amount, 0))}).`,
+  ];
+}
+
+export async function askAssistant(question: string, history: { role: 'user' | 'assistant'; content: string }[], book: Book, lang: string, opts: { private?: boolean } = {}): Promise<string> {
   const language = lang === 'kri' ? 'Sierra Leone Krio' : lang === 'fr' ? 'French' : 'simple English';
   const sys = `You are Kopor, a friendly, practical business advisor for small businesses in Sierra Leone and Africa.
 Answer in ${language}, short and concrete (max ~120 words), using the business data below. Use exact numbers from the data.
-Give practical advice (collect debts, restock, cut costs, pricing). Never invent numbers not in the data. If asked for something outside the data, say so.
+Give practical advice (collect debts, restock, cut costs, pricing, expiring stock, staff, theft). Never invent numbers not in the data. If asked for something outside the data, say so.
+Warning signs about staff are not proof: suggest checking the records and talking to the person, never accuse.
 DATA:
-${bookContext(book)}`;
+${bookContext(book, today(), opts)}`;
   return complete([{ role: 'system', content: sys }, ...history.slice(-8), { role: 'user', content: question }]);
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useBook } from '@/state/app';
+import { useApp, useBook } from '@/state/app';
 import { useErrorText } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
@@ -14,6 +14,7 @@ type Msg = { role: 'user' | 'assistant'; content: string };
 
 export function Assistant() {
   const { t, i18n } = useTranslation();
+  const { can } = useApp();
   const book = useBook();
   const errText = useErrorText();
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -31,7 +32,7 @@ export function Assistant() {
     // Without AI (offline, no key, provider busy or daily limit reached) answer from the records instead.
     const offlineAnswer = () => `${answerOffline(question, book, t)}\n\n— ${t('off.mode')}`;
     try {
-      const answer = ok && navigator.onLine ? (await askAssistant(question, msgs, book, i18n.language)).trim() : offlineAnswer();
+      const answer = ok && navigator.onLine ? (await askAssistant(question, msgs, book, i18n.language, { private: can('reports') })).trim() : offlineAnswer();
       setMsgs([...history, { role: 'assistant', content: answer || offlineAnswer() }]);
     } catch (e) {
       console.warn('AI unavailable, answering offline:', errText(e));
@@ -55,7 +56,7 @@ export function Assistant() {
         {offline && <div className="bubble ai">{offline}</div>}
         {ok === false && <div className="alert small"><Icon name="offline" /><div>{t('off.help')} <Link to="/settings">{t('settings.title')}</Link></div></div>}
         {ok !== null && msgs.length === 0 && (
-          <div className="chips">{(['q1', 'q2', 'q3', 'q4'] as const).map((k) => <button key={k} className="chip" onClick={() => ask(t(`ai.${k}`))}>{t(`ai.${k}`)}</button>)}</div>
+          <div className="chips">{([...(['q1', 'q2', 'q3', 'q4'] as const), ...(can('reports') ? (['q5', 'q6', 'q7'] as const) : [])]).map((k) => <button key={k} className="chip" onClick={() => ask(t(`ai.${k}`))}>{t(`ai.${k}`)}</button>)}</div>
         )}
         {msgs.map((m, i) => <div key={i} className={`bubble ${m.role === 'user' ? 'me' : 'ai'}`}>{m.content}</div>)}
         {busy && <div className="bubble ai muted">{t('ai.thinking')}</div>}
