@@ -66,7 +66,12 @@ const isOn = (until: string | number | null | undefined) => !!until && new Date(
 function csv(name: string, rows: Record<string, unknown>[]) {
   if (!rows.length) return;
   const cols = Object.keys(rows[0]);
-  const cell = (v: unknown) => { const s = v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  // Names are typed by users: a leading = + - @ would run as a formula in Excel, so such cells start with ' (text).
+  const cell = (v: unknown) => {
+    let s = v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
   const text = [cols.join(','), ...rows.map((r) => cols.map((c) => cell(r[c])).join(','))].join('\n');
   downloadBlob(new Blob(['﻿' + text], { type: 'text/csv;charset=utf-8' }), `kopor-${name}-${new Date().toISOString().slice(0, 10)}.csv`);
 }

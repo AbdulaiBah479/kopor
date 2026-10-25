@@ -156,6 +156,9 @@ Deno.serve(async (req) => {
         if (!(amount > 0)) throw new HttpError(400, 'Invalid amount');
         const requestId = crypto.randomUUID();
         const name = String(body.name ?? 'Kopor payment').padEnd(3, ' ').slice(0, 64);
+        // An invoice or group named here must belong to this business (the webhook marks it paid later).
+        if (body.invoiceId && !(await db.from('invoices').select('id').eq('id', String(body.invoiceId)).eq('org_id', orgId).maybeSingle()).data) throw new HttpError(400, 'Invoice not found');
+        if (body.groupId && !(await db.from('groups').select('id').eq('id', String(body.groupId)).eq('org_id', orgId).maybeSingle()).data) throw new HttpError(400, 'Group not found');
         const c = await credsFor(orgId);
         const payer = body.phone ? normalizeSlPhone(String(body.phone)) : null;
         const code = await monime<{ id: string; ussdCode: string }>(c, 'POST', '/payment-codes', {

@@ -45,10 +45,10 @@ Deno.serve(async (req) => {
 
     // A completed customer payment marks the invoice paid and records it in the credit book.
     if (status === 'completed' && pr.kind !== 'payout' && pr.invoice_id) {
-      const { data: inv } = await db.from('invoices').select('*').eq('id', pr.invoice_id).maybeSingle();
+      const { data: inv } = await db.from('invoices').select('*').eq('id', pr.invoice_id).eq('org_id', orgId).maybeSingle(); // never another business's invoice
       if (inv && inv.status === 'unpaid') {
         const now = nowMs();
-        await db.from('invoices').update({ status: 'paid', paid_date: today(), updated_at: now }).eq('id', inv.id);
+        await db.from('invoices').update({ status: 'paid', paid_date: today(), updated_at: now }).eq('id', inv.id).eq('org_id', orgId);
         if (inv.contact_id) {
           await db.from('ledger').insert({
             id: crypto.randomUUID(), org_id: orgId, created_at: now, updated_at: now, created_by: null, branch_id: inv.branch_id,
