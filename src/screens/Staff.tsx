@@ -13,7 +13,7 @@ import { shareText } from '@/lib/share';
 import { today } from '@/lib/dates';
 import type { Member, StaffPay } from '@/db/schema';
 import { updateOrg } from '@/domain/org';
-import { currentPosition, distanceM } from '@/lib/geo';
+import { awayFrom, locate } from '@/lib/geo';
 import { STATUSES, attendanceFlags, dayOf, markDay, monthCounts, monthOf, payFor, recordPay, saveTerms, staffOf, tapIn, tapOut, termsOf, workingDays, type Status } from '@/domain/staff';
 
 type Tab = 'today' | 'month' | 'pay';
@@ -41,6 +41,7 @@ function Today() {
   const { ctx, can, member: me } = useApp();
   const { toast, fail } = useOverlay();
   const [date, setDate] = useState(today());
+  const [finding, setFinding] = useState<'in' | 'shop' | null>(null);
   const staff = staffOf(book);
   const mine = me ? dayOf(book, me.id, today()) : undefined;
   const run = (p: Promise<unknown>, msg: string) => p.then(() => toast(msg)).catch(fail);
@@ -48,13 +49,22 @@ function Today() {
   // How far from the shop this phone is (only the distance is saved). Unknown if location is off or refused.
   const arrive = async () => {
     if (!me) return;
-    const pos = shop ? await currentPosition() : null;
-    const whereM = pos && shop ? distanceM(pos, shop) : null;
-    await run(tapIn(ctx, book, me, new Date(), whereM), whereM != null && whereM > (book.org.away_m || 200) ? t('staff.tappedAway', { m: whereM }) : t('staff.tappedIn'));
+    setFinding('in');
+    const found = shop ? await locate(8000) : null;
+    setFinding(null);
+    const whereM = found?.pos && shop ? awayFrom(found.pos, shop) : null;
+    const msg = whereM != null && whereM > (book.org.away_m || 200) ? t('staff.tappedAway', { m: whereM })
+      : shop && whereM == null ? t('staff.tappedNoPlace', { why: t(`staff.loc.${found?.error ?? 'rough'}`, { m: Math.round(found?.pos?.accuracy ?? 0) }) }) : t('staff.tappedIn');
+    await run(tapIn(ctx, book, me, new Date(), whereM), msg);
   };
   const setShop = async () => {
-    const pos = await currentPosition(12000);
-    if (!pos) return fail(new Error(t('staff.noLocation')));
+    setFinding('shop');
+    const found = await locate(12000);
+    setFinding(null);
+    if (!found.pos) return fail(new Error(t(`staff.loc.${found.error}`)));
+    const pos = found.pos;
+    // A shop saved from a rough position would mark everyone as away, so it has to be fairly exact.
+    if (pos.accuracy > 150) return fail(new Error(t('staff.loc.rough', { m: Math.round(pos.accuracy) })));
     await updateOrg(ctx, { shop_lat: Math.round(pos.lat * 1e5) / 1e5, shop_lng: Math.round(pos.lng * 1e5) / 1e5 }).then(() => toast(t('staff.shopSet'))).catch(fail);
   };
   return (
@@ -65,7 +75,7 @@ function Today() {
             {mine && <span className={`badge ${STATUS_CLASS[mine.status]}`}>{t(`staff.st.${mine.status}`)}</span>}</div>
           <div className="small muted">{mine?.time_in ? t('staff.arrived', { time: mine.time_in }) : t('staff.notIn')}{mine?.time_out ? ` · ${t('staff.left', { time: mine.time_out })}` : ''}</div>
           <div className="btn-row">
-            {!mine?.time_in && <button className="btn primary" data-testid="tap-in" onClick={arrive}><Icon name="check" size={18} /> {t('staff.tapIn')}</button>}
+            {!mine?.time_in && <button className="btn primary" data-testid="tap-in" onClick={arrive} disabled={!!finding}><Icon name="check" size={18} /> {finding === 'in' ? t('staff.locating') : t('staff.tapIn')}</button>}
             {mine?.time_in && !mine.time_out && <button className="btn" data-testid="tap-out" onClick={() => run(tapOut(ctx, book, me), t('staff.tappedOut'))}><Icon name="up" size={18} /> {t('staff.tapOut')}</button>}
           </div>
         </div>
@@ -73,7 +83,7 @@ function Today() {
       {can('team') && (
         <div className="card flat small row between" style={{ gap: 8, flexWrap: 'wrap' }} data-testid="shop-location">
           <span>{shop ? t('staff.shopIsSet') : t('staff.shopNotSet')}</span>
-          <button type="button" className="btn sm" onClick={setShop}><Icon name="store" size={16} /> {t(shop ? 'staff.shopReset' : 'staff.shopSetHere')}</button>
+          <button type="button" className="btn sm" onClick={setShop} disabled={!!finding} data-testid="set-shop"><Icon name="store" size={16} /> {finding === 'shop' ? t('staff.locating') : t(shop ? 'staff.shopReset' : 'staff.shopSetHere')}</button>
           <div className="row" style={{ gap: 8, width: '100%' }}>
             <Field label={t('staff.startTime')}><input type="time" name="late_after" defaultValue={book.org.late_after || '08:30'}
               onBlur={(e) => e.target.value && e.target.value !== (book.org.late_after || '08:30') && updateOrg(ctx, { late_after: e.target.value }).then(() => toast(t('common.saved'))).catch(fail)} /></Field>
