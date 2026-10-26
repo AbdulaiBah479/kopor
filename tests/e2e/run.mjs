@@ -433,6 +433,26 @@ await step('picture and voice mode: big pictures on Home, record a sale from a p
   await page.getByTestId('search').waitFor();          // the full Home is back
 });
 
+await step('hide amounts, data saver and the getting-started list', async () => {
+  await go('/');
+  await page.getByTestId('hide-money').click();
+  await page.waitForFunction(() => document.documentElement.hasAttribute('data-hide'));
+  const blur = await page.locator('.balance-card .amount').first().evaluate((el) => getComputedStyle(el).filter);
+  if (!/blur/.test(blur)) throw new Error('amounts are not hidden: ' + blur);
+  await page.getByTestId('hide-money').click();
+  await page.waitForFunction(() => !document.documentElement.hasAttribute('data-hide'));
+  const list = page.getByTestId('start-checklist');
+  if (await list.count()) {                                // the demo has records, so only some steps are left
+    await list.getByText(/of 7 done/).waitFor();
+    await list.getByRole('button', { name: 'Hide this list' }).click();
+    await list.waitFor({ state: 'detached' });
+  }
+  await go('/settings');
+  await page.getByTestId('data-saver').check();
+  await page.getByTestId('hide-money-setting').waitFor();
+  await page.getByTestId('data-saver').uncheck();
+});
+
 if (LIVE_AI) await step('microphone: record, transcribe with Whisper, understand', async () => {
   await go('/');
   await page.getByRole('button', { name: 'Speak' }).click();

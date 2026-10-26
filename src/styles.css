@@ -232,6 +232,8 @@
   .alert.bad { background: var(--danger-soft); }
   .alert.bad .ic { color: var(--danger); }
   .alert.info { background: var(--primary-soft); }
+  /* Hide amounts (Settings or the eye on Home): money is blurred until switched back. */
+  [data-hide] .money, [data-hide] .balance-card .amount, [data-hide] .balance-card .split b { filter: blur(8px); user-select: none; }
   /* Picture and voice mode: two big picture buttons per row. */
   .simple-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .simple-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 150px; padding: 16px 8px; border-radius: 20px; border: 1px solid var(--separator); background: var(--elevated); color: var(--foreground); font: inherit; cursor: pointer; }

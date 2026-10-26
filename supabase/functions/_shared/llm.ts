@@ -19,6 +19,10 @@ function providers(): Provider[] {
       text: list(e('GROQ_MODELS'), ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b']), vision: list(e('GROQ_VISION_MODELS'), ['qwen/qwen3.8-27b']), extra: gptOss },
     { name: 'gemini', base: 'https://generativelanguage.googleapis.com/v1beta/openai', key: e('GEMINI_API_KEY'),
       text: list(e('GEMINI_MODELS'), ['gemini-flash-latest', 'gemini-flash-lite-latest']), vision: list(e('GEMINI_MODELS'), ['gemini-flash-latest', 'gemini-flash-lite-latest']) },
+    // Ollama: its free cloud (OLLAMA_API_KEY from ollama.com/settings/keys) or your own Ollama computer (OLLAMA_BASE_URL,
+    // e.g. https://my-pc.example/v1; no key needed). Both speak the same OpenAI-style API.
+    { name: 'ollama', base: e('OLLAMA_BASE_URL') ?? (e('OLLAMA_API_KEY') ? 'https://ollama.com/v1' : ''), key: e('OLLAMA_API_KEY') ?? (e('OLLAMA_BASE_URL') ? 'ollama' : undefined),
+      text: list(e('OLLAMA_MODELS'), ['gpt-oss:120b', 'gpt-oss:20b']), vision: list(e('OLLAMA_VISION_MODELS'), ['qwen3-vl:235b']) },
     { name: 'cerebras', base: 'https://api.cerebras.ai/v1', key: e('CEREBRAS_API_KEY'), text: list(e('CEREBRAS_MODELS'), ['gpt-oss-120b']), vision: [], extra: gptOss },
     { name: 'mistral', base: 'https://api.mistral.ai/v1', key: e('MISTRAL_API_KEY'),
       text: list(e('MISTRAL_MODELS'), ['mistral-small-latest']), vision: list(e('MISTRAL_VISION_MODELS'), ['mistral-small-latest']) },

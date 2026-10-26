@@ -81,6 +81,9 @@ Deno.serve(async (req) => {
       const day = new Date().toISOString().slice(0, 10);
       const { error: claimed } = await db.from('sms_runs').insert({ day });
       if (claimed) return json({ skipped: 'already ran today' });
+      // Once a day also delete what Kopor no longer needs to keep (see migration 0029).
+      const { data: cleaned, error: cleanErr } = await db.rpc('kopor_cleanup');
+      if (cleanErr) console.error('cleanup', cleanErr.message); else console.log('cleanup', JSON.stringify(cleaned));
       const { data: orgs } = await db.from('org_secrets').select('org_id').eq('sms_auto', true).not('sms_user', 'is', null);
       let sent = 0;
       for (const o of orgs ?? []) sent += await remindAll(o.org_id).catch((e) => { console.error('sms run', o.org_id, e); return 0; });

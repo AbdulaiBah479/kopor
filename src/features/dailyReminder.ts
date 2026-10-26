@@ -70,15 +70,16 @@ export async function disableDailyReminder() {
 }
 
 /** (Re)schedule from the current records. Called when the app opens and after changes. Silent if off or not the app. */
-export async function scheduleDailyReminder(book: Book, t: TFunction, opts: { owner?: boolean; closes?: boolean } = {}) {
+export async function scheduleDailyReminder(book: Book, t: TFunction, opts: { owner?: boolean; closes?: boolean; closeHour?: number } = {}) {
   if (!isNative() || !(await dailyReminderOn())) return;
   const { LocalNotifications } = await import('@capacitor/local-notifications');
   if ((await LocalNotifications.checkPermissions()).display !== 'granted') return;
   await LocalNotifications.cancel({ notifications: [...IDS, ...CLOSE_IDS].map((id) => ({ id })) });
-  // Every evening at 19:00: count the cash and check mobile money (skipped today if the day is already closed).
-  if (opts.closes) {
+  // Every evening (19:00 unless changed in Reminders; 0 = off): count the cash and check mobile money (skipped today if the day is already closed).
+  const closeHour = opts.closeHour ?? CLOSE_HOUR;
+  if (opts.closes && closeHour > 0) {
     const closedToday = book.closings.some((c) => c.date === today());
-    const evening = nextMorning(new Date(), CLOSE_HOUR);
+    const evening = nextMorning(new Date(), closeHour);
     if (closedToday && evening.toDateString() === new Date().toDateString()) evening.setDate(evening.getDate() + 1);
     await LocalNotifications.schedule({
       notifications: CLOSE_IDS.map((id, i) => {

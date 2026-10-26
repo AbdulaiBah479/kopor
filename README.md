@@ -77,6 +77,7 @@ so Groq alone gives three. Add more free keys as Supabase secrets to multiply th
 |---|---|
 | `GROQ_API_KEY` (set) | console.groq.com |
 | `GEMINI_API_KEY` | aistudio.google.com/apikey |
+| `OLLAMA_API_KEY` | ollama.com/settings/keys (Ollama's free cloud). Or set `OLLAMA_BASE_URL` to your own Ollama server's `/v1` address instead; models via `OLLAMA_MODELS` |
 | `CEREBRAS_API_KEY` | cloud.cerebras.ai |
 | `MISTRAL_API_KEY` | console.mistral.ai |
 | `GITHUB_MODELS_TOKEN` | github.com/settings/tokens (fine-grained, "Models: read" only) |

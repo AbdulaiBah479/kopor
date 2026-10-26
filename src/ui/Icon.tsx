@@ -7,11 +7,11 @@ import {
   ShieldCheck, List, Store, Link, CircleHelp, Crown, ScanBarcode, Contact, Delete, RefreshCw, Undo2, Wallet, TrendingUp, TrendingDown,
   Copy, QrCode, Info, Smartphone, WifiOff, KeyRound, ArrowLeftRight, Square, Palette, Sun, Moon, SunMoon, Type,
   Bus, Building2, Zap, Fuel, UtensilsCrossed, Wrench, Receipt, HandCoins, ShoppingBag, Tag,
-  CalendarDays, type LucideIcon,
+  CalendarDays, Eye, EyeOff, type LucideIcon,
 } from 'lucide-react';
 
 const ICONS: Record<string, LucideIcon> = {
-  home: House, calendar: CalendarDays, book: NotebookText, cash: Banknote, box: Package, grid: LayoutGrid, users: Users, file: FileText, pulse: Activity,
+  home: House, calendar: CalendarDays, eye: Eye, eyeOff: EyeOff, book: NotebookText, cash: Banknote, box: Package, grid: LayoutGrid, users: Users, file: FileText, pulse: Activity,
   sliders: SlidersHorizontal, mic: Mic, plus: Plus, minus: Minus, chat: MessageCircle, sms: MessageSquareText, phone: Phone,
   search: Search, back: ChevronLeft, chev: ChevronRight, alert: TriangleAlert, print: Printer, share: Share2, check: Check,
   trash: Trash2, edit: Pencil, up: ArrowUpRight, down: ArrowDownLeft, spark: Sparkles, lock: Lock, download: Download,

@@ -20,20 +20,25 @@ import { dailyReminderOn, disableDailyReminder, enableDailyReminder, localRemind
 function AppDailyReminder() {
   const { t, i18n } = useTranslation();
   const book = useBook();
+  const { device, setDevice, can } = useApp();
   const { toast, fail } = useOverlay();
   const [on, setOn] = useState<boolean | null>(null);
   useEffect(() => { dailyReminderOn().then(setOn).catch(() => setOn(false)); }, []);
   return (
-    <div className="card row between" data-testid="app-daily">
+    <div className="card row between flex-wrap" data-testid="app-daily">
       <div><b>{t('push.ownerTitle')}</b><div className="small muted">{t('daily.help')}</div></div>
       <button className={`btn sm ${on ? '' : 'primary'}`} disabled={on === null} onClick={async () => {
         try {
           if (on) { await disableDailyReminder(); setOn(false); toast(t('push.off')); return; }
           if (!(await enableDailyReminder())) { toast(t('push.denied'), { tone: 'error' }); return; }
           setOn(true); toast(t('push.on'));
-          await scheduleDailyReminder(book, i18n.t);
+          await scheduleDailyReminder(book, i18n.t, { closes: can('close'), closeHour: device.closeHour });
         } catch (e) { fail(e); }
       }}>{on ? t('push.turnOff') : t('push.turnOn')}</button>
+      {on && can('close') && <label className="w-full">{t('prefs.closeHour')}{' '}
+        <select className="input" data-testid="close-hour" value={device.closeHour} onChange={(e) => setDevice({ closeHour: Number(e.target.value) })}>
+          {[17, 18, 19, 20, 21, 22, 0].map((h) => <option key={h} value={h}>{h ? `${h}:00` : t('prefs.off')}</option>)}
+        </select></label>}
     </div>
   );
 }

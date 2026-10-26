@@ -476,4 +476,15 @@ await test('text messages: the phone login, signing key and text log are server-
   }
 });
 
+await test('daily clean-up: old guest AI counts and logs go; recent ones stay; only the server may run it', async () => {
+  for (const who of [null, 'owner']) { await as(who); await rejects(q('select kopor_cleanup()'), /permission denied/); }
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  await q(`insert into ai_usage_anon (key, day, count) values ('old', current_date - 10, 3), ('new', current_date, 1)`);
+  await q(`insert into sms_log (org_id, kind, at) values ($1, 'test', now() - interval '200 days'), ($1, 'test', now())`, [ORG]);
+  const n = (await q('select kopor_cleanup() as n')).rows[0].n;
+  assert.ok(n.ai_guest >= 1 && n.sms_log >= 1);
+  assert.deepEqual((await q(`select key from ai_usage_anon where key in ('old', 'new')`)).rows.map((r) => r.key), ['new']);
+  assert.equal((await q('select count(*)::int as c from sms_log where org_id = $1', [ORG])).rows[0].c, 1);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

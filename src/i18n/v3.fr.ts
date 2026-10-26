@@ -816,5 +816,26 @@ const v3: V3Dict = {
     low_one: '{{count}} article bientôt épuisé',
     low_other: '{{count}} articles bientôt épuisés',
   },
+  prefs: {
+    hide: 'Masquer les montants',
+    show: 'Afficher les montants',
+    hideHelp: 'Floute l’argent à l’écran pour que les personnes proches ne puissent pas le lire. L’œil sur l’accueil le change aussi.',
+    closeHour: 'Rappel de clôture de la journée',
+    off: 'Désactivé',
+    dataSaver: 'Économie de données',
+    dataSaverHelp: 'Envoie des photos plus petites à l’IA. Utilise environ moitié moins de données.',
+    start: {
+      title: 'Pour commencer',
+      done: '{{n}} sur {{total}} faits',
+      hide: 'Masquer cette liste',
+      product: 'Ajouter un produit',
+      sale: 'Enregistrer une vente',
+      credit: 'Noter un crédit',
+      pin: 'Choisir un code PIN',
+      cloud: 'Sauvegarder dans le cloud',
+      staff: 'Ajouter un membre de l’équipe',
+      close: 'Clôturer une journée',
+    },
+  },
 };
 export default v3;

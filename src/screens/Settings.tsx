@@ -187,6 +187,8 @@ function PreferencesCard() {
       <div className="lang-pick">{LANGUAGES.map((l) => <button key={l.code} className={device.lang === l.code ? 'on' : ''} aria-pressed={device.lang === l.code} onClick={() => setDevice({ lang: l.code })}>{l.label}</button>)}</div>
       <label className="check"><input type="checkbox" data-testid="simple-mode" checked={device.simple} onChange={(e) => setDevice({ simple: e.target.checked })} /> {t('simple.setting')}</label>
       <div className="small muted">{t('simple.settingHelp')}</div>
+      <label className="check"><input type="checkbox" data-testid="data-saver" checked={device.dataSaver} onChange={(e) => setDevice({ dataSaver: e.target.checked })} /> {t('prefs.dataSaver')}</label>
+      <div className="small muted">{t('prefs.dataSaverHelp')}</div>
       {canSpeak() && <label className="check"><input type="checkbox" checked={device.voice} onChange={(e) => setDevice({ voice: e.target.checked })} /> {t('simple.voiceSetting')}</label>}
     </div>
   );
@@ -212,6 +214,8 @@ function SecurityCard() {
         <button className="btn primary">{on ? t('settings.changePin') : t('common.save')}</button>
         {on && <button type="button" className="btn ghost" onClick={() => setPin(member.id, null).then(() => setOn(false))}>{t('settings.removePin')}</button>}
       </div>
+      <label className="check"><input type="checkbox" data-testid="hide-money-setting" checked={device.hideMoney} onChange={(e) => setDevice({ hideMoney: e.target.checked })} /> {t('prefs.hide')}</label>
+      <div className="small muted">{t('prefs.hideHelp')}</div>
       <Field label={t('settings.autoLock')}>
         <select value={device.autoLockMin} onChange={(e) => setDevice({ autoLockMin: Number(e.target.value) })}>{[1, 2, 5, 10, 30, 0].map((m) => <option key={m} value={m}>{m || '∞'}</option>)}</select>
       </Field>

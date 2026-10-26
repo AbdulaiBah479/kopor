@@ -23,6 +23,7 @@ import { Announcements } from '@/ui/Announcements';
 import { UpdateCard } from '@/ui/UpdateCard';
 import { SeasonCard } from '@/ui/SeasonCard';
 import { SimpleHome } from '@/ui/SimpleHome';
+import { StartChecklist } from '@/ui/StartChecklist';
 
 // AI tools (and their validation library) download only when first used.
 const VoiceSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.VoiceSheet })));
@@ -33,7 +34,7 @@ type Period = 'today' | 'week' | 'month';
 export function Home() {
   const { t } = useTranslation();
   const book = useBook();
-  const { member, can, session, switchSession, device } = useApp();
+  const { member, can, session, switchSession, device, setDevice } = useApp();
   const { openSheet } = useOverlay();
   const { fmt } = useDate();
   const remind = useReminderText();
@@ -98,6 +99,8 @@ export function Home() {
   return (
     <Page guide="home" title={book.org.name} sub={`${greet}${member ? ', ' + member.name.split(' ')[0] : ''}`}
       right={<>
+        <button className="icon-btn" onClick={() => setDevice({ hideMoney: !device.hideMoney })} aria-pressed={device.hideMoney}
+          aria-label={device.hideMoney ? t('prefs.show') : t('prefs.hide')} data-testid="hide-money"><Icon name={device.hideMoney ? 'eyeOff' : 'eye'} size={22} /></button>
         <button className="icon-btn" onClick={search} aria-label={t('ux.searchTitle')} data-testid="search"><Icon name="search" size={22} /></button>
         <Link className="icon-btn" to="/settings" aria-label={t('settings.title')}><Icon name="sliders" size={22} /></Link>
       </>}>
@@ -148,6 +151,7 @@ export function Home() {
         </div>
       )}
 
+      {member?.role === 'owner' && <StartChecklist book={book} memberId={member.id} />}
       {can('stock') && <SeasonCard book={book} />}
       {tips.length > 0 && (
         <section className="carousel" aria-label={t('home.insights')} data-tour="insights">

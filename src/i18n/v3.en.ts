@@ -814,6 +814,27 @@ const v3 = {
     low_one: '{{count}} item running low',
     low_other: '{{count}} items running low',
   },
+  prefs: {
+    hide: 'Hide amounts',
+    show: 'Show amounts',
+    hideHelp: 'Blurs money on the screen so people near you cannot read it. The eye on Home switches it too.',
+    closeHour: 'Close-the-day reminder',
+    off: 'Off',
+    dataSaver: 'Data saver',
+    dataSaverHelp: 'Sends smaller photos to the AI. Uses about half the data.',
+    start: {
+      title: 'Getting started',
+      done: '{{n}} of {{total}} done',
+      hide: 'Hide this list',
+      product: 'Add a product',
+      sale: 'Record a sale',
+      credit: 'Write a credit',
+      pin: 'Set a PIN',
+      cloud: 'Back up to the cloud',
+      staff: 'Add a team member',
+      close: 'Close a day',
+    },
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

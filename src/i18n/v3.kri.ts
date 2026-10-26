@@ -816,5 +816,26 @@ const v3: V3Dict = {
     low_one: '{{count}} tin de dɔn',
     low_other: '{{count}} tin dɛn de dɔn',
   },
+  prefs: {
+    hide: 'Ayd di mɔni',
+    show: 'Sho di mɔni',
+    hideHelp: 'I de blɔ di mɔni na di skrin so pipul dɛn we de nia yu nɔ go rid am. Di yay na Om de chenj am bak.',
+    closeHour: 'Mɛmba fɔ klos di de',
+    off: 'Of',
+    dataSaver: 'Sev data',
+    dataSaverHelp: 'I de sɛn smɔl pikchɔ to di AI. I de yuz lɛk af di data.',
+    start: {
+      title: 'Fɔ biginin',
+      done: '{{n}} pan {{total}} dɔn',
+      hide: 'Ayd dis list',
+      product: 'Ad wan tin fɔ sɛl',
+      sale: 'Rayt wan sel',
+      credit: 'Rayt wan kredit',
+      pin: 'Put PIN',
+      cloud: 'Sev na di klawd',
+      staff: 'Ad wan wokman',
+      close: 'Klos wan de',
+    },
+  },
 };
 export default v3;

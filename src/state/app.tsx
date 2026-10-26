@@ -9,14 +9,22 @@ import { can as canRole, type Perm } from '@/db/permissions';
 import { loadBook, type Book } from '@/domain/book';
 import { getSession, setSession, anyPin, type Session } from '@/domain/org';
 import { setCurrencySymbol } from '@/lib/money';
+import { setDataSaver } from '@/lib/image';
 import { syncNow, onSyncState, type SyncState } from '@/cloud/sync';
 
 export type Accent = 'emerald' | 'ocean' | 'royal' | 'sunset' | 'rose' | 'graphite';
 export type TextSize = 'normal' | 'large' | 'xl';
 export interface Appearance { theme: 'auto' | 'light' | 'dark'; accent: Accent; text: TextSize }
 /** simple: picture and voice mode on Home; voice: read things aloud. */
-export interface DeviceSettings extends Appearance { lang: string; autoLockMin: number; simple: boolean; voice: boolean }
-const DEVICE_DEFAULTS: DeviceSettings = { lang: 'en', theme: 'auto', accent: 'emerald', text: 'normal', autoLockMin: 5, simple: false, voice: true };
+// hideMoney blurs amounts (for counting in front of customers); closeHour = when "Close the day" rings (0 = never);
+// dataSaver sends smaller photos to the AI.
+export interface DeviceSettings extends Appearance { lang: string; autoLockMin: number; simple: boolean; voice: boolean; hideMoney: boolean; closeHour: number; dataSaver: boolean }
+const DEVICE_DEFAULTS: DeviceSettings = { lang: 'en', theme: 'auto', accent: 'emerald', text: 'normal', autoLockMin: 5, simple: false, voice: true, hideMoney: false, closeHour: 19, dataSaver: false };
+
+function applyDevicePrivacy(d: DeviceSettings) {
+  if (d.hideMoney) document.documentElement.dataset.hide = ''; else delete document.documentElement.dataset.hide;
+  setDataSaver(d.dataSaver);
+}
 
 interface AppState {
   ready: boolean;
@@ -83,6 +91,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await setLanguage(d.lang);
       document.documentElement.lang = d.lang === 'kri' ? 'kri' : d.lang;
       applyAppearance({ theme: d.theme, accent: d.accent, text: d.text });
+      applyDevicePrivacy(d);
       setSess(await getSession());
       setLocked(await anyPin());
       setReady(true);
@@ -96,10 +105,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!book) return;
     const timer = window.setTimeout(() => {
       const role = book.members.find((m) => m.id === session?.memberId)?.role ?? 'viewer';
-      import('@/features/dailyReminder').then((m) => m.scheduleDailyReminder(book, i18n.t, { owner: canRole(role, 'reports'), closes: canRole(role, 'close') })).catch(() => {});
+      import('@/features/dailyReminder').then((m) => m.scheduleDailyReminder(book, i18n.t, { owner: canRole(role, 'reports'), closes: canRole(role, 'close'), closeHour: device.closeHour })).catch(() => {});
     }, 3000);
     return () => window.clearTimeout(timer);
-  }, [book, session?.memberId]);
+  }, [book, session?.memberId, device.closeHour]);
   const member = book?.members.find((m) => m.id === session?.memberId);
   const role: Role = member?.active ? member.role : 'viewer';
   if (book) setCurrencySymbol(book.org.currency);
@@ -109,6 +118,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setDeviceState(next);
     // Apply first so the change is instant; saving to the device database can follow.
     if (p.theme || p.accent || p.text) applyAppearance({ theme: next.theme, accent: next.accent, text: next.text });
+    applyDevicePrivacy(next);
     if (p.lang) { document.documentElement.lang = p.lang; await setLanguage(p.lang); }
     await setMeta('device', next);
   }, [device]);
