@@ -602,6 +602,7 @@
     .shell, .nav-inner, .sticky-actions .btn-row, .chat-input form { max-width: 760px; }
     .fab { right: max(16px, calc(50vw - 364px)); }
     .large-title h1 { font-size: 38px; }
+    .mode-preview { aspect-ratio: auto; height: 140px; }
   }
   @media (min-width: 1000px) {
     :root { --side: 232px; }
@@ -610,7 +611,6 @@
     .nav a { flex-direction: row; justify-content: flex-start; gap: 12px; font-size: 15px; padding: 11px 14px; border-radius: 12px; }
     .nav a.on { background: var(--primary-soft); }
     .shell { margin-left: var(--side); max-width: none; padding-bottom: 40px; }
-    .shell > .topbar > *, .shell > .large-title, .shell > .content { width: 100%; }
     .shell > .large-title, .shell > .content { max-width: 880px; margin-inline: auto; }
     .content { padding-inline: 24px; }
     .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -618,5 +618,6 @@
     .sticky-actions .btn-row, .chat-input form { max-width: 832px; }
     .fab { right: max(24px, calc((100vw - var(--side)) / 2 - 416px)); bottom: 24px; }
     .simple-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .mode-preview { aspect-ratio: auto; height: 120px; }
   }
 }
