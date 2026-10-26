@@ -21,10 +21,19 @@ export function LiveSwitch() {
   const book = useBook();
   const { ctx } = useApp();
   const { toast, fail } = useOverlay();
+  // The switch moves at once; saving follows (and it moves back if saving fails).
+  const saved = !!book.org.track_live;
+  const [on, setOn] = useState(saved);
+  const [was, setWas] = useState(saved);
+  if (was !== saved) { setWas(saved); setOn(saved); }
   return (
     <div className="stack" style={{ width: '100%' }}>
-      <label className="check"><input type="checkbox" data-testid="live-switch" checked={!!book.org.track_live}
-        onChange={(e) => updateOrg(ctx, { track_live: e.target.checked ? 1 : 0 }).then(() => toast(t('common.saved'))).catch(fail)} /> {t('live.switch')}</label>
+      <label className="check"><input type="checkbox" data-testid="live-switch" checked={on}
+        onChange={(e) => {
+          const next = e.target.checked;
+          setOn(next);
+          updateOrg(ctx, { track_live: next ? 1 : 0 }).then(() => toast(t('common.saved'))).catch((err) => { setOn(!next); fail(err); });
+        }} /> {t('live.switch')}</label>
       <div className="small muted">{t('live.switchHelp')}</div>
     </div>
   );
