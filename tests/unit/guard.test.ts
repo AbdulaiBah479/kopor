@@ -92,3 +92,12 @@ describe('fraud watch: new warning signs', () => {
     expect(await kinds()).toEqual([]);
   });
 });
+
+describe('weekly report dates', () => {
+  it('last week is Monday to Sunday before this week', async () => {
+    const { lastWeek } = await import('@/ui/WeekCard');
+    expect(lastWeek('2026-10-26')).toEqual({ from: '2026-10-19', to: '2026-10-25' });   // a Monday
+    expect(lastWeek('2026-10-29')).toEqual({ from: '2026-10-19', to: '2026-10-25' });   // a Thursday
+    expect(lastWeek('2026-11-01')).toEqual({ from: '2026-10-19', to: '2026-10-25' });   // a Sunday
+  });
+});

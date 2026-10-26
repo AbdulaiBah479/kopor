@@ -101,7 +101,9 @@ export function syncNow(orgId: string): Promise<void> {
     emit({ status: 'syncing', error: undefined });
     try {
       rejected = [];
-      await push(orgId);
+      const sent = await push(orgId);
+      // New records may have made fraud alerts on the server: have them sent to the owner now.
+      if (sent) void import('./alerts').then((m) => m.sendAlertsSoon(orgId));
       await pull(orgId);
       if (rejected.length) emit({ status: 'error', lastSync: Date.now(), error: `${rejected.length} not synced: ${rejected[0]}` });
       else emit({ status: 'idle', lastSync: Date.now() });

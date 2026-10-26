@@ -24,6 +24,8 @@ import { UpdateCard } from '@/ui/UpdateCard';
 import { SeasonCard } from '@/ui/SeasonCard';
 import { SimpleHome } from '@/ui/SimpleHome';
 import { StartChecklist } from '@/ui/StartChecklist';
+import { WeekCard } from '@/ui/WeekCard';
+import { useUnseenAlerts } from '@/features/alertStore';
 
 // AI tools (and their validation library) download only when first used.
 const VoiceSheet = lazyRetry(() => import('./AiSheets').then((m) => ({ default: m.VoiceSheet })));
@@ -36,6 +38,7 @@ export function Home() {
   const book = useBook();
   const { member, can, session, switchSession, device, setDevice } = useApp();
   const { openSheet } = useOverlay();
+  const unseenAlerts = useUnseenAlerts();
   const { fmt } = useDate();
   const remind = useReminderText();
   const nav = useNavigate();
@@ -92,6 +95,10 @@ export function Home() {
     <Page title={book.org.name} sub={`${greet}${member ? ', ' + member.name.split(' ')[0] : ''}`}>
       <UpdateCard />
       <Announcements />
+      {can('reports') && unseenAlerts > 0 && (
+        <Link to="/watch" className="alert bad" data-testid="alert-banner"><Icon name="alert" /><div><b>{t('watch.alert.banner', { count: unseenAlerts })}</b><br />{t('watch.alert.bannerHelp')}</div></Link>
+      )}
+      {member?.role === 'owner' && <WeekCard book={book} />}
       <SimpleHome />
     </Page>
   );

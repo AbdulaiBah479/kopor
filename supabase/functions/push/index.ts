@@ -5,8 +5,12 @@
 //   unsubscribe { endpoint }
 //   run                                   -> send today's reminders; does nothing if today's run already happened,
 //                                            so the free daily GitHub job (or anyone) can trigger it safely.
+//   alerts { orgId? }                     -> send fraud alerts the database made and has not sent yet (each goes out
+//                                            once, so phones after syncing and a backup job can all call it)
+//   weekly                                -> last week's report to owners and managers, once per week
 import { admin, caller, cors, json, HttpError } from '../_shared/util.ts';
 import { generateVapidKeys, sendPush, type VapidKeys } from '../_shared/webpush.ts';
+import { flushAlerts, weeklyReports } from '../_shared/alerts.ts';
 
 const SUBJECT = Deno.env.get('PUSH_SUBJECT') ?? 'mailto:babdulai225.2@gmail.com';
 const APP = (Deno.env.get('PUBLIC_APP_URL') ?? 'https://abdulaibah479.github.io/kopor/').replace(/\/?$/, '/');
@@ -98,6 +102,15 @@ Deno.serve(async (req) => {
         if (error) throw new Error(error.message);
         return json({ ok: true });
       }
+
+      case 'alerts': {
+        const orgId = body.orgId ? String(body.orgId) : undefined;
+        if (orgId && !/^[0-9a-f-]{36}$/.test(orgId)) throw new HttpError(400, 'Bad request');
+        return json(await flushAlerts(await vapid(), SUBJECT, APP, orgId));
+      }
+
+      case 'weekly':
+        return json(await weeklyReports(await vapid(), SUBJECT, APP));
 
       case 'unsubscribe': {
         await db.from('push_subscriptions').delete().eq('endpoint', String(body.endpoint ?? ''));

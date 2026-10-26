@@ -646,6 +646,20 @@ const v3: V3Dict = {
     rules: 'Ɔltɛm on: kashia kin rayt tide ɔ yestade nɔmɔ (ol de nid manija); fɔ gi mɔni bak ɛn fɔ chenj ɔ dilit ol tin nid manija; ɛni chenj de na di istri.',
     creditLimit: 'Kredit limit fɔ wan kɔstɔma',
     creditLimitHelp: 'Kashia nɔ go ebul gi kɔstɔma kredit pas dis. Manija ɛn ɔna kin du am. Lɛf am ɛmti if yu nɔ want limit.',
+    alert: {
+      title: 'Kopor wɔnin',
+      banner_one: '{{count}} nyu wɔnin',
+      banner_other: '{{count}} nyu wɔnin dɛn',
+      bannerHelp: 'Tap fɔ si wetin apin.',
+      latest: 'Di las wɔnin dɛn',
+      short: '{{who}} klos {{date}} ɛn {{amount}} nɔ de',
+      deleted: '{{who}} dilit {{what}} we na {{amount}}',
+      away: '{{who}} tap in {{m}} m frɔm di shɔp',
+      left: '{{who}} de lɛk {{m}} m frɔm di shɔp na wok awa',
+      fake: '{{who}} in fon de yuz fek GPS ap',
+      sale: 'sel',
+      credit: 'kredit',
+    },
     k: {
       short: 'Kesh nɔ kɔmplit',
       momoShort: 'Mobayl mɔni nɔ kɔmplit',
@@ -908,6 +922,15 @@ const v3: V3Dict = {
     fake: 'Sɔm lokeshɔn kɔmɔt frɔm fek GPS ap na dis fon.',
     loadFailed: 'Wi nɔ ebul lod di lokeshɔn dɛn. Chɛk di intanɛt.',
     privacy: 'Na ɔna ɛn manija nɔmɔ de si dis. Wi de kip di lokeshɔn 30 de.',
+  },
+  week: {
+    title: 'Las wik',
+    profit: 'Prɔfit',
+    attendance: 'Lat / nɔ kam',
+    lateAbsent: '{{late}} lat, {{absent}} nɔ kam',
+    warnings: 'Wɔnin',
+    noWarnings: 'No wɔnin las wik.',
+    open: 'Opin Fraud watch',
   },
 };
 export default v3;

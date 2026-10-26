@@ -534,4 +534,58 @@ await test('no back-dating: a cashier cannot put a sale on an old or future day;
     values (gen_random_uuid(), $1, $2, $2, $3, 'in', 'sale', 100, 'cash', current_date - 5)`, [ORG, now(), OWNER_M]);
 });
 
+await test('alerts: the database itself flags a short day, a deletion and leaving the shop; only managers see them', async () => {
+  await as('owner');
+  await q(`update orgs set shop_lat = 8.4844, shop_lng = -13.2344, away_m = 200 where id = $1`, [ORG]);
+  await as('cashier');
+  const cid = (await q(`insert into closings (id, org_id, created_at, updated_at, created_by, date, expected, counted, difference, momo)
+    values (gen_random_uuid(), $1, $2, $2, $3, current_date, 10000, 7000, -3000, '{"orange": {"expected": 5000, "counted": 4000}}') returning id`, [ORG, now(), CASHIER_M])).rows[0].id;
+  const tid = (await q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date)
+    values (gen_random_uuid(), $1, $2, $2, $3, 'in', 'sale', 2500, 'cash', current_date) returning id`, [ORG, now(), CASHIER_M])).rows[0].id;
+  assert.equal((await q('select * from alerts')).rows.length, 0); // cashiers cannot read alerts
+  await as('owner');
+  await q(`update members set role = 'manager' where id = $1`, [CASHIER_M]);
+  await as('cashier');
+  await q(`update transactions set deleted = 1 where id = $1`, [tid]);
+  await as('owner');
+  await q(`update members set role = 'cashier' where id = $1`, [CASHIER_M]);
+  await q('reset role');
+  // Live position 1 km north of the shop (±20 m): outside the 200 m area.
+  await q(`insert into staff_live (org_id, member_id, lat, lng, accuracy) values ($1, $2, 8.4934, -13.2344, 20)
+           on conflict (org_id, member_id) do update set lat = excluded.lat, lng = excluded.lng, accuracy = excluded.accuracy, at = now()`, [ORG, CASHIER_M]);
+  await as('owner');
+  const rows = (await q('select kind, ref, who, amount from alerts where org_id = $1 order by id', [ORG])).rows;
+  const by = Object.fromEntries(rows.map((r) => [r.kind, r]));
+  assert.deepEqual({ ...by.short, amount: Number(by.short.amount) }, { kind: 'short', ref: cid, who: 'Sorie', amount: 4000 });
+  assert.equal(by.deleted.ref, tid);
+  assert.equal(by.left.who, 'Sorie');
+  // The same hour does not make a second "left" alert.
+  await q('reset role');
+  await q(`update staff_live set lat = 8.4950, at = now() where member_id = $1`, [CASHIER_M]);
+  assert.equal((await q(`select count(*)::int as c from alerts where kind = 'left'`)).rows[0].c, 1);
+});
+
+await test('credit limit on the server: a cashier cannot go above it, the owner can', async () => {
+  await as('owner');
+  await q('update orgs set credit_limit = 50000 where id = $1', [ORG]);
+  const contact = (await q(`insert into contacts (id, org_id, created_at, updated_at, created_by, name) values (gen_random_uuid(), $1, $2, $2, $3, 'Limit Test') returning id`, [ORG, now(), OWNER_M])).rows[0].id;
+  const credit = (amount, by) => q(`insert into ledger (id, org_id, created_at, updated_at, created_by, contact_id, type, amount, date)
+    values (gen_random_uuid(), $1, $2, $2, $3, $4, 'gave', $5, current_date)`, [ORG, now(), by, contact, amount]);
+  await as('cashier');
+  await credit(40000, CASHIER_M);
+  await rejects(credit(20000, CASHIER_M), /err\.creditLimit/);
+  await as('owner');
+  await credit(20000, OWNER_M);
+  await q('update orgs set credit_limit = null where id = $1', [ORG]);
+});
+
+await test('weekly report: sales, expenses, cost of goods and warnings per business', async () => {
+  await q('reset role');
+  const r = (await q(`select * from kopor_weekly_report(current_date - 6) where org_id = $1`, [ORG])).rows[0];
+  assert.ok(Number(r.sales) > 0 && r.records > 0);
+  assert.ok(r.warnings.some((w) => w.who === 'Sorie' && w.n >= 2));
+  await as('owner');
+  await rejects(q('select * from kopor_weekly_report(current_date)'), /permission denied/);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

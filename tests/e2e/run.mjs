@@ -453,6 +453,23 @@ await step('picture and voice mode: big pictures on Home, record a sale from a p
   await page.getByTestId('search').waitFor();          // the full Home is back
 });
 
+await step('computer and tablet screens: side menu, wider pages, nothing cut off', async () => {
+  try {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await go('/');
+    const nav = await page.locator('nav.nav').boundingBox();
+    if (!nav || nav.x > 1 || nav.height < 700 || nav.width > 260) throw new Error('side menu not on the left: ' + JSON.stringify(nav));
+    await noOverflow();
+    await shot('16-computer');
+    await go('/staff');
+    await noOverflow();
+    await page.setViewportSize({ width: 820, height: 1180 });   // tablet
+    await go('/');
+    await noOverflow();
+    await shot('17-tablet');
+  } finally { await page.setViewportSize({ width: 390, height: 844 }); }
+});
+
 await step('hide amounts, data saver and the getting-started list', async () => {
   await go('/');
   await page.getByTestId('hide-money').click();

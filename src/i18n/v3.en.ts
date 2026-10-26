@@ -644,6 +644,20 @@ const v3 = {
     rules: 'Always on: cashiers can record only today or yesterday (older days need a manager); refunds and editing or deleting old records need a manager; every change is in the history.',
     creditLimit: 'Credit limit per customer',
     creditLimitHelp: 'Cashiers cannot give a customer credit above this. Managers and owners can. Leave empty for no limit.',
+    alert: {
+      title: 'Kopor alert',
+      banner_one: '{{count}} new alert',
+      banner_other: '{{count}} new alerts',
+      bannerHelp: 'Tap to see what happened.',
+      latest: 'Latest alerts',
+      short: '{{who}} closed {{date}} short by {{amount}}',
+      deleted: '{{who}} deleted a {{what}} of {{amount}}',
+      away: '{{who}} tapped in {{m}} m from the shop',
+      left: '{{who}} is about {{m}} m from the shop during working hours',
+      fake: '{{who}}’s phone is using a fake-GPS app',
+      sale: 'sale',
+      credit: 'credit entry',
+    },
     k: {
       short: 'Cash short',
       momoShort: 'Mobile money short',
@@ -906,6 +920,15 @@ const v3 = {
     fake: 'Some positions came from a fake-GPS app on this phone.',
     loadFailed: 'Could not load locations. Check the internet.',
     privacy: 'Only owners and managers see this. Positions are kept 30 days.',
+  },
+  week: {
+    title: 'Last week',
+    profit: 'Profit',
+    attendance: 'Late / absent',
+    lateAbsent: '{{late}} late, {{absent}} absent',
+    warnings: 'Warnings',
+    noWarnings: 'No warning signs last week.',
+    open: 'Open Fraud watch',
   },
 };
 export default v3;

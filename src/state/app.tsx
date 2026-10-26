@@ -123,6 +123,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [book?.org.id, me?.id, liveOn, book?.org.track_live]); // eslint-disable-line react-hooks/exhaustive-deps
   const member = me;
   const role: Role = member?.active ? member.role : 'viewer';
+  // Owners and managers: watch for fraud alerts while Kopor is open (needs the cloud).
+  const watching = !!book && canRole(role, 'reports') && sync.status !== 'off';
+  const orgId = book?.org.id;
+  useEffect(() => {
+    if (!watching || !orgId) return;
+    let stop: (() => void) | undefined;
+    import('@/features/alertWatch').then((m) => { m.startAlertWatch(orgId, i18n.t); stop = m.stopAlertWatch; }).catch(() => {});
+    return () => stop?.();
+  }, [watching, orgId]);
+  useEffect(() => {
+    if (watching && orgId && sync.status === 'idle') import('@/features/alertWatch').then((m) => m.checkAlerts(orgId, i18n.t)).catch(() => {});
+  }, [sync.lastSync]); // eslint-disable-line react-hooks/exhaustive-deps
   if (book) setCurrencySymbol(book.org.currency);
 
   const setDevice = useCallback(async (p: Partial<DeviceSettings>) => {

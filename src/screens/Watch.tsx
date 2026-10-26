@@ -14,6 +14,8 @@ import { monimeStatus, walletHistory, type WalletTxn } from '@/cloud/payments';
 import { byBranch, byPerson, watchFlags, type Flag, type FlagKind } from '@/domain/watch';
 import { updateOrg } from '@/domain/org';
 import { useOverlay } from '@/ui/overlay';
+import { useAlerts } from '@/features/alertStore';
+import type { AlertRow } from '@/cloud/alerts';
 import { MoneyInput, Field } from '@/ui/widgets';
 
 const ICON: Record<FlagKind, string> = {
@@ -37,6 +39,9 @@ export function Watch() {
       .then((h) => live && h && setReversals(h.items.filter((i) => i.kind === 'reversal'))).catch(() => {});
     return () => { live = false; };
   }, [ctx.orgId]);
+  const live = useAlerts();
+  // Opening Fraud watch marks the alerts as seen (the banner on Home goes away).
+  useEffect(() => { import('@/features/alertWatch').then((m) => m.markAlertsSeen(ctx.orgId)).catch(() => {}); }, [ctx.orgId, live]);
   const flags = useMemo(() => watchFlags(book, audit), [book, audit]);
   const people = byPerson(flags);
   const branches = book.branches.length > 1 ? byBranch(flags) : [];
@@ -51,6 +56,7 @@ export function Watch() {
   return (
     <Page title={t('watch.title')} sub={t('watch.sub')} back="/more">
       <Seg value={tab} onChange={setTab} options={[['people', t('watch.people')], ...(branches.length ? [['branches', t('watch.branches')] as ['branches', string]] : []), ['all', t('watch.all', { n: flags.length })], ['safe', t('watch.safe')]]} />
+      {tab !== 'safe' && live.length > 0 && <LatestAlerts list={live} />}
       {tab !== 'safe' && reversals.length > 0 && (
         <div className="alert bad" data-testid="reversals"><Icon name="alert" /><div><b>{t('watch.reversals', { n: reversals.length })}</b><br />
           {reversals.slice(0, 5).map((r) => `${new Date(r.time).toLocaleDateString()} ${formatMoney(r.amount)}${r.reference ? ` (${r.reference})` : ''}`).join(' · ')}</div></div>
@@ -100,6 +106,24 @@ export function Watch() {
       {tab === 'safe' && <ProtectCard />}
       {tab === 'safe' && <SafetyTips />}
     </Page>
+  );
+}
+
+/** The latest alerts the server made (cash short, deletions, away from the shop, fake GPS). */
+function LatestAlerts({ list }: { list: AlertRow[] }) {
+  const { t } = useTranslation();
+  const [text, setText] = useState<((a: AlertRow) => string) | null>(null);
+  useEffect(() => { import('@/features/alertWatch').then((m) => setText(() => (a: AlertRow) => m.alertText(t, a))).catch(() => {}); }, [t]);
+  if (!text) return null;
+  return (
+    <div className="card stack" data-testid="latest-alerts">
+      <b><Icon name="bell" size={18} className="mr-1 inline" />{t('watch.alert.latest')}</b>
+      <div className="list">
+        {list.slice(0, 8).map((a) => (
+          <div key={a.id} className="item"><div className="main"><div className="t">{text(a)}</div><div className="s">{new Date(a.at).toLocaleString()}</div></div></div>
+        ))}
+      </div>
+    </div>
   );
 }
 

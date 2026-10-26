@@ -25,3 +25,6 @@ jobs:
           # Automatic text reminders from each shop's own phone (only for shops that turned them on).
           curl -fsS -X POST "$URL/functions/v1/sms" -H "Authorization: Bearer $KEY" -H "apikey: $KEY" \
             -H 'Content-Type: application/json' -d '{"action":"run"}' | tee -a "$GITHUB_STEP_SUMMARY" || echo "::warning::SMS reminders did not run"
+          # Monday (or the first run after it): last week's report to every owner. Sent once per week.
+          curl -fsS -X POST "$URL/functions/v1/push" -H "Authorization: Bearer $KEY" -H "apikey: $KEY" \
+            -H 'Content-Type: application/json' -d '{"action":"weekly"}' | tee -a "$GITHUB_STEP_SUMMARY" || echo "::warning::Weekly report did not run"

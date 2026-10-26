@@ -1,0 +1,30 @@
+name: Fraud alerts
+# Free backup sender for fraud alerts: every 10 minutes it asks the Kopor server to send any alert the database made
+# that no phone has sent yet (phones ask straight after syncing, so most alerts go out within seconds). Each alert is
+# sent once, so extra runs do nothing.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alerts
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send new alerts
+        env:
+          URL: ${{ vars.VITE_SUPABASE_URL }}
+          KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }} # the public app key (already inside the app), not a secret
+        run: |
+          set -euo pipefail
+          [ -n "$URL" ] || { echo "::error::VITE_SUPABASE_URL is not set"; exit 1; }
+          curl -fsS -X POST "$URL/functions/v1/push" -H "Authorization: Bearer $KEY" -H "apikey: $KEY" \
+            -H 'Content-Type: application/json' -d '{"action":"alerts"}' | tee -a "$GITHUB_STEP_SUMMARY"

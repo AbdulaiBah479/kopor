@@ -7,6 +7,7 @@ import { useSyncExternalStore } from 'react';
 import { getMeta, setMeta } from '@/db/repo';
 import { distanceM, type Fix } from '@/lib/geo';
 import { sharePosition } from '@/cloud/live';
+import { sendAlertsSoon } from '@/cloud/alerts';
 
 export type LiveState = 'idle' | 'sharing' | 'denied' | 'off' | 'error';
 let state: LiveState = 'idle';
@@ -39,6 +40,7 @@ async function onFix(orgId: string, f: Fix & { fake?: boolean }) {
     if (r === 'off') { stopLiveSharing(); return; }
     if (r === 'not-working') { set('idle'); return; }
     set('sharing');
+    sendAlertsSoon(orgId); // leaving the shop area makes an alert on the server: send it now
   } catch { set('error'); } // no internet: a later reading tries again (still at most once every 20-60 s)
 }
 

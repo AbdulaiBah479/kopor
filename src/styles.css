@@ -593,3 +593,30 @@
   .save-as .btn { min-height: 52px; justify-content: flex-start; padding-inline: 14px; font-size: 15px; text-align: left; line-height: 1.2; }
   .save-as .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
+
+/* ---------- Tablets and computers ----------
+   Tablets: a wider column. Computers (1000 px and wider): the tab bar becomes a side menu on the left, pages use up to
+   880 px, and bars that sit above the tab bar on phones sit at the bottom of the page area instead. */
+@layer components {
+  @media (min-width: 700px) {
+    .shell, .nav-inner, .sticky-actions .btn-row, .chat-input form { max-width: 760px; }
+    .fab { right: max(16px, calc(50vw - 364px)); }
+    .large-title h1 { font-size: 38px; }
+  }
+  @media (min-width: 1000px) {
+    :root { --side: 232px; }
+    .nav { inset: 0 auto 0 0; width: var(--side); box-shadow: .5px 0 0 var(--separator); padding: calc(24px + env(safe-area-inset-top)) 12px 24px; }
+    .nav-inner { display: flex; flex-direction: column; gap: 4px; height: auto; max-width: none; margin: 0; }
+    .nav a { flex-direction: row; justify-content: flex-start; gap: 12px; font-size: 15px; padding: 11px 14px; border-radius: 12px; }
+    .nav a.on { background: var(--primary-soft); }
+    .shell { margin-left: var(--side); max-width: none; padding-bottom: 40px; }
+    .shell > .topbar > *, .shell > .large-title, .shell > .content { width: 100%; }
+    .shell > .large-title, .shell > .content { max-width: 880px; margin-inline: auto; }
+    .content { padding-inline: 24px; }
+    .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .sticky-actions, .chat-input { left: var(--side); bottom: 0; }
+    .sticky-actions .btn-row, .chat-input form { max-width: 832px; }
+    .fab { right: max(24px, calc((100vw - var(--side)) / 2 - 416px)); bottom: 24px; }
+    .simple-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+}

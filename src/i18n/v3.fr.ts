@@ -646,6 +646,20 @@ const v3: V3Dict = {
     rules: 'Toujours actif : les caissiers ne saisissent qu’aujourd’hui ou hier (les jours plus anciens demandent un gérant) ; remboursements et modification ou suppression d’anciennes saisies demandent un gérant ; chaque changement est dans l’historique.',
     creditLimit: 'Plafond de crédit par client',
     creditLimitHelp: 'Les caissiers ne peuvent pas dépasser ce crédit pour un client. Les gérants et propriétaires peuvent. Laissez vide pour aucun plafond.',
+    alert: {
+      title: 'Alerte Kopor',
+      banner_one: '{{count}} nouvelle alerte',
+      banner_other: '{{count}} nouvelles alertes',
+      bannerHelp: 'Touchez pour voir ce qui s’est passé.',
+      latest: 'Dernières alertes',
+      short: '{{who}} a clôturé le {{date}} avec {{amount}} en moins',
+      deleted: '{{who}} a supprimé {{what}} de {{amount}}',
+      away: '{{who}} a pointé à {{m}} m de la boutique',
+      left: '{{who}} est à environ {{m}} m de la boutique pendant les heures de travail',
+      fake: 'Le téléphone de {{who}} utilise une appli de faux GPS',
+      sale: 'une vente',
+      credit: 'un crédit',
+    },
     k: {
       short: 'Manque en caisse',
       momoShort: 'Manque mobile money',
@@ -908,6 +922,15 @@ const v3: V3Dict = {
     fake: 'Certaines positions viennent d’une appli de faux GPS sur ce téléphone.',
     loadFailed: 'Impossible de charger les positions. Vérifiez internet.',
     privacy: 'Seuls les propriétaires et gérants voient ceci. Les positions sont gardées 30 jours.',
+  },
+  week: {
+    title: 'La semaine dernière',
+    profit: 'Bénéfice',
+    attendance: 'Retards / absences',
+    lateAbsent: '{{late}} retard(s), {{absent}} absence(s)',
+    warnings: 'Signaux',
+    noWarnings: 'Aucun signal la semaine dernière.',
+    open: 'Ouvrir Fraud watch',
   },
 };
 export default v3;
