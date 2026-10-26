@@ -5,6 +5,7 @@ import { today, addDays } from '@/lib/dates';
 import { AppError, findByName, type Book } from './book';
 import { recordExpense } from './cash';
 import { addEntry, ensureContact } from './credit';
+import { recordDate } from './guard';
 
 /** Stock on hand per product = sum of all movements (append-only, so offline devices never conflict). */
 export function stockLevels(book: Book): Map<string, number> {
@@ -79,7 +80,7 @@ export async function recordPurchase(ctx: Ctx, input: PurchaseInput) {
   assertCan(ctx.role, 'stock');
   const lines = input.lines.filter((l) => l.name.trim() && l.qty > 0);
   if (!lines.length) throw new AppError('err.amountOrItems');
-  const date = input.date || today();
+  const date = recordDate(ctx, input.date);
   const amount = Math.round(input.total || lines.reduce((s, l) => s + l.qty * l.unitCost, 0));
   return atomic(async () => {
     const products = (await db.products.where('org_id').equals(ctx.orgId).toArray()).filter((p) => !p.deleted);

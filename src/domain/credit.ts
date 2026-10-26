@@ -4,6 +4,7 @@ import { assertCan } from '@/db/permissions';
 import { today, addDays } from '@/lib/dates';
 import { randomToken } from '@/lib/crypto';
 import { AppError, findByName, type Book } from './book';
+import { checkCreditLimit, recordDate } from './guard';
 
 /** The secret token behind a customer's statement link. Made on first share; renewing it stops the old link working. */
 export async function statementToken(ctx: Ctx, contactId: string, renew = false): Promise<string> {
@@ -92,8 +93,10 @@ export async function removeEntry(ctx: Ctx, id: string) {
 export async function addEntry(ctx: Ctx, i: EntryInput): Promise<LedgerEntry> {
   assertCan(ctx.role, 'record');
   if (!(i.amount > 0)) throw new AppError('err.amount');
+  const date = recordDate(ctx, i.date);
+  if (i.type === 'gave') await checkCreditLimit(ctx, i.contactId, Math.round(i.amount));
   return insert(ctx, 'ledger', {
     branch_id: ctx.branchId, contact_id: i.contactId, type: i.type, amount: Math.round(i.amount), note: i.note?.trim() ?? '',
-    date: i.date || today(), due_date: i.type === 'gave' ? i.dueDate || null : null, ref_type: i.refType ?? null, ref_id: i.refId ?? null,
+    date, due_date: i.type === 'gave' ? i.dueDate || null : null, ref_type: i.refType ?? null, ref_id: i.refId ?? null,
   }, `${i.type === 'gave' ? 'Credit given' : 'Payment received'} ${i.amount / 100}`);
 }

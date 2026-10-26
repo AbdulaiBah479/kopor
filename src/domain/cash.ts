@@ -5,6 +5,7 @@ import { today, addDays } from '@/lib/dates';
 import { AppError, findByName, type Book } from './book';
 import { ensureContact, addEntry } from './credit';
 import { computeTotals, taxSettings } from './tax';
+import { recordDate } from './guard';
 
 export const EXPENSE_CATEGORIES = ['stock', 'rent', 'transport', 'salaries', 'utilities', 'phone', 'fuel', 'food', 'repairs', 'taxes', 'loan', 'other'] as const;
 export const METHODS: Method[] = ['cash', 'orange', 'afrimoney', 'qmoney', 'bank', 'card', 'credit'];
@@ -48,7 +49,7 @@ export async function recordSale(ctx: Ctx, input: SaleInput): Promise<Txn> {
   if (!(total > 0)) throw new AppError('err.amountOrItems');
   const customer = input.customer?.trim() ?? '';
   if (input.method === 'credit' && !customer) throw new AppError('err.creditCustomer');
-  const date = input.date || today();
+  const date = recordDate(ctx, input.date);
 
   return atomic(async () => {
     const contact = customer ? await ensureContact(ctx, customer, input.phone) : null;
@@ -78,7 +79,7 @@ export async function recordExpense(ctx: Ctx, i: ExpenseInput): Promise<Txn> {
   if (!(i.amount > 0)) throw new AppError('err.amount');
   return insert(ctx, 'transactions', {
     branch_id: ctx.branchId, type: 'out', category: i.category || 'other', amount: Math.round(i.amount), method: i.method ?? 'cash',
-    contact_id: null, note: i.note?.trim() ?? '', date: i.date || today(), items: [], ledger_id: null, invoice_id: null,
+    contact_id: null, note: i.note?.trim() ?? '', date: recordDate(ctx, i.date), items: [], ledger_id: null, invoice_id: null,
     discount: 0, tax: 0, refund_of: null,
   }, `Expense ${i.amount / 100} (${i.category})`);
 }

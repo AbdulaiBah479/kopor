@@ -774,6 +774,11 @@ await step('fraud watch: mobile money shortfall, refunds and unconfirmed payment
   await shot('13-fraud-watch');
   await page.getByRole('tab', { name: 'Stay safe' }).click();
   if ((await page.getByTestId('safety-tips').locator('.card').count()) !== 6) throw new Error('tips');
+  // The owner sets a credit limit per customer.
+  const protect = page.getByTestId('protect-form');
+  await protect.locator('[name=credit_limit]').fill('5000');
+  await protect.getByRole('button', { name: 'Save' }).click();
+  await page.getByText('Saved').first().waitFor();
 });
 
 await step('owner dashboard: every user and business, a business page, money, AI and an announcement on Home', async () => {

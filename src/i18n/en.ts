@@ -174,6 +174,8 @@ const base = {
     remindersSub: 'Who to remind today', offlineNote: 'Kopor works offline. Records are saved on this phone. Make backups or connect the cloud so you never lose them.' },
   public: { title: 'Invoice', notFound: 'This invoice link is not valid.', pay: 'Pay now', from: 'From', loadFail: 'Could not load this page. Check your internet connection.', retry: 'Try again' },
   err: {
+    backdated: 'Cashiers can record only today or yesterday. Ask a manager to record an older day.',
+    creditLimit: 'This would take the customer above the credit limit (Le {{limit}}; they owe Le {{owes}}). Ask a manager.',
     amount: 'Enter an amount', amountOrItems: 'Enter an amount or add items', creditCustomer: 'Enter the customer who is buying on credit', nameRequired: 'Enter a name',
     productExists: 'A product with this name already exists', contactExists: 'Another contact already has this name', qty: 'Enter a quantity', notFound: 'Not found', lastOwner: 'A business must keep at least one owner',
     removeSelf: 'You cannot remove yourself', pinFormat: 'PIN must be 4 to 8 digits', pinLocked: 'Too many wrong PINs. Try again in {{seconds}} seconds.',

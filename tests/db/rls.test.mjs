@@ -521,4 +521,17 @@ await test('live location: only while the owner allows it and the person is tapp
   assert.equal(await share(), 'not-working');
 });
 
+await test('no back-dating: a cashier cannot put a sale on an old or future day; a manager or owner can', async () => {
+  const sale = (days) => q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date)
+    values (gen_random_uuid(), $1, $2, $2, $3, 'in', 'sale', 100, 'cash', current_date + $4::int)`, [ORG, now(), CASHIER_M, days]);
+  await as('cashier');
+  await sale(0);
+  await sale(-1);                                                   // after midnight / offline phone: still allowed
+  await rejects(sale(-5), /err\.backdated/);
+  await rejects(sale(3), /err\.backdated/);
+  await as('owner');
+  await q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date)
+    values (gen_random_uuid(), $1, $2, $2, $3, 'in', 'sale', 100, 'cash', current_date - 5)`, [ORG, now(), OWNER_M]);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

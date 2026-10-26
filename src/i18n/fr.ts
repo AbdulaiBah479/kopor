@@ -173,6 +173,8 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     remindersSub: 'Qui relancer aujourd’hui', offlineNote: 'Kopor fonctionne hors ligne. Les données sont sur ce téléphone. Faites des sauvegardes ou connectez le cloud pour ne rien perdre.' },
   public: { title: 'Facture', notFound: 'Ce lien de facture n’est pas valide.', pay: 'Payer maintenant', from: 'De', loadFail: 'Impossible de charger cette page. Vérifiez votre connexion Internet.', retry: 'Réessayer' },
   err: {
+    backdated: 'Les caissiers ne peuvent saisir qu’aujourd’hui ou hier. Demandez à un gérant pour un jour plus ancien.',
+    creditLimit: 'Le client dépasserait son plafond de crédit (Le {{limit}} ; il doit Le {{owes}}). Demandez à un gérant.',
     amount: 'Saisissez un montant', amountOrItems: 'Saisissez un montant ou ajoutez des articles', creditCustomer: 'Indiquez le client qui achète à crédit', nameRequired: 'Saisissez un nom',
     productExists: 'Un produit porte déjà ce nom', contactExists: 'Un autre contact porte déjà ce nom', qty: 'Saisissez une quantité', notFound: 'Introuvable', lastOwner: 'Un commerce doit garder au moins un propriétaire',
     removeSelf: 'Vous ne pouvez pas vous retirer vous-même', pinFormat: 'Le PIN doit comporter 4 à 8 chiffres', pinLocked: 'Trop d’essais. Réessayez dans {{seconds}} secondes.',

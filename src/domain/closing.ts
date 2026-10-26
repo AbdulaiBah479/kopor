@@ -4,6 +4,7 @@ import { insert, type Ctx } from '@/db/repo';
 import { assertCan } from '@/db/permissions';
 import { today } from '@/lib/dates';
 import { AppError, type Book } from './book';
+import { recordDate } from './guard';
 
 /**
  * Cash in the drawer by the books: opening float + cash sales − cash expenses − cash refunds.
@@ -41,7 +42,7 @@ export async function closeDay(ctx: Ctx, input: { date?: string; openingFloat: n
   if (input.counted < 0) throw new AppError('err.amount');
   const difference = Math.round(input.counted - input.expected);
   return insert(ctx, 'closings', {
-    branch_id: ctx.branchId, date: input.date || today(), opening_float: Math.round(input.openingFloat), expected: Math.round(input.expected),
+    branch_id: ctx.branchId, date: recordDate(ctx, input.date), opening_float: Math.round(input.openingFloat), expected: Math.round(input.expected),
     counted: Math.round(input.counted), difference, note: input.note?.trim() ?? '', momo: input.momo ?? {},
   }, `Day closed: counted ${input.counted / 100}, difference ${difference / 100}`);
 }

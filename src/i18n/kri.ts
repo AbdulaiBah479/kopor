@@ -173,6 +173,8 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     remindersSub: 'Udat fɔ rimayn tide', offlineNote: 'Kopor de wok widawt nɛt. Rɛkɔd de sev na dis fon. Mek bakɔp ɔ kɔnɛkt di klawd so yu nɔ go lɔs am.' },
   public: { title: 'Invɔys', notFound: 'Dis invɔys link nɔ rayt.', pay: 'Pe naw', from: 'Frɔm', loadFail: 'A nɔ ebul lod dis pej. Chɛk yu intanɛt.', retry: 'Tray bak' },
   err: {
+    backdated: 'Kashia kin rayt tide ɔ yestade nɔmɔ. Aks manija fɔ rayt ol de.',
+    creditLimit: 'Dis go mek di kɔstɔma pas di kredit limit (Le {{limit}}; i de ɔw Le {{owes}}). Aks manija.',
     amount: 'Put kopor', amountOrItems: 'Put kopor ɔ ad tin', creditCustomer: 'Put di kɔstɔma we de bay pan trɔst', nameRequired: 'Put nem',
     productExists: 'Prɔdak wit dis nem dɔn de', contactExists: 'Ɔda kɔntak dɔn get dis nem', qty: 'Put ɔmɔs', notFound: 'A nɔ si am', lastOwner: 'Biznɛs fɔ get wan ɔna atlis',
     removeSelf: 'Yu nɔ kin rimov yusɛf', pinFormat: 'PIN fɔ bi 4 to 8 nɔmba', pinLocked: 'Tumɔs rɔng PIN. Tray bak afta {{seconds}} sɛkɔn.',
