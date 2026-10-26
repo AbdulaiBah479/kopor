@@ -15,6 +15,11 @@ function providers(): Provider[] {
   return [
     // Custom OpenAI-compatible endpoint first, if configured (e.g. a self-hosted model).
     { name: 'custom', base: e('AI_BASE_URL') ?? '', key: e('AI_API_KEY'), text: list(e('AI_MODEL'), []), vision: list(e('AI_VISION_MODEL'), []), extra: gptOss },
+    // OmniRoute (github.com/diegosouzapw/OmniRoute, MIT): a self-hosted router in front of many free AI providers, with
+    // its own fallback. OMNIROUTE_URL = its public address ending in /v1; OMNIROUTE_KEY = a key made in its dashboard;
+    // OMNIROUTE_MODELS = the model or combo names to use (from its dashboard), comma-separated.
+    { name: 'omniroute', base: e('OMNIROUTE_URL') ?? '', key: e('OMNIROUTE_KEY'),
+      text: list(e('OMNIROUTE_MODELS'), []), vision: list(e('OMNIROUTE_VISION_MODELS'), []) },
     { name: 'groq', base: 'https://api.groq.com/openai/v1', key: e('GROQ_API_KEY'),
       text: list(e('GROQ_MODELS'), ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b']), vision: list(e('GROQ_VISION_MODELS'), ['qwen/qwen3.8-27b']), extra: gptOss },
     { name: 'gemini', base: 'https://generativelanguage.googleapis.com/v1beta/openai', key: e('GEMINI_API_KEY'),
@@ -77,6 +82,7 @@ export async function complete(messages: Msg[], opts: { vision?: boolean; maxTok
       return { content, provider: p.name, model };
     } catch (e) {
       errors.push(`${id}: ${e instanceof Error ? e.name : 'error'}`);
+      cooldown.set(id, Date.now() + 5 * 60_000); // unreachable or too slow: try the others first for a while
     }
   }
   console.error('All AI providers failed', errors);
