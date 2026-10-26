@@ -232,6 +232,7 @@
   .alert.bad { background: var(--danger-soft); }
   .alert.bad .ic { color: var(--danger); }
   .alert.info { background: var(--primary-soft); }
+  .steps { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 16px; }
   /* Hide amounts (Settings or the eye on Home): money is blurred until switched back. */
   [data-hide] .money, [data-hide] .balance-card .amount, [data-hide] .balance-card .split b { filter: blur(8px); user-select: none; }
   /* Picture and voice mode: two big picture buttons per row. */

@@ -17,14 +17,15 @@ if (server) await new Promise((resolve, reject) => {
 // A recorded sentence plays as the microphone, so the real voice flow can be tested (live mode only).
 const LIVE_AI = !!process.env.E2E_LIVE_AI;
 const browser = await chromium.launch({ channel, args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--use-file-for-fake-audio-capture=' + new URL('../fixtures/sale.wav', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')] });
-const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'en-GB' });
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'en-GB',
+  geolocation: { latitude: 8.4844, longitude: -13.2344, accuracy: 8 } });   // standing in the shop (Freetown)
 // Force the download path for exported files (desktop Web Share would open a system dialog).
 await ctx.addInitScript(() => { Object.defineProperty(navigator, 'canShare', { value: undefined, configurable: true }); });
 // Default: no cloud AI, so results are repeatable and the offline fallbacks are what gets tested.
 if (!LIVE_AI) await ctx.route('**/functions/v1/**', (r) => r.abort('internetdisconnected'));
 // Reports never go to the real inbox from tests: they take the offline path (kept on the phone).
 await ctx.route('**/rest/v1/reports**', (r) => r.abort('internetdisconnected'));
-await ctx.grantPermissions(['microphone']).catch(() => {});
+await ctx.grantPermissions(['microphone', 'geolocation']).catch(() => {});
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
@@ -336,6 +337,25 @@ await step('staff: tap in, mark absent, set pay, give an advance, pay the salary
   await page.getByText(/Staff advance/).first().waitFor();
   await page.getByText(/Staff salary/).first().waitFor();
   if (await page.getByText(/Kadiatu Kamara/).count()) throw new Error('the cash book names whose pay it is');
+});
+
+await step('location: save the shop exactly, switch on live location, staff agree, managers see who is at work', async () => {
+  await go('/staff');
+  await page.getByTestId('set-shop').click();
+  await page.getByText('Shop location saved').waitFor();
+  await page.getByTestId('shop-location').getByText(/set/i).first().waitFor();
+  await page.getByTestId('live-switch').check();
+  const ask = page.getByTestId('live-consent');                // the owner is tapped in, so their own phone asks too
+  await ask.waitFor();
+  await ask.getByTestId('live-agree').click();
+  await page.getByTestId('live-status').waitFor();
+  const map = page.getByTestId('live-map');
+  await map.waitFor();
+  await map.locator('[data-member]').first().waitFor();          // everyone tapped in is listed
+  await noOverflow();
+  await shot('11c-live-location');
+  await page.getByTestId('live-switch').uncheck();
+  await map.waitFor({ state: 'detached' });
 });
 
 await step('import: a customer spreadsheet (with what they owe) and a stock list', async () => {

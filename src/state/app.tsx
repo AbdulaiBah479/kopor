@@ -10,6 +10,7 @@ import { loadBook, type Book } from '@/domain/book';
 import { getSession, setSession, anyPin, type Session } from '@/domain/org';
 import { setCurrencySymbol } from '@/lib/money';
 import { setDataSaver } from '@/lib/image';
+import { addDays, today } from '@/lib/dates';
 import { syncNow, onSyncState, type SyncState } from '@/cloud/sync';
 
 export type Accent = 'emerald' | 'ocean' | 'royal' | 'sunset' | 'rose' | 'graphite';
@@ -109,7 +110,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, 3000);
     return () => window.clearTimeout(timer);
   }, [book, session?.memberId, device.closeHour]);
-  const member = book?.members.find((m) => m.id === session?.memberId);
+  const me = book?.members.find((m) => m.id === session?.memberId);
+  // Live location: share this phone's position while tapped in, if the owner switched it on and the person agreed.
+  const myDay = book && me ? book.attendance.find((x) => x.member_id === me.id && !x.deleted && x.time_in && !x.time_out && x.date >= addDays(today(), -1)) : undefined;
+  const liveOn = !!book?.org.track_live && !!me?.active && !!myDay;
+  useEffect(() => {
+    if (!book || !me) return;
+    import('@/features/liveShare').then((m) => m.syncLiveSharing({
+      orgId: book.org.id, memberId: me.id, working: liveOn, enabled: !!book.org.track_live,
+      title: i18n.t('live.notifTitle'), body: i18n.t('live.notifBody', { name: book.org.name }),
+    })).catch(() => {});
+  }, [book?.org.id, me?.id, liveOn, book?.org.track_live]); // eslint-disable-line react-hooks/exhaustive-deps
+  const member = me;
   const role: Role = member?.active ? member.role : 'viewer';
   if (book) setCurrencySymbol(book.org.currency);
 

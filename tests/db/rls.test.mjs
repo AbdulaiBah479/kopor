@@ -487,4 +487,38 @@ await test('daily clean-up: old guest AI counts and logs go; recent ones stay; o
   assert.equal((await q('select count(*)::int as c from sms_log where org_id = $1', [ORG])).rows[0].c, 1);
 });
 
+await test('live location: only while the owner allows it and the person is tapped in; only managers see others', async () => {
+  const share = () => q('select kopor_share_location($1, 8.4844, -13.2344, 12) as r', [ORG]).then((x) => x.rows[0].r);
+  await q('reset role');                                                         // an earlier test removed the cashier's account
+  await q('update members set user_id = $1, active = 1, deleted = 0 where id = $2', [U.cashier, CASHIER_M]);
+  await q('delete from attendance where member_id = $1', [CASHIER_M]);
+  await as('cashier');
+  assert.equal(await share(), 'off');
+  await as('owner');
+  await q('update orgs set track_live = 1 where id = $1', [ORG]);
+  await as('cashier');
+  assert.equal(await share(), 'not-working');                                   // not tapped in yet
+  await q(`insert into attendance (id, org_id, created_at, updated_at, created_by, member_id, date, status, time_in)
+           values (gen_random_uuid(), $1, 1, 1, $2, $2, current_date, 'present', '08:00')`, [ORG, CASHIER_M]);
+  assert.equal(await share(), 'ok');
+  assert.equal(await share(), 'wait');                                          // at most every 20 seconds
+  await rejects(q(`insert into staff_live (org_id, member_id, lat, lng, accuracy) values ($1, $2, 0, 0, 1)`, [ORG, OWNER_M]));
+  await rejects(q('select kopor_share_location($1, 95, 0, 5)', [ORG]), /Bad position/);
+  assert.equal((await q('select member_id from staff_live')).rows.length, 1);  // their own
+  await as('stranger');
+  await rejects(q('select kopor_share_location($1, 8.48, -13.23, 10)', [ORG]), /Not a member/);
+  assert.equal((await q('select * from staff_live')).rows.length, 0);
+  assert.equal((await q('select * from staff_track')).rows.length, 0);
+  await as('owner');
+  const { rows } = await q('select member_id, accuracy from staff_live where org_id = $1', [ORG]);
+  assert.deepEqual(rows.map((r) => r.member_id), [CASHIER_M]);
+  assert.equal((await q('select count(*)::int as c from staff_track where org_id = $1', [ORG])).rows[0].c, 1);
+  // After tap-out nothing more is shared.
+  await as('cashier');
+  await q(`update attendance set time_out = '17:00' where member_id = $1 and org_id = $2`, [CASHIER_M, ORG]);
+  await q(`select set_config('request.jwt.claim.sub', $1, false)`, [U.cashier]);
+  await q('reset role'); await q(`update staff_live set at = now() - interval '1 minute'`); await as('cashier');
+  assert.equal(await share(), 'not-working');
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

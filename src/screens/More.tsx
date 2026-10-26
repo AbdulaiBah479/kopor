@@ -5,7 +5,7 @@ import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
 import { health } from '@/domain/health';
 import { isPro } from '@/domain/plan';
-import { useInstall, APP_URL } from '@/features/pwa';
+import { useInstall, APP_URL, type InstallHow } from '@/features/pwa';
 import { shareText } from '@/lib/share';
 import { useOverlay } from '@/ui/overlay';
 import { AppearancePanel } from '@/ui/Appearance';
@@ -29,13 +29,27 @@ function MenuItem({ to, icon, tile, title, sub }: { to: string; icon: string; ti
   );
 }
 
+const APK_URL = 'https://github.com/AbdulaiBah479/kopor/releases/download/test-latest/kopor-test.apk';
+
+/** Install steps for browsers without a one-tap install, plus the Android app download. */
+function InstallSteps({ how }: { how: InstallHow }) {
+  const { t } = useTranslation();
+  return (
+    <div className="stack" data-testid="install-steps">
+      <ol className="steps">{(t(`pwa.how.${how}`, { returnObjects: true }) as string[]).map((s) => <li key={s}>{s}</li>)}</ol>
+      <div className="small muted">{t('pwa.howAfter')}</div>
+      {how === 'android' && <a className="btn" href={APK_URL} target="_blank" rel="noopener"><Icon name="download" size={18} /> {t('pwa.apk')}</a>}
+    </div>
+  );
+}
+
 export function More() {
   const { t } = useTranslation();
   const book = useBook();
   const { can } = useApp();
   const h = health(book);
   const { sync } = useApp();
-  const { canInstall, install } = useInstall();
+  const { install, how } = useInstall();
   const { openSheet } = useOverlay();
   const [admin, setAdmin] = useState(false);
   useEffect(() => { isAppAdmin().then(setAdmin); }, [sync.status]);
@@ -85,8 +99,8 @@ export function More() {
         </button>
       </div>
       <div className="list">
-        {canInstall && (
-          <button className="item" onClick={install} data-testid="install">
+        {how && (
+          <button className="item" onClick={() => (how === 'prompt' ? install() : openSheet(t('pwa.install'), <InstallSteps how={how} />))} data-testid="install">
             <span className="tile" style={{ background: 'var(--tile-indigo)' }}><Icon name="install" size={18} strokeWidth={2.2} /></span>
             <div className="main"><div className="t">{t('pwa.install')}</div><div className="s">{t('pwa.installHelp')}</div></div>
           </button>

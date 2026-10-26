@@ -25,6 +25,10 @@ const PRIVACY: [string, string[]][] = [
     'To share the free AI allowance fairly, people without an account are counted per network address. The address is scrambled (hashed) and never stored in a readable form, and the count is deleted after a few days.',
     'Do not use AI features if you do not agree. Everything else in Kopor works without them.',
   ]],
+  ['Staff location', [
+    'Tapping in can check how far the phone is from the shop; only that distance is saved with the tap-in, not the place.',
+    'If the business owner switches on live location, a staff member’s position is shared with the owner and managers only after that person agrees on their own phone, only while they are tapped in, and it stops when they tap out. The Android app shows a notification the whole time. Each person can stop sharing at any time. Positions are deleted after 30 days.',
+  ]],
   ['Payments', ['Mobile money and card payments are processed by Monime, a payment provider licensed by the Bank of Sierra Leone, under its own privacy policy. Kopor stores only the payment status and reference, never card numbers or mobile money PINs.']],
   ['Crash reports', ['If enabled, anonymous error reports (no names, phone numbers or business records) are sent to Sentry so we can fix problems.']],
   ['Security', ['Records on your phone can be protected with a PIN. Backups can be encrypted with a password. Cloud accounts are locked for a while after repeated wrong PINs, and PINs are never stored in a readable form. Staff join a business only with a one-time invite code from the owner. Cloud data is protected with access rules so that only members of a business can see it, and payment keys are encrypted on the server. To run the service, help you when you ask and stop fraud, Kopor’s support team can see account and business summaries (names, phone numbers, staff, totals and recent activity) and can suspend an account that is used for fraud. Every time they open a business is written down.']],

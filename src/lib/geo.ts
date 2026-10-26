@@ -20,41 +20,62 @@ function kind(e: unknown): LocateError {
   return 'timeout';
 }
 
-async function nativeFix(o: Opts): Promise<Fix> {
+type Watch = (o: Opts, on: (f: Fix) => void, err: (e: unknown) => void) => Promise<() => void>;
+
+const nativeWatch: Watch = async (o, on, err) => {
   const { Geolocation } = await import('@capacitor/geolocation');
   let perm = await Geolocation.checkPermissions();
   if (perm.location !== 'granted' && perm.coarseLocation !== 'granted') perm = await Geolocation.requestPermissions();
-  if (perm.location !== 'granted' && perm.coarseLocation !== 'granted') throw { code: 1, message: 'denied' };
-  const p = await Geolocation.getCurrentPosition(o);
-  return { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy };
-}
+  if (perm.location !== 'granted' && perm.coarseLocation !== 'granted') { err({ code: 1, message: 'denied' }); return () => {}; }
+  const id = await Geolocation.watchPosition(o, (p, e) => {
+    if (e) err(e); else if (p) on({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy });
+  });
+  return () => { void Geolocation.clearWatch({ id }); };
+};
 
-function webFix(o: Opts): Promise<Fix> {
+const webWatch: Watch = async (o, on, err) => {
   const geo = globalThis.navigator?.geolocation;
-  if (!geo) return Promise.reject({ message: 'unsupported' });
+  if (!geo) { err({ message: 'unsupported' }); return () => {}; }
+  const id = geo.watchPosition((p) => on({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }), err, o);
+  return () => geo.clearWatch(id);
+};
+
+/**
+ * Exact position: the phone's first answer is often rough (Wi-Fi or a stale GPS fix), and it gets better over the next
+ * seconds. Keep listening and return the most exact reading: as soon as it is within goalM metres, or the best one
+ * seen when time is up. Fails only when no reading came at all.
+ */
+function sample(watch: Watch, o: Opts, goalM: number): Promise<Fix> {
   return new Promise((resolve, reject) => {
-    const guard = setTimeout(() => reject({ code: 3, message: 'timeout' }), o.timeout + 1500);
-    geo.getCurrentPosition(
-      (p) => { clearTimeout(guard); resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }); },
-      (e) => { clearTimeout(guard); reject(e); },
-      o,
-    );
+    let best: Fix | null = null, stop: (() => void) | null = null, over = false;
+    const finish = (e?: unknown) => {
+      if (over) return; over = true; clearTimeout(timer); stop?.();
+      if (best) resolve(best); else reject(e ?? { code: 3, message: 'timeout' });
+    };
+    const timer = setTimeout(() => finish(), o.timeout);
+    watch(o, (f) => {
+      if (!best || f.accuracy < best.accuracy) best = f;
+      if (f.accuracy <= goalM) finish();
+    }, (e) => { if (kind(e) !== 'timeout' || !best) finish(e); })
+      .then((s) => { stop = s; if (over) s(); })
+      .catch(finish);
   });
 }
 
 /** The phone's position, or why it could not be found. Never takes much longer than timeoutMs × 2. */
-export async function locate(timeoutMs = 10_000): Promise<Located> {
+export async function locate(timeoutMs = 10_000, goalM = 25): Promise<Located> {
   const native = Capacitor.isNativePlatform();
   if (!native && !globalThis.navigator?.geolocation) return { error: 'unsupported' };
-  const fix = native ? nativeFix : webFix;
+  const watch = native ? nativeWatch : webWatch;
   try {
-    return { pos: await fix({ enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 30_000 }) };
+    return { pos: await sample(watch, { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 0 }, goalM) };
   } catch (e) {
     const k = kind(e);
     if (k !== 'timeout') return { error: k };
   }
+  // No GPS reading at all in time (deep indoors): the network position is rougher but quick.
   try {
-    return { pos: await fix({ enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 5 * 60_000 }) };
+    return { pos: await sample(watch, { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 5 * 60_000 }, 100) };
   } catch (e) { return { error: kind(e) }; }
 }
 

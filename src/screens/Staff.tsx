@@ -14,6 +14,7 @@ import { today } from '@/lib/dates';
 import type { Member, StaffPay } from '@/db/schema';
 import { updateOrg } from '@/domain/org';
 import { awayFrom, locate } from '@/lib/geo';
+import { LiveConsent, LiveMap, LiveSwitch } from './LiveStaff';
 import { STATUSES, attendanceFlags, dayOf, markDay, monthCounts, monthOf, payFor, recordPay, saveTerms, staffOf, tapIn, tapOut, termsOf, workingDays, type Status } from '@/domain/staff';
 
 type Tab = 'today' | 'month' | 'pay';
@@ -78,6 +79,7 @@ function Today() {
             {!mine?.time_in && <button className="btn primary" data-testid="tap-in" onClick={arrive} disabled={!!finding}><Icon name="check" size={18} /> {finding === 'in' ? t('staff.locating') : t('staff.tapIn')}</button>}
             {mine?.time_in && !mine.time_out && <button className="btn" data-testid="tap-out" onClick={() => run(tapOut(ctx, book, me), t('staff.tappedOut'))}><Icon name="up" size={18} /> {t('staff.tapOut')}</button>}
           </div>
+          <LiveConsent me={me} working={!!mine?.time_in && !mine.time_out} />
         </div>
       )}
       {can('team') && (
@@ -90,8 +92,10 @@ function Today() {
             <Field label={t('staff.radius')}><select name="away_m" value={book.org.away_m || 200} onChange={(e) => updateOrg(ctx, { away_m: Number(e.target.value) }).then(() => toast(t('common.saved'))).catch(fail)}>
               {[100, 200, 500, 1000].map((m) => <option key={m} value={m}>{t('staff.withinM', { m })}</option>)}</select></Field>
           </div>
+          <LiveSwitch />
         </div>
       )}
+      {can('reports') && <LiveMap />}
       {can('edit') && <Field label={t('staff.date')}><input type="date" value={date} max={today()} onChange={(e) => e.target.value && setDate(e.target.value)} /></Field>}
       {staff.length > 1 || can('edit') ? (
         <div className="list" data-testid="register">

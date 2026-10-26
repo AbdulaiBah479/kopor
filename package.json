@@ -22,6 +22,7 @@
     "typecheck:server": "npx -y deno@2.5.4 check supabase/functions/*/index.ts"
   },
   "dependencies": {
+    "@capacitor-community/background-geolocation": "1.2.26",
     "@capacitor-community/bluetooth-le": "^8.3.0",
     "@capacitor-community/text-to-speech": "8.0.2",
     "@capacitor/android": "^8.5.3",
