@@ -29,6 +29,11 @@ const extra: ExtraDict = {
     short: 'Il manque {{amount}}. Vérifiez les dépenses non enregistrées ou l’argent manquant.', save: 'Enregistrer la clôture', saved: 'Journée clôturée',
   },
   plan: {
+    trial: 'Essayer Pro gratuitement 14 jours',
+    trialOn: 'Kopor Pro est actif pour 14 jours. Bonne utilisation !',
+    signInFirst: 'Kopor Pro est pour les entreprises avec un compte cloud. Ouvrez Plus → Cloud et compte pour vous connecter d’abord.',
+    soon: 'Le paiement de Pro dans l’application ouvre bientôt. En attendant, le support Kopor peut activer Pro pour vous.',
+    soonWa: 'Bonjour Kopor, je voudrais Kopor Pro pour {{name}}.',
     title: 'Kopor Pro', freeSub: 'Offre gratuite', proActive: 'Pro actif', proUntil: 'Pro jusqu’au {{date}}', current: 'Votre offre',
     pitch: 'Développez-vous avec plus de succursales, plus de personnel et plus d’aide IA.', unlimited: 'Illimité',
     f: { records: 'Crédit, caisse, stock, tontines, factures', offline: 'Fonctionne hors ligne', branches: 'Succursales', staff: 'Comptes du personnel', ai: 'Requêtes IA (cloud)', support: 'Support prioritaire' },
@@ -81,6 +86,10 @@ const extra: ExtraDict = {
     deleted: 'Compte supprimé',
   },
   errx: {
+    signIn: 'Connectez-vous d’abord (Plus → Cloud et compte).',
+    role: 'Votre rôle ne permet pas cette action. Demandez au propriétaire.',
+    trialUsed: 'Cette entreprise a déjà utilisé son essai gratuit de Pro.',
+    proNotReady: 'Le paiement de Pro ouvre bientôt. Contactez le support Kopor pour activer Pro.',
     quoteUsed: 'Ce devis a déjà été transformé en facture ou annulé.', 
     reportBusy: 'Beaucoup de signalements arrivent en ce moment. Réessayez dans une minute.',
     pinLocked: 'Trop de PIN incorrects : ce compte est bloqué un moment pour le protéger. Réessayez plus tard ou utilisez « Code oublié ? » avec votre code de récupération.', signupLimit: 'Trop de nouveaux comptes depuis ce réseau aujourd’hui. Réessayez demain.',

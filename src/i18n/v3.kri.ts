@@ -82,6 +82,7 @@ const v3: V3Dict = {
     linkUsers: 'Akawnt dɛn (Supabase)', linkData: 'Databes (Supabase)', linkLogs: 'Sava fɔnkshɔn ɛn lɔg (Supabase)', linkDeploys: 'Ɔpdet (GitHub)',
     linkAi: 'AI yuz (Groq)', updated: 'Ɔpdet na {{time}}',
   },  report: {
+    queuedOnline: 'Wi nɔ ebul rich Kopor naw. Yu ripɔt sev na dis fon ɛn i go sɛn insɛf.',
     title: 'Ripɔt prɔblɛm ɔ kɔmplen', sub: 'Sɔntin nɔ rayt? Tɛl wi, wi de rid ɛni ripɔt', help: 'Pik wetin i bɔt ɛn tɛl wi wetin apin. Di Kopor tim de rid ɛni ripɔt.',
     what: 'Wetin apin?', about: 'I bɔt', contact: 'Yu fon ɔ imel (if yu want)', contactHelp: 'Jɔs if yu want ansa.',
     send: 'Sɛn ripɔt', thanks: 'Tɛnki', sent: 'Yu ripɔt dɔn rich di Kopor tim.', queued: 'Nɛt nɔ de. Yu ripɔt dɔn sev ɛn i go sɛn insɛf.',

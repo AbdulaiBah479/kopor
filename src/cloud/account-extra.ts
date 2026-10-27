@@ -1,16 +1,11 @@
 // Kopor Pro billing and account deletion (Edge Functions: billing, delete-account).
-import { getSupabase } from './supabase';
+import { callFunction, getSupabase } from './supabase';
 
-async function invoke<T>(fn: string, body: Record<string, unknown>): Promise<T> {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('err.noCloud');
-  const { data, error } = await sb.functions.invoke(fn, { body });
-  if (error) throw new Error(error.message);
-  if (data?.error) throw new Error(data.error);
-  return data as T;
-}
+const invoke = <T,>(fn: string, body: Record<string, unknown>) => callFunction<T>(fn, body);
 
 export const startProCheckout = (orgId: string, months: 1 | 12) => invoke<{ url: string }>('billing', { orgId, months });
+export const startProTrial = (orgId: string) => invoke<{ ok: true; until: number }>('billing', { orgId, action: 'trial' });
+export const proStatus = () => invoke<{ payments: boolean; trialDays: number }>('billing', { action: 'status' });
 
 export async function deleteCloudAccount() {
   await invoke<{ ok: true }>('delete-account', {});

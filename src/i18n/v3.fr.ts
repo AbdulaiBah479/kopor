@@ -82,6 +82,7 @@ const v3: V3Dict = {
     linkUsers: 'Comptes (Supabase)', linkData: 'Tables de la base (Supabase)', linkLogs: 'Fonctions serveur et journaux (Supabase)', linkDeploys: 'Mises à jour (GitHub)',
     linkAi: 'Usage IA (Groq)', updated: 'Mis à jour {{time}}',
   },  report: {
+    queuedOnline: 'Kopor est injoignable pour le moment. Votre signalement est gardé sur ce téléphone et sera envoyé automatiquement.',
     title: 'Signaler un problème ou une plainte', sub: 'Un souci ? Dites-le nous, nous lisons tout', help: 'Choisissez le sujet et décrivez ce qui s’est passé. L’équipe Kopor lit chaque signalement.',
     what: 'Que s’est-il passé ?', about: 'Concerne', contact: 'Votre téléphone ou e-mail (facultatif)', contactHelp: 'Seulement si vous voulez une réponse.',
     send: 'Envoyer', thanks: 'Merci', sent: 'Votre signalement est arrivé à l’équipe Kopor.', queued: 'Vous êtes hors ligne. Le signalement est enregistré et partira automatiquement.',

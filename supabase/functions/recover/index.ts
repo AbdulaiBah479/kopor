@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     if (body.action === 'create') {
       const user = createClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'), { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } }, auth: { persistSession: false } });
       const { data: u } = await user.auth.getUser();
-      if (!u.user) throw new HttpError(401, 'Not signed in');
+      if (!u.user) throw new HttpError(401, 'errx.signIn');
       return json({ code: await issueCode(db, u.user.id) });
     }
 

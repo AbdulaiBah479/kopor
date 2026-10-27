@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const user = createClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'), { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } }, auth: { persistSession: false } });
     const { data: u } = await user.auth.getUser();
-    if (!u.user) throw new HttpError(401, 'Not signed in');
+    if (!u.user) throw new HttpError(401, 'errx.signIn');
     const digits = u.user.email?.match(/^p(\d{10,15})@phone\.kopor\.app$/)?.[1];
     if (!digits) throw new HttpError(400, 'This account has no phone number');
     const phone = `+${digits}`;

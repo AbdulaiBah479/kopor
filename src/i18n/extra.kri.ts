@@ -29,6 +29,11 @@ const extra: ExtraDict = {
     short: 'I de {{amount}} NƆ RICH wetin fɔ de. Chɛk if yu fɔgɛt rayt ɛkspens ɔ mɔni lɔs.', save: 'Sev di klos', saved: 'Di de dɔn klos',
   },
   plan: {
+    trial: 'Tray Pro fri fɔ 14 de',
+    trialOn: 'Kopor Pro dɔn on fɔ 14 de. Ɛnjɔy am!',
+    signInFirst: 'Kopor Pro na fɔ biznɛs we gɛt klawd akawnt. Opin More → Cloud & account fɔ sayn in fɔs.',
+    soon: 'Fɔ pe fɔ Pro insay di ap go opin kwik. Bifo dat, Kopor sɔpɔt kin on Pro fɔ yu.',
+    soonWa: 'Kushɛ Kopor, a want Kopor Pro fɔ {{name}}.',
     title: 'Kopor Pro', freeSub: 'Fri plan', proActive: 'Pro de ɔn', proUntil: 'Pro te {{date}}', current: 'Yu plan',
     pitch: 'Gro wit mɔ branch, mɔ staf ɛn mɔ AI ɛp.', unlimited: 'Nɔ lim',
     f: { records: 'Kredit, kesh, stɔk, osusu, invɔys', offline: 'I de wok widawt nɛt', branches: 'Branch', staff: 'Staf akawnt', ai: 'AI kwɛstyɔn (klawd)', support: 'Fɔs ɛp' },
@@ -81,6 +86,10 @@ const extra: ExtraDict = {
     deleted: 'Akawnt dɔn dilit',
   },
   errx: {
+    signIn: 'Duya sayn in fɔs (More → Cloud & account).',
+    role: 'Yu wok nɔ alaw yu fɔ du dis. Aks di ɔna.',
+    trialUsed: 'Dis biznɛs dɔn yuz in fri Pro tray.',
+    proNotReady: 'Fɔ pe fɔ Pro go opin kwik. Kɔl Kopor sɔpɔt fɔ on Pro.',
     quoteUsed: 'Dis kwotɛshɔn dɔn tɔn to invɔys ɔ dɛn dɔn kansul am.', 
     reportBusy: 'Bɔku ripɔt de kam naw. Duya tray bak afta wan minit.',
     pinLocked: 'Yu put rɔng PIN tumɔs, so dis akawnt lɔk fɔ smɔl tɛm fɔ sef am. Tray bak leta, ɔ yuz "Yu fɔgɛt yu PIN?" wit yu kod.', signupLimit: 'Tumɔs nyu akawnt frɔm dis nɛtwɔk tide. Duya tray bak tumara.',

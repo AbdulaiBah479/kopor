@@ -23,7 +23,7 @@ export async function caller(req: Request, orgId: string) {
   const auth = req.headers.get('Authorization') ?? '';
   const userClient = createClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'), { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });
   const { data: u } = await userClient.auth.getUser();
-  if (!u.user) throw new HttpError(401, 'Not signed in');
+  if (!u.user) throw new HttpError(401, 'errx.signIn');
   const { data: level, error } = await userClient.rpc('kopor_level', { o: orgId });
   if (error) throw new HttpError(403, error.message);
   return { user: u.user, level: Number(level) };
@@ -31,7 +31,7 @@ export async function caller(req: Request, orgId: string) {
 
 export class HttpError extends Error { constructor(public status: number, msg: string) { super(msg); } }
 export function requireLevel(level: number, min: number) {
-  if (level < min) throw new HttpError(403, 'Your role is not allowed to do this');
+  if (level < min) throw new HttpError(403, 'errx.role');
 }
 
 /* AES-256-GCM encryption for third-party secrets at rest (key from env KOPOR_MASTER_KEY, 32+ chars). */

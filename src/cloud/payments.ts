@@ -1,16 +1,9 @@
 // Mobile money / card payments through Monime (licensed by the Bank of Sierra Leone). Either the business connects its
 // own Monime account, or (easy payments) it just gives a mobile money number and each payment is sent on to it.
 // Secrets live only in the Supabase Edge Function (supabase/functions/monime); the phone never sees them.
-import { getSupabase } from './supabase';
+import { callFunction } from './supabase';
 
-async function call<T>(body: Record<string, unknown>): Promise<T> {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('err.noCloud');
-  const { data, error } = await sb.functions.invoke('monime', { body });
-  if (error) throw new Error(error.message);
-  if (data?.error) throw new Error(data.error);
-  return data as T;
-}
+const call = <T,>(body: Record<string, unknown>) => callFunction<T>('monime', body);
 
 export const connectMonime = (orgId: string, spaceId: string, token: string) => call<{ ok: true }>({ action: 'connect', orgId, spaceId, token });
 export interface MonimeStatus { connected: boolean; mode: 'own' | 'easy' | null; easyAvailable: boolean; phone?: string; providerId?: string; auto?: boolean }

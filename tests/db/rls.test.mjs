@@ -588,4 +588,12 @@ await test('weekly report: sales, expenses, cost of goods and warnings per busin
   await rejects(q('select * from kopor_weekly_report(current_date)'), /permission denied/);
 });
 
+await test('Pro trial date: only the server sets it; an owner cannot clear it for a second trial', async () => {
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  await q(`update orgs set pro_trial_at = now() where id = $1`, [ORG]);
+  await as('owner');
+  await q(`update orgs set pro_trial_at = null, updated_at = $2 where id = $1`, [ORG, now() + 900]);
+  assert.ok((await q('select pro_trial_at from orgs where id = $1', [ORG])).rows[0].pro_trial_at);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

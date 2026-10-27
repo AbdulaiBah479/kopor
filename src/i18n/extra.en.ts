@@ -27,6 +27,11 @@ const extra = {
     short: 'There is {{amount}} LESS than expected. Check for unrecorded expenses or missing cash.', save: 'Save day close', saved: 'Day closed',
   },
   plan: {
+    trial: 'Try Pro free for 14 days',
+    trialOn: 'Kopor Pro is on for 14 days. Enjoy!',
+    signInFirst: 'Kopor Pro is for businesses with a cloud account. Open More → Cloud & account to sign in first.',
+    soon: 'Paying for Pro in the app opens soon. Until then, Kopor support can switch Pro on for you.',
+    soonWa: 'Hello Kopor, I would like Kopor Pro for {{name}}.',
     title: 'Kopor Pro', freeSub: 'Free plan', proActive: 'Pro is active', proUntil: 'Pro until {{date}}', current: 'Your plan',
     pitch: 'Grow with more branches, more staff and more AI help.', unlimited: 'Unlimited',
     f: { records: 'Credit, cash, stock, osusu, invoices', offline: 'Works offline', branches: 'Branches', staff: 'Staff accounts', ai: 'AI requests (cloud)', support: 'Priority support' },
@@ -79,6 +84,10 @@ const extra = {
     deleted: 'Account deleted',
   },
   errx: {
+    signIn: 'Please sign in first (More → Cloud & account).',
+    role: 'Your role is not allowed to do this. Ask the owner.',
+    trialUsed: 'This business has already used its free Pro trial.',
+    proNotReady: 'Paying for Pro opens soon. Contact Kopor support to switch Pro on.',
     quoteUsed: 'This quotation was already turned into an invoice or cancelled.', 
     reportBusy: 'Many reports are arriving right now. Please try again in a minute.',
     pinLocked: 'Too many wrong PINs, so this account is locked for a while to keep it safe. Try again later, or use "Forgot your PIN?" with your recovery code.', signupLimit: 'Too many new accounts from this network today. Please try again tomorrow.',

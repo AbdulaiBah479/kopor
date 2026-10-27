@@ -29,6 +29,7 @@ export interface Org extends Base {
   shop_lng?: number | null;
   late_after?: string | null;   // HH:MM, tapping in later counts as late (default 08:30)
   away_m?: number | null;       // metres from the shop that still count as "at the shop" (default 200)
+  pro_trial_at?: string | null; // when this business used its free Pro trial (set by the server)
   credit_limit?: number | null; // minor units: cashiers cannot take one customer above this (null = no limit)
   track_live?: 0 | 1;           // 1 = managers see staff positions live while they are tapped in (staff agree first)
 }

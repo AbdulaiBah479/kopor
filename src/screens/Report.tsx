@@ -25,7 +25,7 @@ export function ReportSheet({ kind: k0 = 'bug', about = '', orgId = null, contac
     <div className="stack" data-testid="report-done" style={{ textAlign: 'center' }}>
       <div className="report-ok"><Icon name="check" size={34} strokeWidth={2.6} /></div>
       <h2 style={{ justifyContent: 'center' }}>{t('report.thanks')}</h2>
-      <div className="muted">{t(done === 'sent' ? 'report.sent' : 'report.queued')}</div>
+      <div className="muted">{t(done === 'sent' ? 'report.sent' : navigator.onLine ? 'report.queuedOnline' : 'report.queued')}</div>
       <div className="small muted">{t('report.ref', { ref })}</div>
       {SUPPORT_WHATSAPP && <a className="btn ghost block" href={waLink(SUPPORT_WHATSAPP, waText)} target="_blank" rel="noopener noreferrer"><Icon name="chat" size={18} /> {t('report.alsoWa')}</a>}
     </div>

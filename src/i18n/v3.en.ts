@@ -80,6 +80,7 @@ const v3 = {
     linkUsers: 'Accounts (Supabase)', linkData: 'Database tables (Supabase)', linkLogs: 'Server functions and logs (Supabase)', linkDeploys: 'Updates and deploys (GitHub)',
     linkAi: 'AI usage (Groq)', updated: 'Updated {{time}}',
   },  report: {
+    queuedOnline: 'Kopor could not be reached just now. Your report is saved on this phone and will be sent automatically.',
     title: 'Report a problem or complaint', sub: 'Something wrong? Tell us, we read every report', help: 'Choose what it is about and describe what happened. The Kopor team reads every report.',
     what: 'What happened?', about: 'About', contact: 'Your phone or email (optional)', contactHelp: 'Only if you want a reply.',
     send: 'Send report', thanks: 'Thank you', sent: 'Your report has reached the Kopor team.', queued: 'You are offline. Your report is saved and will be sent automatically.',

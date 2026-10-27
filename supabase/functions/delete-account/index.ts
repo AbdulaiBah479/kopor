@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
   try {
     const user = createClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'), { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } }, auth: { persistSession: false } });
     const { data: u } = await user.auth.getUser();
-    if (!u.user) throw new HttpError(401, 'Not signed in');
+    if (!u.user) throw new HttpError(401, 'errx.signIn');
     const db = admin();
     const { error } = await db.rpc('kopor_forget_user', { uid: u.user.id });
     if (error) throw new HttpError(500, error.message);

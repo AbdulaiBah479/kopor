@@ -1,6 +1,6 @@
 // Problem reports and complaints (supabase/migrations/0011_reports.sql). Sent straight to the Kopor cloud, where only
 // the app owner can read them (Owner dashboard). Offline or failing: kept on this phone and sent later.
-import { getSupabase } from './supabase';
+import { getAnonSupabase, getSupabase } from './supabase';
 
 export type ReportKind = 'bug' | 'money' | 'payment' | 'account' | 'abuse' | 'suggestion' | 'other';
 export const REPORT_KINDS: ReportKind[] = ['bug', 'money', 'payment', 'account', 'abuse', 'suggestion', 'other'];
@@ -15,7 +15,7 @@ export function appInfo(extra: Record<string, unknown> = {}) {
   return {
     version: import.meta.env.VITE_APP_VERSION ?? 'web', screen: location.hash.replace(/\/(i|pay)\/[^/]+/, '/$1/…').slice(0, 60),
     lang: document.documentElement.lang, theme: document.documentElement.dataset.theme, size: `${innerWidth}x${innerHeight}`,
-    online: navigator.onLine, installed: !!standalone, ua: navigator.userAgent.slice(0, 160), at: new Date().toISOString(), ...extra,
+    online: navigator.onLine, installed: !!standalone, app: !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.(), ua: navigator.userAgent.slice(0, 160), at: new Date().toISOString(), ...extra,
   };
 }
 
@@ -23,19 +23,27 @@ const readQueue = (): Queued[] => { try { return JSON.parse(localStorage.getItem
 const writeQueue = (q: Queued[]) => { try { localStorage.setItem(QUEUE, JSON.stringify(q.slice(-20))); } catch { /* storage full or blocked */ } };
 
 async function insert(r: Queued) {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('err.noCloud');
-  const { error } = await sb.from('reports').insert({
+  const row = {
     kind: r.kind, message: r.message.trim().slice(0, 4000), contact: (r.contact ?? '').trim().slice(0, 120),
     about: (r.about ?? '').trim().slice(0, 200), org_id: r.orgId ?? null, app_info: r.app_info,
-  });
-  if (error) throw new Error(error.message);
+  };
+  const sb = await getSupabase();
+  if (!sb) throw new Error('err.noCloud');
+  const { error } = await sb.from('reports').insert(row);
+  if (!error) return;
+  // Anyone may send a report, so if the phone's sign-in is no longer accepted, send it without one.
+  const plain = await getAnonSupabase();
+  const again = plain ? await plain.from('reports').insert(row) : { error };
+  if (again.error) throw new Error(again.error.message);
 }
 
 /** Send a report. Returns 'sent', or 'queued' when it will be sent automatically once the phone is back online. */
 export async function sendReport(input: ReportInput, extraInfo: Record<string, unknown> = {}): Promise<'sent' | 'queued'> {
   const r: Queued = { ...input, app_info: appInfo(extraInfo) };
-  try { await insert(r); return 'sent'; } catch { writeQueue([...readQueue(), r]); return 'queued'; }
+  try { await insert(r); return 'sent'; } catch (e) {
+    writeQueue([...readQueue(), { ...r, app_info: { ...r.app_info, firstError: String((e as Error)?.message ?? e).slice(0, 120) } }]);
+    return 'queued';
+  }
 }
 
 /** Retry reports kept on this phone (called at start-up and when the connection comes back). */
@@ -51,7 +59,7 @@ export async function flushReports() {
 export async function autoCrashReport(error: unknown) {
   try {
     const msg = (error instanceof Error ? `${error.name}: ${error.message}\n${(error.stack ?? '').split('\n').slice(0, 6).join('\n')}` : String(error)).slice(0, 1500);
-    if (/Failed to fetch|NetworkError|Load failed|errx?\.|chunk/i.test(msg)) return; // connection problems are not bugs
+    if (/Failed to fetch|NetworkError|Load failed|errx?\.|chunk|Importing a module script failed|dynamically imported module/i.test(msg)) return; // connection problems are not bugs
     const day = new Date().toISOString().slice(0, 10);
     const key = 'kopor-crash-' + day;
     const seen: string[] = JSON.parse(localStorage.getItem(key) ?? '[]');
