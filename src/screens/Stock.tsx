@@ -3,7 +3,6 @@ import { ImportSheet } from './ImportSheet';
 import { SeasonCard } from '@/ui/SeasonCard';
 import { batchesLeft, expiring, supplierDebts } from '@/domain/expiry';
 import { useTranslation } from 'react-i18next';
-import { shareText } from '@/lib/share';
 import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
@@ -16,6 +15,7 @@ import { remove } from '@/db/repo';
 import type { Product } from '@/db/schema';
 import { stockLevels, stockValue, isLow, forecast, saveProduct, adjustStock } from '@/domain/stock';
 import { DeleteButton } from './Credit';
+import { PriceListSheet } from './PriceList';
 import { ScanToggle } from '@/ui/extras';
 
 const UNITS = ['pcs', 'bag', 'carton', 'kg', 'litre', 'bottle', 'packet', 'dozen', 'tin', 'bundle', 'service'];
@@ -50,7 +50,7 @@ export function StockList() {
       right={<>
         {can('record') && <ScanButton prefer="purchase" />}
         {can('stock') && <button className="icon-btn" aria-label={t('imp.products')} data-testid="import-products" onClick={() => openSheet(t('imp.products'), <ImportSheet kind="products" />)}><Icon name="upload" size={22} /></button>}
-        {book.products.length > 0 && <button className="icon-btn" aria-label={t('catalog.share')} data-testid="share-catalog" onClick={() => shareText(catalogText())}><Icon name="share" size={22} /></button>}
+        {book.products.length > 0 && <button className="icon-btn" aria-label={t('catalog.share')} data-testid="share-catalog" onClick={() => openSheet(t('catalog.share'), <PriceListSheet text={catalogText()} />)}><Icon name="share" size={22} /></button>}
       </>}
       fab={can('stock') && <button className="fab" onClick={() => openSheet(t('stock.newProduct'), <ProductSheet />)}><Icon name="plus" /> {t('stock.product')}</button>}>
       <div className="grid2">

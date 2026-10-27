@@ -25,6 +25,7 @@ import { SeasonCard } from '@/ui/SeasonCard';
 import { SimpleHome } from '@/ui/SimpleHome';
 import { StartChecklist } from '@/ui/StartChecklist';
 import { WeekCard } from '@/ui/WeekCard';
+import { MoneyNow } from '@/ui/MoneyNow';
 import { useUnseenAlerts } from '@/features/alertStore';
 
 // AI tools (and their validation library) download only when first used.
@@ -99,6 +100,7 @@ export function Home() {
         <Link to="/watch" className="alert bad" data-testid="alert-banner"><Icon name="alert" /><div><b>{t('watch.alert.banner', { count: unseenAlerts })}</b><br />{t('watch.alert.bannerHelp')}</div></Link>
       )}
       {member?.role === 'owner' && <WeekCard book={book} />}
+      {can('reports') && <MoneyNow book={book} />}
       <SimpleHome />
     </Page>
   );

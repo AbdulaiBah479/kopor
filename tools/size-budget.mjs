@@ -3,8 +3,8 @@
 import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 
-// first load: gzipped; offline copy: precache, as stored (raised from 1350 to 1500 KB on 2026-10-24 for new screens)
-const BUDGET = { firstLoadKB: 290, offlineCopyKB: 1500 };
+// first load: gzipped; offline copy: precache, as stored (raised from 1350 to 1500 KB on 2026-10-24, and to 1600 KB on 2026-10-27, for new screens)
+const BUDGET = { firstLoadKB: 290, offlineCopyKB: 1600 };
 const html = readFileSync('dist/index.html', 'utf8');
 const first = [...html.matchAll(/(?:src|href)="\.\/(assets\/[^"]+\.(?:js|css))"/g)].map((m) => m[1]);
 const firstKB = first.reduce((s, f) => s + gzipSync(readFileSync(`dist/${f}`)).length, 0) / 1024;

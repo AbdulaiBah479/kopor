@@ -31,6 +31,7 @@ const Account = lazyRetry(() => import('./screens/Settings').then((m) => ({ defa
 const PublicInvoice = lazyRetry(() => import('./screens/PublicInvoice').then((m) => ({ default: m.PublicInvoice })));
 const PublicStatement = lazyRetry(() => import('./screens/PublicStatement').then((m) => ({ default: m.PublicStatement })));
 const PublicPassport = lazyRetry(() => import('./screens/Passport').then((m) => ({ default: m.PublicPassport })));
+const PublicCatalog = lazyRetry(() => import('./screens/PublicCatalog').then((m) => ({ default: m.PublicCatalog })));
 const Passport = lazyRetry(() => import('./screens/Passport').then((m) => ({ default: m.Passport })));
 const PublicGroup = lazyRetry(() => import('./screens/PublicGroup').then((m) => ({ default: m.PublicGroup })));
 const Savings = lazyRetry(() => import('./screens/Savings').then((m) => ({ default: m.Savings })));
@@ -52,11 +53,12 @@ function Gate() {
   const { ready, session, book, locked } = useApp();
   const { pathname } = useLocation();
   // Public pages work without a business or sign-in (customer invoice, statement and Credit Passport links, legal pages).
-  if (pathname.startsWith('/i/') || pathname.startsWith('/s/') || pathname.startsWith('/p/') || pathname.startsWith('/g/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/')) return (
+  if (pathname.startsWith('/i/') || pathname.startsWith('/s/') || pathname.startsWith('/p/') || pathname.startsWith('/c/') || pathname.startsWith('/g/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/')) return (
     <Suspense fallback={<Boot />}><Routes>
       <Route path="/i/:token" element={<PublicInvoice />} />
       <Route path="/s/:token" element={<PublicStatement />} />
       <Route path="/p/:token" element={<PublicPassport />} />
+      <Route path="/c/:token" element={<PublicCatalog />} />
       <Route path="/g/:token" element={<PublicGroup />} />
       <Route path="/legal/:doc" element={<Legal />} />
       <Route path="/pay/:data" element={<PayPage />} />

@@ -59,6 +59,8 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     groupUnpaid: '{{name}} : {{count}} membres n’ont pas payé le tour {{round}}.',
   },
   credit: {
+    customers: 'Clients',
+    suppliers: 'Fournisseurs',
     title: 'Cahier de crédit', sub: '{{count}} clients et fournisseurs', overdue: 'En retard', addEntry: 'Nouvelle écriture', youGave: 'Vous avez donné', youGot: 'Vous avez reçu',
     willGet: 'À recevoir', willGive: 'À payer', settled: 'Soldé', noEntries: 'Aucune écriture', noContacts: 'Aucun client',
     noContactsHelp: 'Ajoutez un client pour suivre qui vous doit de l’argent.', noOverdue: 'Aucune dette en retard', noOverdueHelp: 'Tout le monde paie à temps.',
@@ -173,6 +175,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     remindersSub: 'Qui relancer aujourd’hui', offlineNote: 'Kopor fonctionne hors ligne. Les données sont sur ce téléphone. Faites des sauvegardes ou connectez le cloud pour ne rien perdre.' },
   public: { title: 'Facture', notFound: 'Ce lien de facture n’est pas valide.', pay: 'Payer maintenant', from: 'De', loadFail: 'Impossible de charger cette page. Vérifiez votre connexion Internet.', retry: 'Réessayer' },
   err: {
+    handoverTo: 'Choisissez le caissier qui prend le relais.',
     backdated: 'Les caissiers ne peuvent saisir qu’aujourd’hui ou hier. Demandez à un gérant pour un jour plus ancien.',
     creditLimit: 'Le client dépasserait son plafond de crédit (Le {{limit}} ; il doit Le {{owes}}). Demandez à un gérant.',
     amount: 'Saisissez un montant', amountOrItems: 'Saisissez un montant ou ajoutez des articles', creditCustomer: 'Indiquez le client qui achète à crédit', nameRequired: 'Saisissez un nom',

@@ -10,7 +10,8 @@ export interface Alert { id: number; org_id: string; kind: string; who: string; 
 
 const L = {
   en: {
-    short: (a: Alert) => [`Cash short: ${leones(a.amount)}`, `${a.who || 'Someone'} closed ${a.detail.slice(0, 10)} short by ${leones(a.amount)}${a.detail.includes('momo') ? ' (mobile money too)' : ''}.`],
+    short: (a: Alert) => [`Cash short: ${leones(a.amount)}`, a.detail.includes('handover') ? `${a.who || 'Someone'} handed over the drawer ${leones(a.amount)} short.` : `${a.who || 'Someone'} closed ${a.detail.slice(0, 10)} short by ${leones(a.amount)}${a.detail.includes('momo') ? ' (mobile money too)' : ''}.`],
+    refund: (a: Alert) => [`Refund: ${leones(a.amount)}`, `${a.who || 'Someone'} gave a refund of ${leones(a.amount)}${a.detail === 'no-sale' ? ' with no sale linked to it' : ''}.`],
     deleted: (a: Alert) => [`Deleted: ${leones(a.amount)}`, `${a.who || 'Someone'} deleted a ${a.detail === 'ledger' ? 'credit entry' : 'sale'} of ${leones(a.amount)}.`],
     away: (a: Alert) => ['Tap-in away from the shop', `${a.who} tapped in ${a.detail} m from the shop.`],
     left: (a: Alert) => ['Left the shop area', `${a.who} is about ${a.detail} m from the shop during working hours.`],
@@ -19,6 +20,7 @@ const L = {
     week: (s: string, e: string, p: string, late: string, warn: string) => `Sales ${s} · expenses ${e} · profit about ${p}.${late ? ` Late/absent: ${late}.` : ''}${warn ? ` Warnings: ${warn}.` : ' No warnings.'}`,
   },
   kri: {
+    refund: (a: Alert) => [`Gi mɔni bak: ${leones(a.amount)}`, `${a.who || 'Sɔmbɔdi'} gi ${leones(a.amount)} bak${a.detail === 'no-sale' ? ' we nɔ gɛt sel' : ''}.`],
     short: (a: Alert) => [`Mɔni nɔ kɔmplit: ${leones(a.amount)}`, `${a.who || 'Sɔmbɔdi'} klos ${a.detail.slice(0, 10)} ɛn ${leones(a.amount)} nɔ de${a.detail.includes('momo') ? ' (mobayl mɔni bak)' : ''}.`],
     deleted: (a: Alert) => [`Dɛn dilit: ${leones(a.amount)}`, `${a.who || 'Sɔmbɔdi'} dilit ${a.detail === 'ledger' ? 'kredit' : 'sel'} we na ${leones(a.amount)}.`],
     away: (a: Alert) => ['Tap in fa frɔm di shɔp', `${a.who} tap in ${a.detail} m frɔm di shɔp.`],
@@ -28,6 +30,7 @@ const L = {
     week: (s: string, e: string, p: string, late: string, warn: string) => `Sel ${s} · ɛkspɛns ${e} · prɔfit lɛk ${p}.${late ? ` Lat/nɔ kam: ${late}.` : ''}${warn ? ` Wɔnin: ${warn}.` : ' No wɔnin.'}`,
   },
   fr: {
+    refund: (a: Alert) => [`Remboursement : ${leones(a.amount)}`, `${a.who || 'Quelqu’un'} a remboursé ${leones(a.amount)}${a.detail === 'no-sale' ? ' sans vente liée' : ''}.`],
     short: (a: Alert) => [`Caisse manquante : ${leones(a.amount)}`, `${a.who || 'Quelqu’un'} a clôturé le ${a.detail.slice(0, 10)} avec ${leones(a.amount)} en moins${a.detail.includes('momo') ? ' (mobile money aussi)' : ''}.`],
     deleted: (a: Alert) => [`Supprimé : ${leones(a.amount)}`, `${a.who || 'Quelqu’un'} a supprimé ${a.detail === 'ledger' ? 'un crédit' : 'une vente'} de ${leones(a.amount)}.`],
     away: (a: Alert) => ['Pointage loin de la boutique', `${a.who} a pointé à ${a.detail} m de la boutique.`],

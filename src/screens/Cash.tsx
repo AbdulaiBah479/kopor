@@ -15,7 +15,8 @@ import type { LineItem, Method, Txn } from '@/db/schema';
 import { recordSale, recordExpense, deleteTxn, summary, topProducts, itemsLabel, itemsTotal, EXPENSE_CATEGORIES, METHODS } from '@/domain/cash';
 import { computeTotals, taxSettings } from '@/domain/tax';
 import { recordReturn, returnedQty } from '@/domain/returns';
-import { expectedCash, expectedMomo, closeDay, lastClosing } from '@/domain/closing';
+import { expectedCash, expectedMomo, closeDay, lastClosing, cashSinceLastCount, handOver } from '@/domain/closing';
+import { loyaltyFor } from '@/domain/loyalty';
 import { DeleteButton, useEntryConfirm } from './Credit';
 import { creditTotals } from '@/domain/credit';
 
@@ -74,6 +75,14 @@ export function CashBook() {
           <Icon name="chev" />
         </button>
       )}
+      {can('close') && book.members.filter((m) => m.active && !m.deleted).length > 1 && (
+        <button className="card row" style={{ border: 0, font: 'inherit', textAlign: 'left', cursor: 'pointer', color: 'inherit' }} data-testid="handover"
+          onClick={() => openSheet(t('handover.title'), <HandoverSheet />)}>
+          <div className="avatar" style={{ background: 'var(--brand-soft)', color: 'var(--brand)' }}><Icon name="swap" size={18} /></div>
+          <div className="spacer"><b>{t('handover.title')}</b><div className="small muted">{t('handover.sub')}</div></div>
+          <Icon name="chev" />
+        </button>
+      )}
       {methodTotal > 0 && (
         <div className="card method-bars">
           <h2>{t('cash.byMethod')}</h2>
@@ -121,6 +130,7 @@ export function SaleSheet({ prefill = {} }: { prefill?: { items?: Partial<LineIt
   const real = items.filter((i) => i.name?.trim());
   const hasItems = real.length > 0;
   const tax = taxSettings(book.org);
+  const loyal = loyaltyFor(book, customer);
   const totals = hasItems
     ? computeTotals(itemsTotal(real.map((i) => ({ product_id: null, name: '', cost: 0, qty: i.qty ?? 0, price: i.price ?? 0 }))), discount, tax)
     : computeTotals(amount, discount, { ...tax, inclusive: true });
@@ -154,6 +164,13 @@ export function SaleSheet({ prefill = {} }: { prefill?: { items?: Partial<LineIt
         <Field label={t('cash.customer')}><input name="customer" list="dl-contacts" autoComplete="off" value={customer} placeholder={method === 'credit' ? '' : t('common.optional')} onChange={(e) => setCustomer(e.target.value)} required={method === 'credit'} /></Field>
       )}
       <datalist id="dl-contacts">{book.contacts.map((c) => <option key={c.id} value={c.name} />)}</datalist>
+      {loyal?.due && (
+        <div className="alert info" data-testid="loyalty">
+          <Icon name="spark" />
+          <div className="stack" style={{ gap: 6 }}><span>{t('loyalty.due', { name: customer.trim(), n: loyal.visits, pct: loyal.pct })}</span>
+            {!discount && <button type="button" className="btn sm" onClick={() => setDiscount(Math.round(((hasItems ? totals.subtotal : amount) * loyal.pct) / 100))}>{t('loyalty.apply', { pct: loyal.pct })}</button>}</div>
+        </div>
+      )}
       <details className="more-details" open={!!(discount || note || date !== today())}>
         <summary>{t('pos.more')}</summary>
         <Field label={t('tax.discount')}><MoneyInput value={discount} onChange={setDiscount} name="discount" /></Field>
@@ -266,6 +283,39 @@ function ReturnSheet({ txn }: { txn: Txn }) {
       )}
       {txn.method === 'credit' && <div className="small muted">{t('returns.creditNote')}</div>}
       <button className="btn give block">{t('returns.confirm')}</button>
+    </form>
+  );
+}
+
+/** Hand the drawer to the next cashier: count it together; a shortage is the outgoing cashier's and alerts the owner. */
+function HandoverSheet() {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx } = useApp();
+  const { closeSheet, toast, fail } = useOverlay();
+  const others = book.members.filter((m) => m.active && !m.deleted && m.id !== ctx.memberId);
+  const [to, setTo] = useState(others[0]?.id ?? '');
+  const [counted, setCounted] = useState(0);
+  const x = cashSinceLastCount(book);
+  const diff = counted - x.expected;
+  return (
+    <form className="form" data-testid="handover-form" onSubmit={async (e) => {
+      e.preventDefault();
+      try { await handOver(ctx, { counted, expected: x.expected, to }); closeSheet(); toast(t('handover.saved')); } catch (err) { fail(err); }
+    }}>
+      <div className="small muted">{t('handover.help')}</div>
+      <Field label={t('handover.to')}>
+        <select name="to" value={to} onChange={(e) => setTo(e.target.value)} required>{others.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
+      </Field>
+      <div className="card flat stack small">
+        <div className="row between"><span>{x.last ? t('handover.fromLast') : t('handover.fromStart')}</span><span className="num">{formatMoney(x.start)}</span></div>
+        <div className="row between"><span>{t('closing.cashSales')}</span><span className="num">+{formatMoney(x.sales)}</span></div>
+        <div className="row between"><span>{t('closing.cashOut')}</span><span className="num">-{formatMoney(x.out)}</span></div>
+        <div className="row between"><b>{t('closing.expected')}</b><b className="num">{formatMoney(x.expected)}</b></div>
+      </div>
+      <Field label={t('handover.counted')}><MoneyInput big required value={counted} onChange={setCounted} name="counted" /></Field>
+      {counted > 0 && diff !== 0 && <div className={`alert ${diff < 0 ? 'bad' : ''}`}><Icon name="alert" /><div>{diff > 0 ? t('closing.over', { amount: formatMoney(diff) }) : t('closing.short', { amount: formatMoney(-diff) })}</div></div>}
+      <button className="btn primary block" disabled={!to}><Icon name="check" size={18} /> {t('handover.save')}</button>
     </form>
   );
 }

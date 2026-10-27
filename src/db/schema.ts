@@ -29,6 +29,9 @@ export interface Org extends Base {
   shop_lng?: number | null;
   late_after?: string | null;   // HH:MM, tapping in later counts as late (default 08:30)
   away_m?: number | null;       // metres from the shop that still count as "at the shop" (default 200)
+  loyalty_every?: number | null; // loyalty: every Nth visit day a customer gets loyalty_pct % off
+  loyalty_pct?: number | null;
+  catalog_token?: string | null; // secret link to the public price list
   pro_trial_at?: string | null; // when this business used its free Pro trial (set by the server)
   credit_limit?: number | null; // minor units: cashiers cannot take one customer above this (null = no limit)
   open_at?: string | null;     // business hours (HH:MM) for live location; default 08:00-18:00
@@ -115,6 +118,9 @@ export interface Closing extends Base {
   branch_id: string | null; date: string; opening_float: number; expected: number; counted: number; difference: number; note: string;
   /** Mobile money check: per network, what the books expect and what the owner's phone messages show. */
   momo?: Partial<Record<'orange' | 'afrimoney' | 'qmoney', { expected: number; counted: number }>>;
+  /** 'handover' = a cash count between two cashiers during the day (handed_to = who takes the drawer). */
+  kind?: 'close' | 'handover';
+  handed_to?: string | null;
 }
 export interface PaymentRequest extends Base {
   kind: 'checkout' | 'ussd' | 'payout'; invoice_id: string | null; group_id: string | null; amount: number;

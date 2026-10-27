@@ -34,8 +34,38 @@ export function expectedMomo(book: Book, date = today()) {
   return out;
 }
 
+/** The last end-of-day close (handovers between cashiers do not count as closing the day). */
 export const lastClosing = (book: Book) =>
-  [...book.closings].sort((a, b) => b.date.localeCompare(a.date) || b.created_at - a.created_at)[0] as Closing | undefined;
+  [...book.closings].filter((c) => c.kind !== 'handover').sort((a, b) => b.date.localeCompare(a.date) || b.created_at - a.created_at)[0] as Closing | undefined;
+
+/**
+ * Cash that should be in the drawer now, counted from the last count today (a handover), or from the start of the
+ * day: what was handed over (or the opening float) + cash sales − cash paid out since then.
+ */
+export function cashSinceLastCount(book: Book, date = today(), openingFloat = 0) {
+  const handovers = book.closings.filter((c) => !c.deleted && c.kind === 'handover' && c.date === date).sort((a, b) => b.created_at - a.created_at);
+  const last = handovers[0];
+  const since = last?.created_at ?? 0;
+  let sales = 0, out = 0;
+  for (const t of book.txns) {
+    if (t.deleted || t.date !== date || t.method !== 'cash' || t.created_at <= since) continue;
+    if (t.type === 'in') sales += t.amount; else out += t.amount;
+  }
+  const start = last ? last.counted : openingFloat;
+  return { start, sales, out, expected: start + sales - out, last };
+}
+
+/** Hand the drawer to the next cashier: both count it; any shortage is the outgoing cashier's (and alerts the owner). */
+export async function handOver(ctx: Ctx, input: { counted: number; expected: number; to: string; note?: string }): Promise<Closing> {
+  assertCan(ctx.role, 'close');
+  if (input.counted < 0) throw new AppError('err.amount');
+  if (!input.to || input.to === ctx.memberId) throw new AppError('err.handoverTo');
+  const difference = Math.round(input.counted - input.expected);
+  return insert(ctx, 'closings', {
+    branch_id: ctx.branchId, date: today(), opening_float: 0, expected: Math.round(input.expected), counted: Math.round(input.counted),
+    difference, note: input.note?.trim() ?? '', momo: {}, kind: 'handover', handed_to: input.to,
+  }, `Drawer handed over: counted ${input.counted / 100}, difference ${difference / 100}`);
+}
 
 export async function closeDay(ctx: Ctx, input: { date?: string; openingFloat: number; counted: number; expected: number; note?: string; momo?: Closing['momo'] }): Promise<Closing> {
   assertCan(ctx.role, 'close');

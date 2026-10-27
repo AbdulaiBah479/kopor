@@ -69,7 +69,7 @@ export function CreditList() {
   const { can } = useApp();
   const { openSheet } = useOverlay();
   const { fmt } = useDate();
-  const [filter, setFilter] = useState<'all' | 'overdue'>('all');
+  const [filter, setFilter] = useState<'all' | 'overdue' | 'customer' | 'supplier'>('all');
   const [q, setQ] = useState('');
   const bal = useMemo(() => balances(book.ledger), [book.ledger]);
   const totals = creditTotals(book);
@@ -81,7 +81,7 @@ export function CreditList() {
 
   const rows = book.contacts
     .map((c) => ({ c, b: bal.get(c.id) ?? 0, od: overdueSince(book.ledger, c.id) }))
-    .filter((r) => (filter === 'overdue' ? !!r.od : true))
+    .filter((r) => (filter === 'overdue' ? !!r.od : filter === 'customer' || filter === 'supplier' ? r.c.kind === filter : true))
     .filter((r) => !q || `${r.c.name} ${r.c.phone}`.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => Number(!!b.od) - Number(!!a.od) || Math.abs(b.b) - Math.abs(a.b));
 
@@ -93,7 +93,7 @@ export function CreditList() {
         <div className="stat"><div className="k">{t('credit.willGet')}</div><div className="v"><Money v={totals.get} className="good" /></div></div>
         <div className="stat"><div className="k">{t('credit.willGive')}</div><div className="v"><Money v={totals.give} className="bad" /></div></div>
       </div>
-      <Seg value={filter} onChange={setFilter} options={[['all', t('common.all')], ['overdue', t('credit.overdue')]]} />
+      <Seg value={filter} onChange={setFilter} options={[['all', t('common.all')], ['overdue', t('credit.overdue')], ['customer', t('credit.customers')], ['supplier', t('credit.suppliers')]]} />
       <Search value={q} onChange={setQ} placeholder={t('credit.searchPh')} />
       <div className="list" id="contacts">
         {rows.length ? rows.map(({ c, b, od }) => (

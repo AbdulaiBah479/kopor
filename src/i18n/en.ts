@@ -59,6 +59,8 @@ const base = {
     bigExpense: '{{cat}} is {{pct}}% of your expenses this month.', groupUnpaid: '{{name}}: {{count}} members have not paid round {{round}}.',
   },
   credit: {
+    customers: 'Customers',
+    suppliers: 'Suppliers',
     title: 'Credit Book', sub: '{{count}} customers & suppliers', overdue: 'Overdue', addEntry: 'Add entry', youGave: 'You gave', youGot: 'You got',
     willGet: 'You will get', willGive: 'You will give', settled: 'Settled', noEntries: 'No entries yet', noContacts: 'No customers yet',
     noContactsHelp: 'Add a customer to start tracking who owes you.', noOverdue: 'No overdue debts', noOverdueHelp: 'Everyone is paying on time.',
@@ -174,6 +176,7 @@ const base = {
     remindersSub: 'Who to remind today', offlineNote: 'Kopor works offline. Records are saved on this phone. Make backups or connect the cloud so you never lose them.' },
   public: { title: 'Invoice', notFound: 'This invoice link is not valid.', pay: 'Pay now', from: 'From', loadFail: 'Could not load this page. Check your internet connection.', retry: 'Try again' },
   err: {
+    handoverTo: 'Choose the cashier who takes over.',
     backdated: 'Cashiers can record only today or yesterday. Ask a manager to record an older day.',
     creditLimit: 'This would take the customer above the credit limit (Le {{limit}}; they owe Le {{owes}}). Ask a manager.',
     amount: 'Enter an amount', amountOrItems: 'Enter an amount or add items', creditCustomer: 'Enter the customer who is buying on credit', nameRequired: 'Enter a name',

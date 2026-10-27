@@ -366,6 +366,29 @@ await step('location: save the shop exactly, switch on live location, staff agre
   await map.waitFor({ state: 'detached' });
 });
 
+await step('money now, hand over the drawer, suppliers tab, price list, loyalty setting', async () => {
+  await go('/');
+  await page.getByTestId('money-now').waitFor();
+  await go('/cash');
+  await page.getByTestId('handover').click();
+  const h = page.getByTestId('handover-form');
+  await h.locator('[name=counted]').fill('1');
+  await tapInSheet(h.getByRole('button', { name: 'Hand over' }));
+  await page.getByText('Drawer handed over').waitFor();
+  await go('/credit');
+  await page.getByRole('tab', { name: 'Suppliers' }).click();
+  await go('/stock');
+  await page.getByTestId('share-catalog').click();
+  await page.getByTestId('price-sheet').waitFor();
+  await page.keyboard.press('Escape');
+  await go('/settings');
+  const l = page.getByTestId('loyalty-form');
+  await l.locator('[name=loyalty_every]').selectOption('10');
+  await l.getByRole('button', { name: 'Save' }).click();
+  await page.getByText('Saved').first().waitFor();
+  await noOverflow();
+});
+
 await step('import: a customer spreadsheet (with what they owe) and a stock list', async () => {
   await go('/credit');
   await page.getByTestId('import-customers').click();

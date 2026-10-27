@@ -59,6 +59,8 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     groupUnpaid: '{{name}}: {{count}} mɛmba nɔ pe rawnd {{round}} yet.',
   },
   credit: {
+    customers: 'Kɔstɔma dɛn',
+    suppliers: 'Saplaya dɛn',
     title: 'Kredit Buk', sub: '{{count}} kɔstɔma ɛn sɔplaya', overdue: 'Dɔn pas di de', addEntry: 'Ad entri', youGave: 'Yu gi', youGot: 'Yu get',
     willGet: 'Yu go get', willGive: 'Yu go gi', settled: 'Ɔl dɔn pe', noEntries: 'No entri yet', noContacts: 'No kɔstɔma yet',
     noContactsHelp: 'Ad kɔstɔma fɔ no udat ɔw yu.', noOverdue: 'No dɛt we pas di de', noOverdueHelp: 'Ɔlman de pe na tɛm.',
@@ -173,6 +175,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     remindersSub: 'Udat fɔ rimayn tide', offlineNote: 'Kopor de wok widawt nɛt. Rɛkɔd de sev na dis fon. Mek bakɔp ɔ kɔnɛkt di klawd so yu nɔ go lɔs am.' },
   public: { title: 'Invɔys', notFound: 'Dis invɔys link nɔ rayt.', pay: 'Pe naw', from: 'Frɔm', loadFail: 'A nɔ ebul lod dis pej. Chɛk yu intanɛt.', retry: 'Tray bak' },
   err: {
+    handoverTo: 'Pik di kashia we go tek ova.',
     backdated: 'Kashia kin rayt tide ɔ yestade nɔmɔ. Aks manija fɔ rayt ol de.',
     creditLimit: 'Dis go mek di kɔstɔma pas di kredit limit (Le {{limit}}; i de ɔw Le {{owes}}). Aks manija.',
     amount: 'Put kopor', amountOrItems: 'Put kopor ɔ ad tin', creditCustomer: 'Put di kɔstɔma we de bay pan trɔst', nameRequired: 'Put nem',

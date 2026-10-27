@@ -6,7 +6,7 @@ import { attendanceFlags } from './staff';
 import type { Book } from './book';
 
 export type FlagKind = 'short' | 'deleted' | 'refund' | 'discount' | 'lost' | 'belowCost' | 'unconfirmed' | 'momoShort' | 'attendance' | 'lateNight'
-  | 'underPriced' | 'backdated' | 'absentWork' | 'noClose' | 'ghostCredit' | 'selfCredit' | 'bigExpense' | 'dupRef';
+  | 'underPriced' | 'backdated' | 'absentWork' | 'noClose' | 'ghostCredit' | 'selfCredit' | 'bigExpense' | 'dupRef' | 'refundNoSale' | 'noItems';
 /** branch: where it happened (null = the whole business or not known). */
 export interface Flag { kind: FlagKind; date: string; who: string; amount: number; detail: string; at?: number; branch?: string | null }
 
@@ -19,6 +19,8 @@ export const UNDER_PRICE = 0.1;
 export const BIG_EXPENSE = 3;
 /** Credit with no phone number and nothing repaid after this many days. */
 export const GHOST_DAYS = 14;
+/** A cashier whose sales are mostly typed as amounts only (no products), while the shop does sell products. */
+export const NO_ITEMS_SHARE = 0.6, NO_ITEMS_MIN = 5;
 const day = (ms: number) => { const d = new Date(ms); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const last8 = (p: string | null | undefined) => (p ?? '').replace(/\D/g, '').slice(-8);
 
@@ -31,7 +33,7 @@ export function watchFlags(book: Book, audit: AuditEntry[], days = 30, now = tod
   // Cash short at the end of the day, and mobile money short against the phone's messages.
   for (const c of book.closings) {
     if (!inRange(c.date)) continue;
-    if (c.difference < 0) flags.push({ kind: 'short', date: c.date, who: name(c.created_by), amount: -c.difference, detail: '', branch: c.branch_id });
+    if (c.difference < 0) flags.push({ kind: 'short', date: c.date, who: name(c.created_by), amount: -c.difference, detail: c.kind === 'handover' ? 'handover' : '', branch: c.branch_id });
     for (const [net, v] of Object.entries(c.momo ?? {})) {
       if (v && v.counted < v.expected) flags.push({ kind: 'momoShort', date: c.date, who: name(c.created_by), amount: v.expected - v.counted, detail: net });
     }
@@ -47,6 +49,7 @@ export function watchFlags(book: Book, audit: AuditEntry[], days = 30, now = tod
   for (const t of sales) {
     const who = name(t.created_by);
     const branch = t.branch_id;
+    if (t.type === 'out' && t.category === 'refund' && !t.refund_of) flags.push({ kind: 'refundNoSale', date: t.date, who, amount: t.amount, detail: t.note, branch });
     if (t.type === 'out' && t.category === 'refund') flags.push({ kind: 'refund', date: t.date, who, amount: t.amount, detail: t.note , branch });
     if (t.type !== 'in') continue;
     const sub = t.amount - (t.tax ?? 0) + (t.discount ?? 0);
@@ -90,7 +93,7 @@ export function watchFlags(book: Book, audit: AuditEntry[], days = 30, now = tod
   flags.push(...absentDays.values());
 
   // Days with cash sales but nobody counted the cash at the end: shortages on those days cannot be seen.
-  const closed = new Set(book.closings.filter((c) => !c.deleted).map((c) => `${c.branch_id ?? ''}|${c.date}`));
+  const closed = new Set(book.closings.filter((c) => !c.deleted && c.kind !== 'handover').map((c) => `${c.branch_id ?? ''}|${c.date}`));
   const open = new Map<string, { amount: number; by: Map<string, number>; branch: string | null; date: string }>();
   for (const t of sales) {
     if (t.type !== 'in' || t.method !== 'cash' || t.date >= now) continue;
@@ -130,6 +133,21 @@ export function watchFlags(book: Book, audit: AuditEntry[], days = 30, now = tod
   const median = sorted.length >= 5 ? sorted[Math.floor(sorted.length / 2)] : 0;
   if (median > 0) for (const t of outs) {
     if (staffOnly(t.created_by) && t.amount >= median * BIG_EXPENSE) flags.push({ kind: 'bigExpense', date: t.date, who: name(t.created_by), amount: t.amount, detail: t.category, branch: t.branch_id });
+  }
+
+  // Sales typed as amounts only skip the stock: goods can leave the shop while the stock never goes down.
+  if (book.products.length >= 3) {
+    const per = new Map<string, { all: number; bare: number; amount: number; branch: string | null }>();
+    for (const t of sales) {
+      if (t.type !== 'in' || t.category !== 'sale' || !staffOnly(t.created_by) || t.invoice_id) continue;
+      const r = per.get(t.created_by ?? '') ?? { all: 0, bare: 0, amount: 0, branch: t.branch_id };
+      r.all++;
+      if (!t.items.some((i) => i.product_id)) { r.bare++; r.amount += t.amount; }
+      per.set(t.created_by ?? '', r);
+    }
+    for (const [id, r] of per) {
+      if (r.all >= NO_ITEMS_MIN && r.bare / r.all > NO_ITEMS_SHARE) flags.push({ kind: 'noItems', date: now, who: name(id), amount: r.amount, detail: `${r.bare}/${r.all}`, branch: r.branch });
+    }
   }
 
   // The same mobile money reference used for two group payments: one real payment claimed twice.

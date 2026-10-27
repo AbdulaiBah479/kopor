@@ -625,4 +625,37 @@ await test('business hours: open, closed, night shifts; the hours mode shares wi
   await q(`update orgs set track_mode = null, track_live = 0, work_days = null, open_at = null, close_at = null where id = $1`, [ORG]);
 });
 
+await test('public price list: only with the secret link; shows prices and stock, never costs; cashiers cannot make links', async () => {
+  await as('cashier');
+  await rejects(q('select kopor_catalog_token($1)', [ORG]), /errx\.role/);
+  await as('owner');
+  await q(`insert into products (id, org_id, created_at, updated_at, created_by, name, unit, price, cost) values (gen_random_uuid(), $1, $2, $2, $3, 'Rice', 'bag', 120000, 90000)`, [ORG, now(), OWNER_M]);
+  const tok = (await q('select kopor_catalog_token($1) as t', [ORG])).rows[0].t;
+  assert.ok(tok.length >= 24);
+  await as(null);
+  const c = (await q('select public_catalog($1) as c', [tok])).rows[0].c;
+  assert.equal(c.products.find((p) => p.name === 'Rice').price, 120000);
+  assert.ok(!JSON.stringify(c).includes('90000'));                     // the buying price is never shown
+  assert.equal((await q('select public_catalog($1) as c', ['x'.repeat(30)])).rows[0].c, null);
+  await as('owner');
+  const renewed = (await q('select kopor_catalog_token($1, true) as t', [ORG])).rows[0].t;
+  await as(null);
+  assert.equal((await q('select public_catalog($1) as c', [tok])).rows[0].c, null);   // the old link stops working
+  assert.ok((await q('select public_catalog($1) as c', [renewed])).rows[0].c);
+});
+
+await test('refund alert: a refund by a manager makes an alert; a handover short does too', async () => {
+  await as('owner');
+  await q(`update members set role = 'manager' where id = $1`, [CASHIER_M]);   // cashiers cannot record refunds at all
+  await as('cashier');
+  const rid = (await q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date)
+    values (gen_random_uuid(), $1, $2, $2, $3, 'out', 'refund', 900, 'cash', current_date) returning id`, [ORG, now(), CASHIER_M])).rows[0].id;
+  const hid = (await q(`insert into closings (id, org_id, created_at, updated_at, created_by, date, expected, counted, difference, kind, handed_to)
+    values (gen_random_uuid(), $1, $2, $2, $3, current_date, 5000, 4500, -500, 'handover', $4) returning id`, [ORG, now(), CASHIER_M, OWNER_M])).rows[0].id;
+  await as('owner');
+  await q(`update members set role = 'cashier' where id = $1`, [CASHIER_M]);
+  const a = (await q(`select kind, detail, amount from alerts where ref in ($1, $2) order by kind`, [rid, hid])).rows;
+  assert.deepEqual(a.map((x) => [x.kind, x.detail, Number(x.amount)]), [['refund', 'no-sale', 900], ['short', a[1].detail, 500]]);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

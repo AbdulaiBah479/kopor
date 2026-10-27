@@ -29,6 +29,30 @@ import { deleteCloudAccount } from '@/cloud/account-extra';
 
 const CloudSignIn = lazyRetry(() => import('./CloudSignIn'));
 
+function LoyaltyCard() {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx } = useApp();
+  const { toast, fail } = useOverlay();
+  const [f, setF] = useState({ every: book.org.loyalty_every ?? 0, pct: book.org.loyalty_pct ?? 5 });
+  return (
+    <form className="form card" data-testid="loyalty-form" onSubmit={(e) => {
+      e.preventDefault();
+      updateOrg(ctx, f.every ? { loyalty_every: f.every, loyalty_pct: f.pct } : { loyalty_every: null, loyalty_pct: null }).then(() => toast(t('common.saved'))).catch(fail);
+    }}>
+      <h2><Icon name="spark" size={18} /> {t('loyalty.title')}</h2>
+      <div className="small muted">{t('loyalty.help')}</div>
+      <div className="grid2">
+        <Field label={t('loyalty.every')}><select name="loyalty_every" value={f.every} onChange={(e) => setF({ ...f, every: Number(e.target.value) })}>
+          <option value={0}>{t('loyalty.off')}</option>{[5, 10, 15, 20].map((n) => <option key={n} value={n}>{t('loyalty.visits', { n })}</option>)}</select></Field>
+        <Field label={t('loyalty.pct')}><select name="loyalty_pct" value={f.pct} disabled={!f.every} onChange={(e) => setF({ ...f, pct: Number(e.target.value) })}>
+          {[2, 5, 10].map((n) => <option key={n} value={n}>{n}%</option>)}</select></Field>
+      </div>
+      <button className="btn primary block">{t('common.save')}</button>
+    </form>
+  );
+}
+
 function TaxCard() {
   const { t } = useTranslation();
   const book = useBook();
@@ -131,6 +155,7 @@ export function Settings() {
       </div>
       {can('business') && <BusinessCard />}
       {can('business') && <TaxCard />}
+      {can('business') && <LoyaltyCard />}
       {can('business') && <SmsCard />}
       <PreferencesCard />
       <PrinterCard />
