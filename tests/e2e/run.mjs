@@ -345,6 +345,14 @@ await step('location: save the shop exactly, switch on live location, staff agre
   await page.getByText('Shop location saved').waitFor();
   await page.getByTestId('shop-location').getByText(/set/i).first().waitFor();
   await page.getByTestId('live-switch').check();
+  // Business hours: open all day, every day, so this test works at any time of day.
+  const hours = page.getByTestId('live-hours');
+  await hours.locator('[name=open_at]').fill('00:00');
+  await hours.locator('[name=close_at]').fill('00:00');
+  await hours.locator('[name=close_at]').blur();
+  const sunday = hours.locator('[data-day="6"]');
+  if ((await sunday.getAttribute('aria-pressed')) !== 'true') await sunday.click();
+  await page.waitForFunction(() => document.querySelector('[data-testid=live-hours] [data-day="6"]')?.getAttribute('aria-pressed') === 'true');
   const ask = page.getByTestId('live-consent');                // the owner is tapped in, so their own phone asks too
   await ask.waitFor();
   await ask.getByTestId('live-agree').click();

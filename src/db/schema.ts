@@ -31,6 +31,10 @@ export interface Org extends Base {
   away_m?: number | null;       // metres from the shop that still count as "at the shop" (default 200)
   pro_trial_at?: string | null; // when this business used its free Pro trial (set by the server)
   credit_limit?: number | null; // minor units: cashiers cannot take one customer above this (null = no limit)
+  open_at?: string | null;     // business hours (HH:MM) for live location; default 08:00-18:00
+  close_at?: string | null;
+  work_days?: number | null;   // bits, Monday = 1 ... Sunday = 64; default Monday to Saturday
+  track_mode?: 'tapin' | 'hours' | null; // live location: while tapped in (default) or during business hours
   track_live?: 0 | 1;           // 1 = managers see staff positions live while they are tapped in (staff agree first)
 }
 export interface Branch extends Base { name: string; address: string }

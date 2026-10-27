@@ -11,7 +11,9 @@ import { distanceM, type Point } from '@/lib/geo';
 import { addDays, today } from '@/lib/dates';
 import { livePositions, routeToday, type LivePos } from '@/cloud/live';
 import { hasLiveConsent, setLiveConsent, stopLiveSharing, syncLiveSharing, useLiveState } from '@/features/liveShare';
-import type { Member } from '@/db/schema';
+import type { Member, Org } from '@/db/schema';
+import { DAY_BITS, hoursOf, isOpenNow } from '@/domain/hours';
+import { Field } from '@/ui/widgets';
 
 const STALE_MIN = 10; // no position for this long while at work: the phone is off, offline or location is off
 
@@ -35,14 +37,52 @@ export function LiveSwitch() {
           updateOrg(ctx, { track_live: next ? 1 : 0 }).then(() => toast(t('common.saved'))).catch((err) => { setOn(!next); fail(err); });
         }} /> {t('live.switch')}</label>
       <div className="small muted">{t('live.switchHelp')}</div>
+      {on && <HoursSettings />}
+    </div>
+  );
+}
+
+/** Owner: when live location runs — business hours, working days, and while tapped in or for the whole working day. */
+function HoursSettings() {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx } = useApp();
+  const { toast, fail } = useOverlay();
+  const h = hoursOf(book.org);
+  const save = (patch: Partial<Org>) => updateOrg(ctx, patch).then(() => toast(t('common.saved'))).catch(fail);
+  return (
+    <div className="stack" data-testid="live-hours">
+      <Field label={t('live.mode')}>
+        <select name="track_mode" value={book.org.track_mode || 'tapin'} onChange={(e) => save({ track_mode: e.target.value as Org['track_mode'] })}>
+          <option value="tapin">{t('live.modeTapin')}</option>
+          <option value="hours">{t('live.modeHours')}</option>
+        </select>
+      </Field>
+      <div className="row" style={{ gap: 8 }}>
+        <Field label={t('live.opens')}><input type="time" name="open_at" defaultValue={h.open}
+          onBlur={(e) => e.target.value && e.target.value !== h.open && save({ open_at: e.target.value })} /></Field>
+        <Field label={t('live.closes')}><input type="time" name="close_at" defaultValue={h.close}
+          onBlur={(e) => e.target.value && e.target.value !== h.close && save({ close_at: e.target.value })} /></Field>
+      </div>
+      <div className="chips" role="group" aria-label={t('live.days')}>
+        {DAY_BITS.map((bit, i) => (
+          <button key={bit} type="button" className={`chip${h.days & bit ? ' on' : ''}`} aria-pressed={!!(h.days & bit)} data-day={i}
+            onClick={() => { const next = h.days ^ bit; if (next) void save({ work_days: next }); }}>{t(`live.day.${i}`)}</button>
+        ))}
+      </div>
+      <div className="small muted">{t('live.hoursHelp')}</div>
     </div>
   );
 }
 
 /** On each person's own phone: agree (or not) to share while at work, and see whether it is being shared now. */
-export function LiveConsent({ me, working }: { me: Member; working: boolean }) {
+export function LiveConsent({ me, working: tappedIn }: { me: Member; working: boolean }) {
   const { t } = useTranslation();
   const book = useBook();
+  const hoursMode = book.org.track_mode === 'hours';
+  const open = isOpenNow(book.org);
+  const working = open && (hoursMode || tappedIn);
+  const h = hoursOf(book.org);
   const state = useLiveState();
   const [ok, setOk] = useState<boolean | null>(null);
   useEffect(() => { hasLiveConsent(book.org.id, me.id).then(setOk); }, [book.org.id, me.id]);
@@ -57,7 +97,7 @@ export function LiveConsent({ me, working }: { me: Member; working: boolean }) {
   if (!ok) return (
     <div className="alert info" data-testid="live-consent" style={{ flexDirection: 'column' }}>
       <div><b>{t('live.askTitle')}</b></div>
-      <div className="small">{t('live.askBody', { name: book.org.name })}</div>
+      <div className="small">{t(hoursMode ? 'live.askBodyHours' : 'live.askBody', { name: book.org.name, open: h.open, close: h.close })}</div>
       <div className="btn-row">
         <button className="btn primary sm" data-testid="live-agree" onClick={() => apply(true)}>{t('live.agree')}</button>
         <button className="btn ghost sm" onClick={() => apply(false).then(() => setOk(false))}>{t('live.notNow')}</button>
@@ -66,7 +106,7 @@ export function LiveConsent({ me, working }: { me: Member; working: boolean }) {
   );
   return (
     <div className="small muted row between" data-testid="live-status" style={{ flexWrap: 'wrap', gap: 8 }}>
-      <span><Icon name="pin" size={14} className="mr-0.5 inline" />{t(working ? `live.state.${state}` : 'live.state.notWorking')}</span>
+      <span><Icon name="pin" size={14} className="mr-0.5 inline" />{t(working ? `live.state.${state}` : !open ? 'live.state.closed' : 'live.state.notWorking', { open: h.open, close: h.close })}</span>
       <button className="btn ghost sm" onClick={() => apply(false)}>{t('live.stop')}</button>
     </div>
   );
@@ -147,7 +187,12 @@ export function LiveMap() {
   const shop = book.org.shop_lat != null && book.org.shop_lng != null ? { lat: book.org.shop_lat, lng: book.org.shop_lng } : null;
   const radius = book.org.away_m || 200;
   const yday = addDays(today(), -1);
-  const atWork = book.members.filter((m) => m.active && !m.deleted && book.attendance.some((a) => a.member_id === m.id && !a.deleted && a.time_in && !a.time_out && a.date >= yday));
+  const hoursMode = book.org.track_mode === 'hours';
+  const open = isOpenNow(book.org, new Date(nowMs));
+  // Who should be sharing now: in business-hours mode everyone but the owner while open; otherwise whoever is tapped in.
+  const atWork = !open ? [] : book.members.filter((m) => m.active && !m.deleted && (hoursMode
+    ? m.role !== 'owner'
+    : book.attendance.some((a) => a.member_id === m.id && !a.deleted && a.time_in && !a.time_out && a.date >= yday)));
   const byId = new Map((pos ?? []).map((p) => [p.member_id, p]));
   const rows = atWork.map((m) => {
     const p = byId.get(m.id);
@@ -162,7 +207,8 @@ export function LiveMap() {
     <div className="card stack" data-testid="live-map">
       <div className="row between"><b><Icon name="pin" size={18} className="mr-1 inline" />{t('live.title')}</b><span className="small muted">{t('live.refresh')}</span></div>
       {err && <div className="small muted">{err}</div>}
-      {!atWork.length ? <div className="small muted">{t('live.nobody')}</div> : <>
+      {!open ? <div className="small muted" data-testid="live-closed">{t('live.closedNow', { open: hoursOf(book.org).open, close: hoursOf(book.org).close })}</div>
+        : !atWork.length ? <div className="small muted">{t('live.nobody')}</div> : <>
         {centre && rows.some((r) => r.p) && (
           <Radar centre={centre} radiusM={radius} label={t('live.title')}
             dots={rows.filter((r) => r.p).map((r) => ({ id: r.m.id, p: r.p!, tone: r.tone, text: r.m.name[0]?.toUpperCase() ?? '?' }))} />

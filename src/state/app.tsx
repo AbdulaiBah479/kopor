@@ -11,6 +11,7 @@ import { getSession, setSession, anyPin, type Session } from '@/domain/org';
 import { setCurrencySymbol } from '@/lib/money';
 import { setDataSaver } from '@/lib/image';
 import { addDays, today } from '@/lib/dates';
+import { isOpenNow } from '@/domain/hours';
 import { syncNow, onSyncState, type SyncState } from '@/cloud/sync';
 
 export type Accent = 'emerald' | 'ocean' | 'royal' | 'sunset' | 'rose' | 'graphite';
@@ -111,9 +112,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [book, session?.memberId, device.closeHour]);
   const me = book?.members.find((m) => m.id === session?.memberId);
-  // Live location: share this phone's position while tapped in, if the owner switched it on and the person agreed.
+  // Live location: share this phone's position during business hours, if the owner switched it on and the person
+  // agreed: only while tapped in ('tapin', the default) or for the whole working day ('hours'). Checked every minute,
+  // so it starts at opening time and stops at closing time by itself.
+  const [openNow, setOpenNow] = useState(false);
+  const hoursKey = book ? `${book.org.track_live}|${book.org.open_at}|${book.org.close_at}|${book.org.work_days}` : '';
+  useEffect(() => {
+    if (!book?.org.track_live) return;
+    const tick = () => setOpenNow(isOpenNow(book.org));
+    const first = window.setTimeout(tick, 0), id = window.setInterval(tick, 60_000);
+    return () => { window.clearTimeout(first); window.clearInterval(id); };
+  }, [hoursKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const myDay = book && me ? book.attendance.find((x) => x.member_id === me.id && !x.deleted && x.time_in && !x.time_out && x.date >= addDays(today(), -1)) : undefined;
-  const liveOn = !!book?.org.track_live && !!me?.active && !!myDay;
+  const liveOn = !!book?.org.track_live && !!me?.active && openNow && (book.org.track_mode === 'hours' || !!myDay);
   useEffect(() => {
     if (!book || !me) return;
     import('@/features/liveShare').then((m) => m.syncLiveSharing({

@@ -495,7 +495,7 @@ await test('live location: only while the owner allows it and the person is tapp
   await as('cashier');
   assert.equal(await share(), 'off');
   await as('owner');
-  await q('update orgs set track_live = 1 where id = $1', [ORG]);
+  await q(`update orgs set track_live = 1, work_days = 127, open_at = '00:00', close_at = '00:00' where id = $1`, [ORG]);   // open all day, every day
   await as('cashier');
   assert.equal(await share(), 'not-working');                                   // not tapped in yet
   await q(`insert into attendance (id, org_id, created_at, updated_at, created_by, member_id, date, status, time_in)
@@ -594,6 +594,35 @@ await test('Pro trial date: only the server sets it; an owner cannot clear it fo
   await as('owner');
   await q(`update orgs set pro_trial_at = null, updated_at = $2 where id = $1`, [ORG, now() + 900]);
   assert.ok((await q('select pro_trial_at from orgs where id = $1', [ORG])).rows[0].pro_trial_at);
+});
+
+await test('business hours: open, closed, night shifts; the hours mode shares without tap-in but never when closed', async () => {
+  await q('reset role');
+  const open = (t) => q('select kopor_open_now($1, $2::timestamptz) as o', [ORG, t]).then((x) => x.rows[0].o);
+  await q(`update orgs set open_at = '08:00', close_at = '18:00', work_days = 63 where id = $1`, [ORG]);   // Mon-Sat
+  assert.equal(await open('2026-10-26T09:00:00Z'), true);    // Monday 09:00
+  assert.equal(await open('2026-10-26T07:59:00Z'), false);   // before opening
+  assert.equal(await open('2026-10-26T18:00:00Z'), false);   // at closing time
+  assert.equal(await open('2026-11-01T10:00:00Z'), false);   // Sunday
+  await q(`update orgs set open_at = '20:00', close_at = '06:00' where id = $1`, [ORG]);   // night shift
+  assert.equal(await open('2026-10-26T23:00:00Z'), true);    // Monday night
+  assert.equal(await open('2026-10-27T05:00:00Z'), true);    // early Tuesday, still Monday's shift
+  assert.equal(await open('2026-10-26T12:00:00Z'), false);
+  // Hours mode: shares without tapping in while open, refuses when closed.
+  await q(`update orgs set track_live = 1, track_mode = 'hours', open_at = '00:00', close_at = '00:00', work_days = 127 where id = $1`, [ORG]);
+  await q(`delete from attendance where member_id = $1`, [CASHIER_M]);
+  await q(`update staff_live set at = now() - interval '1 minute' where member_id = $1`, [CASHIER_M]);
+  const share = () => q('select kopor_share_location($1, 8.4844, -13.2344, 12) as r', [ORG]).then((x) => x.rows[0].r);
+  await as('cashier');
+  assert.equal(await share(), 'ok');                         // no tap-in needed in this mode
+  await q('reset role');
+  const monday = (await q(`select extract(isodow from now() at time zone 'UTC')::int = 1 as m`)).rows[0].m;
+  await q(`update orgs set work_days = 1 where id = $1`, [ORG]);   // open on Mondays only
+  await q(`update staff_live set at = now() - interval '1 minute' where member_id = $1`, [CASHIER_M]);
+  await as('cashier');
+  assert.equal(await share(), monday ? 'ok' : 'closed');
+  await q('reset role');
+  await q(`update orgs set track_mode = null, track_live = 0, work_days = null, open_at = null, close_at = null where id = $1`, [ORG]);
 });
 
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

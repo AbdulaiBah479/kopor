@@ -38,7 +38,7 @@ async function onFix(orgId: string, f: Fix & { fake?: boolean }) {
     const r = await sharePosition(orgId, f);
     // 'not-working': the tap-in has not reached the server yet (offline); keep listening, it is accepted once synced.
     if (r === 'off') { stopLiveSharing(); return; }
-    if (r === 'not-working') { set('idle'); return; }
+    if (r === 'not-working' || r === 'closed') { set('idle'); return; }
     set('sharing');
     sendAlertsSoon(orgId); // leaving the shop area makes an alert on the server: send it now
   } catch { set('error'); } // no internet: a later reading tries again (still at most once every 20-60 s)

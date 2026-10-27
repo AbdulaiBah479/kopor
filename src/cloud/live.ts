@@ -3,7 +3,7 @@
 import { getSupabase } from './supabase';
 
 export interface LivePos { member_id: string; lat: number; lng: number; accuracy: number; fake: boolean; at: string }
-export type ShareResult = 'ok' | 'off' | 'not-working' | 'wait';
+export type ShareResult = 'ok' | 'off' | 'not-working' | 'closed' | 'wait';
 
 const sb = async () => { const s = await getSupabase(); if (!s) throw new Error('err.noCloud'); return s; };
 
