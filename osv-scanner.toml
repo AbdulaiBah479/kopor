@@ -12,3 +12,11 @@ reason = "Fixed in xlsx 0.19.3; Kopor uses 0.20.3 from cdn.sheetjs.com"
 id = "GHSA-5pgg-2g8v-p4x9"
 ignoreUntil = 2027-04-14
 reason = "Fixed in xlsx 0.20.2; Kopor uses 0.20.3 from cdn.sheetjs.com"
+
+# deepmerge is used only while building the app (vite-plugin-pwa -> workbox-build -> @rollup/plugin-node-resolve),
+# on our own build config, never on data from users, and it is not shipped in the app. No fixed version exists yet;
+# re-check by the date below and update as soon as a fix is published.
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-01-31
+reason = "Build-time only (workbox-build); not in the shipped app; no fixed version published yet"
