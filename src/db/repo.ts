@@ -36,10 +36,15 @@ export async function insert<K extends SyncTable>(ctx: Ctx, table: K, data: NewR
 }
 
 export async function update<K extends SyncTable>(ctx: Ctx, table: K, id: string, patch: Partial<RowOf[K]>, summary = ''): Promise<RowOf[K]> {
-  const cur = await db.t(table).get(id);
-  if (!cur || cur.org_id !== ctx.orgId) throw new Error('Record not found');
-  const row = { ...cur, ...patch, id, org_id: cur.org_id, updated_at: Math.max(Date.now(), cur.updated_at + 1), dirty: 1 } as RowOf[K];
-  await db.t(table).put(row);
+  // Read and write in one transaction: two quick changes to the same record (e.g. two settings saved a moment apart)
+  // must not overwrite each other with a stale copy.
+  const row = await db.transaction('rw', db.t(table), async () => {
+    const cur = await db.t(table).get(id);
+    if (!cur || cur.org_id !== ctx.orgId) throw new Error('Record not found');
+    const next = { ...cur, ...patch, id, org_id: cur.org_id, updated_at: Math.max(Date.now(), cur.updated_at + 1), dirty: 1 } as RowOf[K];
+    await db.t(table).put(next);
+    return next;
+  });
   await audit(ctx, 'update', table, id, summary);
   return row;
 }

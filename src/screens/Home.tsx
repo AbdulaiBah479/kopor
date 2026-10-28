@@ -99,8 +99,6 @@ export function Home() {
       {can('reports') && unseenAlerts > 0 && (
         <Link to="/watch" className="alert bad" data-testid="alert-banner"><Icon name="alert" /><div><b>{t('watch.alert.banner', { count: unseenAlerts })}</b><br />{t('watch.alert.bannerHelp')}</div></Link>
       )}
-      {member?.role === 'owner' && <WeekCard book={book} />}
-      {can('reports') && <MoneyNow book={book} />}
       <SimpleHome />
     </Page>
   );
@@ -115,6 +113,11 @@ export function Home() {
       </>}>
       <UpdateCard />
       <Announcements />
+      {can('reports') && unseenAlerts > 0 && (
+        <Link to="/watch" className="alert bad" data-testid="alert-banner"><Icon name="alert" /><div><b>{t('watch.alert.banner', { count: unseenAlerts })}</b><br />{t('watch.alert.bannerHelp')}</div></Link>
+      )}
+      {member?.role === 'owner' && <WeekCard book={book} />}
+      {can('reports') && <MoneyNow book={book} />}
       {canPickBranch && (
         <select className="input" aria-label={t('home.branch')} value={session?.branchId ?? ''}
           onChange={(e) => switchSession({ ...session!, branchId: e.target.value || null })}>
