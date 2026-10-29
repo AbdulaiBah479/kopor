@@ -101,8 +101,9 @@ export function syncNow(orgId: string): Promise<void> {
     emit({ status: 'syncing', error: undefined });
     try {
       rejected = [];
-      const { deviceSeen } = await import('./protect');
+      const { deviceSeen, newDeviceId } = await import('./protect');
       if ((await deviceSeen(orgId).catch(() => 'ok')) === 'revoked') {
+        await newDeviceId();
         await sb.auth.signOut();
         emit({ status: 'error', error: 'errx.deviceRevoked' });
         return;

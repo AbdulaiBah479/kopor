@@ -182,13 +182,13 @@ function PhonesCard() {
       <div className="row between"><h2 style={{ fontSize: 15 }}>{t('phones.title')}</h2></div>
       <div className="list">
         {list.map((d) => (
-          <div key={d.device_id} className="item" style={{ opacity: d.revoked ? 0.5 : 1 }}>
+          <div key={d.device_id + d.user_id} className="item" style={{ opacity: d.revoked ? 0.5 : 1 }}>
             <div className="avatar"><Icon name="install" size={18} /></div>
             <div className="main"><div className="t with-badge"><span className="trunc">{d.member_name}</span>{d.device_id === mine && <span className="badge good">{t('phones.this')}</span>}{d.revoked && <span className="badge">{t('phones.out')}</span>}</div>
               <div className="s">{d.label} · {t('phones.seen', { time: new Date(d.last_seen).toLocaleString() })}</div></div>
             {!d.revoked && d.device_id !== mine && <button className="btn ghost sm" onClick={async () => {
               if (!confirm(t('phones.confirm', { name: d.member_name })) || !(await askPin())) return;
-              try { await revokeDevice(ctx.orgId, d.device_id); setList(list.map((x) => (x.device_id === d.device_id ? { ...x, revoked: true } : x))); toast(t('phones.done')); } catch (e) { fail(e); }
+              try { await revokeDevice(ctx.orgId, d); setList(list.map((x) => (x.device_id === d.device_id && x.user_id === d.user_id ? { ...x, revoked: true } : x))); toast(t('phones.done')); } catch (e) { fail(e); }
             }}>{t('phones.signOut')}</button>}
           </div>
         ))}

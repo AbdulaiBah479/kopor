@@ -707,13 +707,17 @@ await test('phones list: a new phone alerts the owner; a signed-out phone is tol
   const dev = 'phone-' + 'a'.repeat(20);
   assert.equal((await q('select kopor_device_seen($1, $2, $3) as r', [ORG, dev, 'Android · TECNO'])).rows[0].r, 'ok');
   assert.equal((await q('select kopor_device_seen($1, $2, $3) as r', [ORG, dev, 'Android · TECNO'])).rows[0].r, 'ok');
-  await rejects(q('select kopor_device_revoke($1, $2)', [ORG, 'other-' + 'b'.repeat(20)]), /errx\.role/);
+  await rejects(q('select kopor_device_revoke($1, $2, $3)', [ORG, dev, U.owner]), /errx\.role/);   // only the owner can sign others out
   await as('owner');
-  assert.equal((await q(`select count(*)::int as c from alerts where kind = 'newDevice' and ref = $1`, [dev])).rows[0].c, 1);
+  assert.equal((await q(`select count(*)::int as c from alerts where kind = 'newDevice' and ref = $1`, [`${dev}:${U.cashier}`])).rows[0].c, 1);
   assert.equal((await q('select count(*)::int as c from devices where org_id = $1', [ORG])).rows[0].c, 1);
-  await q('select kopor_device_revoke($1, $2)', [ORG, dev]);
+  await q('select kopor_device_revoke($1, $2, $3)', [ORG, dev, U.cashier]);
   await as('cashier');
   assert.equal((await q('select kopor_device_seen($1, $2, $3) as r', [ORG, dev, 'Android · TECNO'])).rows[0].r, 'revoked');
+  // The owner uses the same shared shop phone: a separate row, not signed out.
+  await as('owner');
+  assert.equal((await q('select kopor_device_seen($1, $2, $3) as r', [ORG, dev, 'Android · TECNO'])).rows[0].r, 'ok');
+  assert.equal((await q('select count(*)::int as c from devices where org_id = $1 and device_id = $2', [ORG, dev])).rows[0].c, 2);
 });
 
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

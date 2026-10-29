@@ -6,7 +6,7 @@ import { getSupabase } from './supabase';
 export type ApprovalKind = 'refund' | 'delete' | 'credit' | 'sale';
 export interface ApprovalRequest { kind: ApprovalKind; payload: Record<string, unknown>; amount: number; summary: string }
 export interface Approval extends ApprovalRequest { id: number; requested_name: string; status: 'pending' | 'done' | 'rejected'; at: string }
-export interface Device { device_id: string; member_name: string; label: string; first_seen: string; last_seen: string; revoked: boolean }
+export interface Device { device_id: string; user_id: string; member_name: string; label: string; first_seen: string; last_seen: string; revoked: boolean }
 
 const sb = async () => { const s = await getSupabase(); if (!s) throw new Error('err.noCloud'); return s; };
 const rpc = async <T>(fn: string, args: Record<string, unknown>) => {
@@ -39,9 +39,11 @@ export function deviceLabel(): string {
   return [os, model && model !== 'K' ? model : '', app].filter(Boolean).join(' · ').slice(0, 80);
 }
 export const deviceSeen = async (orgId: string) => rpc<'ok' | 'revoked'>('kopor_device_seen', { o: orgId, d: await deviceId(), l: deviceLabel() });
-export const revokeDevice = (orgId: string, id: string) => rpc<void>('kopor_device_revoke', { o: orgId, d: id });
+export const revokeDevice = (orgId: string, d: Device) => rpc<void>('kopor_device_revoke', { o: orgId, d: d.device_id, u: d.user_id });
+/** After this phone was signed out by the owner: a fresh id, so signing in again shows (and alerts) as a new phone. */
+export const newDeviceId = () => setMeta('deviceId', '');
 export async function listDevices(orgId: string): Promise<Device[]> {
-  const { data, error } = await (await sb()).from('devices').select('device_id, member_name, label, first_seen, last_seen, revoked').eq('org_id', orgId).order('last_seen', { ascending: false });
+  const { data, error } = await (await sb()).from('devices').select('device_id, user_id, member_name, label, first_seen, last_seen, revoked').eq('org_id', orgId).order('last_seen', { ascending: false });
   if (error) throw new Error(error.message);
   return data as Device[];
 }
