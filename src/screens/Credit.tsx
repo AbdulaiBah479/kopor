@@ -225,7 +225,7 @@ export function DeleteButton({ onDelete, label }: { onDelete: () => Promise<void
   );
 }
 
-function EntryFields({ type, f, setF }: { type: 'gave' | 'got'; f: EntryForm; setF: (f: EntryForm) => void }) {
+function EntryFields({ type, f, setF, supplier = false }: { type: 'gave' | 'got'; f: EntryForm; setF: (f: EntryForm) => void; supplier?: boolean }) {
   const { t } = useTranslation();
   return (
     <>
@@ -233,7 +233,7 @@ function EntryFields({ type, f, setF }: { type: 'gave' | 'got'; f: EntryForm; se
       <Field label={t('common.note')}><input value={f.note} placeholder={t('credit.notePh')} onChange={(e) => setF({ ...f, note: e.target.value })} name="note" /></Field>
       <div className="grid2">
         <Field label={t('common.date')}><input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
-        {type === 'gave' ? <Field label={t('common.dueDate')}><input type="date" value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} /></Field> : <div />}
+        {type === 'gave' || supplier ? <Field label={t('common.dueDate')}><input type="date" value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} /></Field> : <div />}
       </div>
     </>
   );
@@ -256,7 +256,7 @@ function EntrySheet({ contact, type }: { contact: Contact; type: 'gave' | 'got' 
         closeSheet(); toast(t('common.saved'), { undo: () => removeEntry(ctx, entry.id), share });
       } catch (err) { fail(err); }
     }}>
-      <EntryFields type={type} f={f} setF={setF} />
+      <EntryFields type={type} f={f} setF={setF} supplier={contact.kind === 'supplier' && type === 'got'} />
       <button className={`btn ${type === 'gave' ? 'give' : 'get'} block`}>{t('common.save')}</button>
     </form>
   );
@@ -293,7 +293,7 @@ export function NewCreditSheet({ name = '', type: initial = 'gave', amount = 0, 
         <Field label={t('credit.phoneHelp')}><input type="tel" inputMode="tel" value={who.phone} placeholder="076 123 456" onChange={(e) => setWho({ ...who, phone: e.target.value })} /></Field>
       )}
       <Seg value={type} onChange={setType} options={[['gave', t('credit.gaveHelp')], ['got', t('credit.gotHelp')]]} />
-      <EntryFields type={type} f={f} setF={setF} />
+      <EntryFields type={type} f={f} setF={setF} supplier={type === 'got' && findByName(book.contacts, who.name)?.kind === 'supplier'} />
       <button className="btn primary block">{t('common.save')}</button>
     </form>
   );

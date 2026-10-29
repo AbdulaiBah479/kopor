@@ -14,6 +14,8 @@ import { currentRound, roundStatus, loanReminders } from '@/domain/groups';
 import { updateOrg } from '@/domain/org';
 import { useReminderText } from './Credit';
 import { pushIsOn, pushSupported, remindOwner, stopReminders } from '@/cloud/push';
+import { suppliersToPay } from '@/domain/expiry';
+import { Link } from 'react-router-dom';
 import { dailyReminderOn, disableDailyReminder, enableDailyReminder, localRemindersSupported, scheduleDailyReminder } from '@/features/dailyReminder';
 
 /** Android app: the daily reminder is made on the phone itself from its records (works offline, no account needed). */
@@ -121,6 +123,7 @@ export function Reminders() {
           </div>
         )) : <Empty icon="bell" title={t('rem.none')} />}
       </div>
+      {can('stock') && <SuppliersToPay />}
       {can('reports') && <DailyPush />}
       {can('business') && (
         <Field label={t('rem.autoDays')}>
@@ -130,5 +133,29 @@ export function Reminders() {
         </Field>
       )}
     </Page>
+  );
+}
+
+/** Goods bought on credit that are due soon or late, so the shop pays on time (and suppliers keep giving credit). */
+function SuppliersToPay() {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { fmt } = useDate();
+  const list = suppliersToPay(book);
+  if (!list.length) return null;
+  return (
+    <div className="stack" data-testid="suppliers-to-pay">
+      <div className="section-title"><span>{t('supply.toPay')}</span></div>
+      <div className="list">
+        {list.map((s) => (
+          <Link key={s.contact.id} to={`/credit/${s.contact.id}`} className="item" style={{ color: 'inherit' }}>
+            <div className="avatar">{initials(s.contact.name)}</div>
+            <div className="main"><div className="t">{s.contact.name}</div>
+              <div className={`s ${s.late ? 'bad' : 'warn'}`}>{t(s.late ? 'supply.late' : 'supply.due', { date: fmt(s.due!) })}</div></div>
+            <Money v={s.owed} className="bad" />
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }

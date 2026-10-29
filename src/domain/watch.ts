@@ -6,7 +6,7 @@ import { attendanceFlags } from './staff';
 import type { Book } from './book';
 
 export type FlagKind = 'short' | 'deleted' | 'refund' | 'discount' | 'lost' | 'belowCost' | 'unconfirmed' | 'momoShort' | 'attendance' | 'lateNight'
-  | 'underPriced' | 'backdated' | 'absentWork' | 'noClose' | 'ghostCredit' | 'selfCredit' | 'bigExpense' | 'dupRef' | 'refundNoSale' | 'noItems';
+  | 'underPriced' | 'backdated' | 'absentWork' | 'noClose' | 'ghostCredit' | 'selfCredit' | 'bigExpense' | 'dupRef' | 'refundNoSale' | 'noItems' | 'dupPhone' | 'habitDiscount' | 'staffDiscount';
 /** branch: where it happened (null = the whole business or not known). */
 export interface Flag { kind: FlagKind; date: string; who: string; amount: number; detail: string; at?: number; branch?: string | null }
 
@@ -21,6 +21,8 @@ export const BIG_EXPENSE = 3;
 export const GHOST_DAYS = 14;
 /** A cashier whose sales are mostly typed as amounts only (no products), while the shop does sell products. */
 export const NO_ITEMS_SHARE = 0.6, NO_ITEMS_MIN = 5;
+/** A cashier whose small discounts add up to this share of their sales (at least 5 discounted sales). */
+export const HABIT_DISCOUNT = 0.05;
 const day = (ms: number) => { const d = new Date(ms); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const last8 = (p: string | null | undefined) => (p ?? '').replace(/\D/g, '').slice(-8);
 
@@ -148,6 +150,43 @@ export function watchFlags(book: Book, audit: AuditEntry[], days = 30, now = tod
     for (const [id, r] of per) {
       if (r.all >= NO_ITEMS_MIN && r.bare / r.all > NO_ITEMS_SHARE) flags.push({ kind: 'noItems', date: now, who: name(id), amount: r.amount, detail: `${r.bare}/${r.all}`, branch: r.branch });
     }
+  }
+
+  // One phone number behind several customers with credit: made-up customers to hide goods taken on "credit".
+  const byPhone = new Map<string, typeof book.contacts>();
+  for (const c of book.contacts) {
+    const p = last8(c.phone);
+    if (c.deleted || c.kind !== 'customer' || p.length !== 8) continue;
+    byPhone.set(p, [...(byPhone.get(p) ?? []), c]);
+  }
+  for (const list of byPhone.values()) {
+    if (list.length < 2) continue;
+    const ids = new Set(list.map((c) => c.id));
+    const credit = book.ledger.filter((e) => !e.deleted && e.type === 'gave' && ids.has(e.contact_id));
+    if (credit.length < 2) continue;
+    const first = credit.sort((a, b) => a.created_at - b.created_at)[0];
+    flags.push({ kind: 'dupPhone', date: first.date, who: name(first.created_by), amount: credit.reduce((s, e) => s + e.amount, 0), detail: list.map((c) => c.name).sort().join(', '), branch: first.branch_id });
+  }
+
+  // Many small discounts by one cashier: each under the "big discount" line, together a real loss.
+  const disc = new Map<string, { n: number; total: number; sales: number; branch: string | null }>();
+  for (const t of sales) {
+    if (t.type !== 'in' || t.category !== 'sale' || !staffOnly(t.created_by)) continue;
+    const r = disc.get(t.created_by ?? '') ?? { n: 0, total: 0, sales: 0, branch: t.branch_id };
+    r.sales += t.amount + (t.discount ?? 0);
+    if ((t.discount ?? 0) > 0) { r.n++; r.total += t.discount!; }
+    disc.set(t.created_by ?? '', r);
+  }
+  for (const [id, r] of disc) {
+    if (r.n >= 5 && r.sales > 0 && r.total / r.sales >= HABIT_DISCOUNT) flags.push({ kind: 'habitDiscount', date: now, who: name(id), amount: r.total, detail: `${r.n}`, branch: r.branch });
+  }
+
+  // Discounts on sales to a staff member (their phone number on the customer).
+  for (const t of sales) {
+    if (t.type !== 'in' || !(t.discount ?? 0) || !t.contact_id) continue;
+    const c = book.contacts.find((x) => x.id === t.contact_id);
+    const staff = c && staffByPhone.get(last8(c.phone));
+    if (staff && staff.role !== 'owner') flags.push({ kind: 'staffDiscount', date: t.date, who: staff.name, amount: t.discount!, detail: name(t.created_by), branch: t.branch_id });
   }
 
   // The same mobile money reference used for two group payments: one real payment claimed twice.

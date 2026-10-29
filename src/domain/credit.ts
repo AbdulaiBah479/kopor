@@ -95,8 +95,10 @@ export async function addEntry(ctx: Ctx, i: EntryInput): Promise<LedgerEntry> {
   if (!(i.amount > 0)) throw new AppError('err.amount');
   const date = recordDate(ctx, i.date);
   if (i.type === 'gave') await checkCreditLimit(ctx, i.contactId, Math.round(i.amount));
+  // A due date belongs to a debt: credit given to a customer, or goods a supplier gave the shop on credit.
+  const supplier = i.type === 'got' && (await db.contacts.get(i.contactId))?.kind === 'supplier';
   return insert(ctx, 'ledger', {
     branch_id: ctx.branchId, contact_id: i.contactId, type: i.type, amount: Math.round(i.amount), note: i.note?.trim() ?? '',
-    date, due_date: i.type === 'gave' ? i.dueDate || null : null, ref_type: i.refType ?? null, ref_id: i.refId ?? null,
+    date, due_date: i.type === 'gave' || supplier ? i.dueDate || null : null, ref_type: i.refType ?? null, ref_id: i.refId ?? null,
   }, `${i.type === 'gave' ? 'Credit given' : 'Payment received'} ${i.amount / 100}`);
 }

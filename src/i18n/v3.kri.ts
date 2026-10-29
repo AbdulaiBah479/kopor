@@ -627,6 +627,8 @@ const v3: V3Dict = {
     disclaimer: 'Dis ripɔt kɔmɔt frɔm wetin yu rayt na Kopor. Kip yu sɛpla invɔys; na jɔs GST we de pan dɛn yu kin klem. Chɛk yu ritɔn wit akauntant ɔ di NRA bifo yu fayl. Kopor nɔ de fayl fɔ yu.',
   },
   watch: {
+    habitOf: '{{n}} sel wit diskawnt',
+    staffDiscBy: '{{who}} gi am',
     atHandover: 'we dɛn gi di drɔwa',
     noItemsOf: '{{share}} sel we dɛn rayt jɔs mɔni: di stɔk nɔ de go dɔŋ',
     title: 'Wach fɔ tif',
@@ -667,6 +669,9 @@ const v3: V3Dict = {
       credit: 'kredit',
     },
     k: {
+      dupPhone: 'Wan fon, bɔku kɔstɔma',
+      habitDiscount: 'Bɔku smɔl diskawnt',
+      staffDiscount: 'Diskawnt to wokman',
       refundNoSale: 'Gi mɔni bak we nɔ gɛt sel',
       noItems: 'Sel we nɔ gɛt prodak',
       short: 'Kesh nɔ kɔmplit',
@@ -855,6 +860,8 @@ const v3: V3Dict = {
     textTo: 'Tɛks {{name}}',
   },
   daily: {
+    suppliers_one: '{{count}} saplaya fɔ pe',
+    suppliers_other: '{{count}} saplaya dɛn fɔ pe',
     expiring_one: '{{count}} tin go ɛkspayr dis wik',
     expiring_other: '{{count}} tin dɛn go ɛkspayr dis wik',
     signs_one: '{{count}} wɔnin sayn na Wach fɔ tif',
@@ -979,6 +986,8 @@ const v3: V3Dict = {
     saved: 'Dɛn dɔn gi di drɔwa',
   },
   loyalty: {
+    sendThanks: 'Sɛn tɛnki',
+    thanksMsg: 'Tɛnki {{name}}! Dis na yu {{n}} tɛm fɔ kam na {{business}}, so yu sev {{amount}} tide. Wi go si bak.',
     due: '{{name}} in {{n}} tɛm fɔ kam: {{pct}}% tɛnki diskawnt.',
     apply: 'Gi {{pct}}% of',
     title: 'Diskawnt fɔ kɔstɔma we kin kam',
@@ -995,6 +1004,12 @@ const v3: V3Dict = {
     momo: '{{network}} we kam tide',
     stock: 'Stɔk na di shɛlf (bay prays)',
     help: 'Frɔm yu rɛkɔd. Klos di de fɔ chɛk am wit di rial mɔni ɛn mobayl mɔni.',
+  },
+  supply: {
+    payBy: 'Pe di saplaya bifo',
+    toPay: 'Saplaya fɔ pe',
+    due: 'Pe bifo {{date}}',
+    late: 'I dɔn pas tɛm: na {{date}} fɔ pe',
   },
 };
 export default v3;

@@ -625,6 +625,8 @@ const v3 = {
     disclaimer: 'This summary comes from what you recorded in Kopor. Keep your supplier invoices; only GST shown on them can be claimed. Check your return with an accountant or the NRA before filing. Kopor does not file returns for you.',
   },
   watch: {
+    habitOf: '{{n}} discounted sales',
+    staffDiscBy: 'given by {{who}}',
     atHandover: 'at a handover',
     noItemsOf: '{{share}} sales typed as amounts only: the stock does not go down',
     title: 'Fraud watch',
@@ -665,6 +667,9 @@ const v3 = {
       credit: 'credit entry',
     },
     k: {
+      dupPhone: 'One phone, several customers',
+      habitDiscount: 'Many small discounts',
+      staffDiscount: 'Discount to staff',
       refundNoSale: 'Refund with no sale',
       noItems: 'Sales without products',
       short: 'Cash short',
@@ -853,6 +858,8 @@ const v3 = {
     textTo: 'Text {{name}}',
   },
   daily: {
+    suppliers_one: '{{count}} supplier to pay',
+    suppliers_other: '{{count}} suppliers to pay',
     expiring_one: '{{count}} item expires this week',
     expiring_other: '{{count}} items expire this week',
     signs_one: '{{count}} warning sign in Fraud watch',
@@ -977,6 +984,8 @@ const v3 = {
     saved: 'Drawer handed over',
   },
   loyalty: {
+    sendThanks: 'Send a thank-you',
+    thanksMsg: 'Thank you {{name}}! This was your visit number {{n}} at {{business}}, so you saved {{amount}} today. See you again soon.',
     due: '{{name}}’s visit number {{n}}: a {{pct}}% thank-you discount.',
     apply: 'Give {{pct}}% off',
     title: 'Loyalty discount',
@@ -993,6 +1002,12 @@ const v3 = {
     momo: '{{network}} received today',
     stock: 'Stock on the shelves (buying price)',
     help: 'From your records. Close the day to check it against the real cash and mobile money.',
+  },
+  supply: {
+    payBy: 'Pay the supplier by',
+    toPay: 'Suppliers to pay',
+    due: 'Pay by {{date}}',
+    late: 'Late: was due {{date}}',
   },
 };
 export default v3;

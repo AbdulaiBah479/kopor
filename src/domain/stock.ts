@@ -70,7 +70,7 @@ export async function adjustStock(ctx: Ctx, productId: string, qty: number, opts
 }
 
 export interface PurchaseLine { productId: string | null; name: string; qty: number; unitCost: number; sellPrice?: number; expiry?: string | null }
-export interface PurchaseInput { lines: PurchaseLine[]; total?: number; supplier?: string; date?: string; method?: Method }
+export interface PurchaseInput { lines: PurchaseLine[]; total?: number; supplier?: string; date?: string; method?: Method; dueDate?: string }
 
 /**
  * Goods bought for the shop (e.g. from a photographed supplier receipt): each line adds stock to its product (new
@@ -93,7 +93,7 @@ export async function recordPurchase(ctx: Ctx, input: PurchaseInput) {
       : null;
     if (onCredit && amount > 0) {
       const supplier = await ensureContact(ctx, input.supplier!, '', 'supplier');
-      await addEntry(ctx, { contactId: supplier.id, type: 'got', amount, note: `Goods on credit: ${label}`.slice(0, 300), date, refType: 'purchase' });
+      await addEntry(ctx, { contactId: supplier.id, type: 'got', amount, note: `Goods on credit: ${label}`.slice(0, 300), date, refType: 'purchase', dueDate: input.dueDate || addDays(date, 14) });
     }
     let created = 0;
     for (const l of lines) {

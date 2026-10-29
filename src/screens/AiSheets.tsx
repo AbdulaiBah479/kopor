@@ -19,6 +19,7 @@ import { ensureContact, addEntry } from '@/domain/credit';
 import { findByName } from '@/domain/book';
 import { atomic, update } from '@/db/repo';
 import { SaleSheet, ExpenseSheet } from './Cash';
+import { addDays, today } from '@/lib/dates';
 import { NewCreditSheet } from './Credit';
 
 // After every voice or typed entry the user picks where it goes: one button per part of the app.
@@ -292,11 +293,12 @@ export function ScanSheet({ prefill, prefer }: { prefill?: ScanResult; prefer?: 
   const lineSum = rows.reduce((s, r) => s + r.qty * r.price, 0);
   const newCount = rows.filter((r) => r.name.trim() && !r.productId).length;
   const date = res?.date && /^\d{4}-\d{2}-\d{2}$/.test(res.date) ? res.date : undefined;
+  const [payBy, setPayBy] = useState(() => addDays(today(), 14));
 
   const save = async () => {
     try {
       if (mode === 'purchase') {
-        await recordPurchase(ctx, { supplier, total: total || lineSum, method, date,
+        await recordPurchase(ctx, { supplier, total: total || lineSum, method, date, dueDate: method === 'credit' ? payBy : undefined,
           lines: rows.map((r) => ({ productId: r.productId || null, name: r.name, qty: r.qty, unitCost: r.price, sellPrice: r.sellPrice })) });
         toast(t('rscan.savedPurchase'), { view: '/stock' });
       } else if (mode === 'sale') {
@@ -348,6 +350,7 @@ export function ScanSheet({ prefill, prefer }: { prefill?: ScanResult; prefer?: 
           {mode !== 'sale' && <Field label={t(mode === 'purchase' ? 'rscan.supplier' : 'rscan.note')}><input value={supplier} onChange={(e) => setSupplier(e.target.value)} /></Field>}
           {mode === 'expense' && <Field label={t('cash.category')}><select value={category} onChange={(e) => setCategory(e.target.value)}>{EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{t(`categories.${c}`)}</option>)}</select></Field>}
           <Field label={t('cash.paidWith')}><select value={method} onChange={(e) => setMethod(e.target.value as Method)}>{METHODS.filter((m) => m !== 'credit' || mode === 'purchase').map((m) => <option key={m} value={m}>{m === 'credit' ? t('pack.onCredit') : t(`methods.${m}`)}</option>)}</select></Field>
+          {mode === 'purchase' && method === 'credit' && <Field label={t('supply.payBy')}><input type="date" name="pay_by" value={payBy} onChange={(e) => e.target.value && setPayBy(e.target.value)} /></Field>}
           {mode !== 'sale'
             ? <Field label={t('rscan.total')}><MoneyInput value={total || lineSum} onChange={setTotal} /></Field>
             : <div className="row between"><b>{t('common.total')}</b><b className="num">{formatMoney(lineSum)}</b></div>}

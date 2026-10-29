@@ -7,11 +7,11 @@ import { overdueContacts } from '@/domain/credit';
 import { lowStock } from '@/domain/stock';
 import { loanReminders, pendingClaims } from '@/domain/groups';
 import { getMeta, setMeta } from '@/db/repo';
-import { expiring } from '@/domain/expiry';
+import { expiring, suppliersToPay } from '@/domain/expiry';
 import { watchFlags } from '@/domain/watch';
 import { today } from '@/lib/dates';
 
-export interface Digest { overdue: number; claims: number; loans: number; low: number; expiring: number; signs: number }
+export interface Digest { overdue: number; claims: number; loans: number; low: number; expiring: number; signs: number; suppliers: number }
 
 /** What needs attention today (pure: unit tested). Warning signs (Fraud watch, last 2 days) only for owners and managers. */
 export function dailyDigest(book: Book, now?: string, opts: { owner?: boolean } = {}): Digest {
@@ -22,6 +22,7 @@ export function dailyDigest(book: Book, now?: string, opts: { owner?: boolean } 
     low: lowStock(book).length,
     expiring: expiring(book, 7, now).length,
     signs: opts.owner ? watchFlags(book, [], 2, now).filter((f) => f.kind !== 'unconfirmed').length : 0,
+    suppliers: opts.owner ? suppliersToPay(book, now, 1).length : 0,
   };
 }
 
@@ -31,6 +32,7 @@ export function digestText(t: TFunction, d: Digest): string | null {
     d.overdue && t('daily.overdue', { count: d.overdue }), d.claims && t('daily.claims', { count: d.claims }),
     d.loans && t('daily.loans', { count: d.loans }), d.low && t('daily.low', { count: d.low }),
     d.expiring && t('daily.expiring', { count: d.expiring }), d.signs && t('daily.signs', { count: d.signs }),
+    d.suppliers && t('daily.suppliers', { count: d.suppliers }),
   ].filter(Boolean);
   return parts.length ? parts.join(' · ') : null;
 }

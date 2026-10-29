@@ -78,3 +78,32 @@ describe('money now and new warning signs', () => {
     expect(watchFlags(await book(), []).filter((x) => x.kind === 'noClose').map((x) => x.date)).toEqual([addDays(today(), -3)]);
   });
 });
+
+describe('supplier due dates and more warning signs', () => {
+  it('goods bought on credit get a due date; Reminders lists suppliers due soon or late', async () => {
+    const { recordPurchase } = await import('@/domain/stock');
+    const { suppliersToPay } = await import('@/domain/expiry');
+    const { addEntry } = await import('@/domain/credit');
+    await recordPurchase(ctx, { supplier: 'Kroo Bay Wholesale', method: 'credit', lines: [{ productId: null, name: 'Rice', qty: 2, unitCost: 5000 }], dueDate: addDays(today(), 2) });
+    let list = suppliersToPay(await book());
+    expect(list).toMatchObject([{ owed: 10000, due: addDays(today(), 2), late: false }]);
+    await addEntry(ctx, { contactId: list[0].contact.id, type: 'gave', amount: 10000 });   // paid
+    list = suppliersToPay(await book());
+    expect(list).toEqual([]);
+  });
+
+  it('flags one phone behind several customers with credit, habitual small discounts, and discounts to staff', async () => {
+    const { addEntry, ensureContact } = await import('@/domain/credit');
+    const a = await ensureContact(cashier, 'Musa A', '076 222 333');
+    const b = await ensureContact(cashier, 'Musa B', '+232 76 222 333');
+    await addEntry(cashier, { contactId: a.id, type: 'gave', amount: 3000 });
+    await addEntry(cashier, { contactId: b.id, type: 'gave', amount: 4000 });
+    for (let i = 0; i < 5; i++) await recordSale(cashier, { method: 'cash', amount: 1000, discount: 80 });   // 8% each, under the 10% line
+    await ensureContact(ctx, 'Sorie (staff)', '077111222');
+    await recordSale(ctx, { method: 'cash', amount: 2000, discount: 100, customer: 'Sorie (staff)' });
+    const flags = watchFlags(await book(), []);
+    expect(flags.find((f) => f.kind === 'dupPhone')).toMatchObject({ amount: 7000, detail: 'Musa A, Musa B' });
+    expect(flags.find((f) => f.kind === 'habitDiscount')).toMatchObject({ who: 'Sorie', amount: 400 });
+    expect(flags.find((f) => f.kind === 'staffDiscount')).toMatchObject({ who: 'Sorie', amount: 100, detail: 'Ama' });
+  });
+});

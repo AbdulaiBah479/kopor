@@ -37,6 +37,25 @@ export function expiring(book: Book, days = SOON_DAYS, now = today()): { product
     .sort((a, b) => a.expiry.localeCompare(b.expiry));
 }
 
+/**
+ * Suppliers to pay soon or already late: what is still owed (payments cover the oldest goods first) and the earliest
+ * due date of what is unpaid, soonest first.
+ */
+export function suppliersToPay(book: Book, now = today(), soonDays = 3) {
+  return book.contacts.filter((c) => c.kind === 'supplier' && !c.deleted).map((c) => {
+    const rows = book.ledger.filter((e) => e.contact_id === c.id && !e.deleted).sort((a, b) => a.date.localeCompare(b.date) || a.created_at - b.created_at);
+    let paid = rows.filter((e) => e.type === 'gave').reduce((s, e) => s + e.amount, 0);
+    let owed = 0, due: string | null = null;
+    for (const e of rows) {
+      if (e.type !== 'got') continue;
+      const covered = Math.min(paid, e.amount);
+      paid -= covered;
+      if (covered < e.amount) { owed += e.amount - covered; if (e.due_date && (!due || e.due_date < due)) due = e.due_date; }
+    }
+    return { contact: c, owed, due, late: !!due && due < now };
+  }).filter((x) => x.owed > 0 && x.due && x.due <= addDays(now, soonDays)).sort((a, b) => a.due!.localeCompare(b.due!));
+}
+
 /** Suppliers the shop owes money to (goods bought on credit), biggest first. */
 export function supplierDebts(book: Book) {
   const owed = new Map<string, number>();

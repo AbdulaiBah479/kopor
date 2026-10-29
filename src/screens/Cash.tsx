@@ -18,6 +18,7 @@ import { recordReturn, returnedQty } from '@/domain/returns';
 import { expectedCash, expectedMomo, closeDay, lastClosing, cashSinceLastCount, handOver } from '@/domain/closing';
 import { loyaltyFor } from '@/domain/loyalty';
 import { DeleteButton, useEntryConfirm } from './Credit';
+import { waLink } from '@/lib/phone';
 import { creditTotals } from '@/domain/credit';
 
 type Range = 'today' | 'week' | 'month' | 'all';
@@ -150,7 +151,10 @@ export function SaleSheet({ prefill = {} }: { prefill?: { items?: Partial<LineIt
         const txn = await recordSale(ctx, { items, amount, discount, method, customer, note, date });
         // Sold on credit to a customer with a phone: offer the WhatsApp confirmation of what they now owe.
         const c = method === 'credit' ? book.contacts.find((x) => x.name.toLowerCase() === customer.trim().toLowerCase()) : undefined;
-        const share = c ? confirm(c, 'gave', txn.amount, itemsLabel(txn.items) || note) : undefined;
+        // A loyalty reward given: offer the customer a thank-you message (WhatsApp) saying what they saved.
+        const loyalC = loyal?.due && discount > 0 ? book.contacts.find((x) => x.name.toLowerCase() === customer.trim().toLowerCase()) : undefined;
+        const thanks = loyalC?.phone ? { label: t('loyalty.sendThanks'), href: waLink(loyalC.phone, t('loyalty.thanksMsg', { name: loyalC.name.split(' ')[0], business: book.org.name, amount: formatMoney(discount), n: loyal!.visits }), book.org.country_code) } : undefined;
+        const share = c ? confirm(c, 'gave', txn.amount, itemsLabel(txn.items) || note) : thanks;
         closeSheet(); toast(t(method === 'credit' ? 'cash.creditSaved' : 'cash.saleSaved'), { undo: () => deleteTxn(ctx, txn.id), share });
       } catch (err) { fail(err); }
     }}>

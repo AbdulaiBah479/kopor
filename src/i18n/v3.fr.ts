@@ -627,6 +627,8 @@ const v3: V3Dict = {
     disclaimer: 'Ce résumé vient de ce que vous avez enregistré dans Kopor. Gardez les factures de vos fournisseurs : seule la TPS qui y figure peut être déduite. Vérifiez votre déclaration avec un comptable ou la NRA avant de la déposer. Kopor ne dépose pas de déclaration pour vous.',
   },
   watch: {
+    habitOf: '{{n}} ventes avec remise',
+    staffDiscBy: 'accordée par {{who}}',
     atHandover: 'lors d’une passation',
     noItemsOf: '{{share}} ventes saisies en montant seul : le stock ne baisse pas',
     title: 'Surveillance des fraudes',
@@ -667,6 +669,9 @@ const v3: V3Dict = {
       credit: 'un crédit',
     },
     k: {
+      dupPhone: 'Un téléphone, plusieurs clients',
+      habitDiscount: 'Beaucoup de petites remises',
+      staffDiscount: 'Remise à un employé',
       refundNoSale: 'Remboursement sans vente',
       noItems: 'Ventes sans produits',
       short: 'Manque en caisse',
@@ -855,6 +860,8 @@ const v3: V3Dict = {
     textTo: 'SMS à {{name}}',
   },
   daily: {
+    suppliers_one: '{{count}} fournisseur à payer',
+    suppliers_other: '{{count}} fournisseurs à payer',
     expiring_one: '{{count}} article expire cette semaine',
     expiring_other: '{{count}} articles expirent cette semaine',
     signs_one: '{{count}} signe d’alerte dans Surveillance',
@@ -979,6 +986,8 @@ const v3: V3Dict = {
     saved: 'Caisse passée',
   },
   loyalty: {
+    sendThanks: 'Envoyer un merci',
+    thanksMsg: 'Merci {{name}} ! C’était votre visite n° {{n}} chez {{business}}, vous avez donc économisé {{amount}} aujourd’hui. À bientôt.',
     due: 'Visite n° {{n}} de {{name}} : une remise de fidélité de {{pct}} %.',
     apply: 'Accorder {{pct}} %',
     title: 'Remise de fidélité',
@@ -995,6 +1004,12 @@ const v3: V3Dict = {
     momo: '{{network}} reçu aujourd’hui',
     stock: 'Stock en rayon (prix d’achat)',
     help: 'D’après vos registres. Clôturez la journée pour comparer avec l’argent et le mobile money réels.',
+  },
+  supply: {
+    payBy: 'Payer le fournisseur avant le',
+    toPay: 'Fournisseurs à payer',
+    due: 'À payer avant le {{date}}',
+    late: 'En retard : dû le {{date}}',
   },
 };
 export default v3;

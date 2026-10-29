@@ -20,7 +20,7 @@ import { MoneyInput, Field } from '@/ui/widgets';
 
 const ICON: Record<FlagKind, string> = {
   short: 'cash', momoShort: 'phone', deleted: 'trash', refund: 'undo', discount: 'tag', lost: 'box', belowCost: 'trendDown', unconfirmed: 'alert', attendance: 'users', lateNight: 'moon',
-  underPriced: 'tag', backdated: 'calendar', absentWork: 'users', noClose: 'lock', ghostCredit: 'book', selfCredit: 'book', bigExpense: 'up', dupRef: 'copy', refundNoSale: 'undo', noItems: 'box',
+  underPriced: 'tag', backdated: 'calendar', absentWork: 'users', noClose: 'lock', ghostCredit: 'book', selfCredit: 'book', bigExpense: 'up', dupRef: 'copy', refundNoSale: 'undo', noItems: 'box', dupPhone: 'phone', habitDiscount: 'tag', staffDiscount: 'tag',
 };
 
 export function Watch() {
@@ -53,6 +53,8 @@ export function Watch() {
     : f.kind === 'absentWork' ? t(`staff.st.${f.detail}`)
     : f.kind === 'short' && f.detail === 'handover' ? t('watch.atHandover')
     : f.kind === 'noItems' ? t('watch.noItemsOf', { share: f.detail })
+    : f.kind === 'habitDiscount' ? t('watch.habitOf', { n: f.detail })
+    : f.kind === 'staffDiscount' ? t('watch.staffDiscBy', { who: f.detail })
     : f.kind === 'dupRef' ? t('watch.refUsed', { ref: f.detail.split(' · ')[0], who: f.detail.split(' · ')[1] })
     : f.detail;
   return (
