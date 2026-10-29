@@ -503,10 +503,12 @@ await step('computer and tablet screens: side menu, wider pages, nothing cut off
 
 await step('hide amounts, data saver and the getting-started list', async () => {
   await go('/');
+  await page.locator('[data-sonner-toast]').first().waitFor({ state: 'detached', timeout: 12000 }).catch(() => {});   // a message from the last step can cover the top bar
   await page.getByTestId('hide-money').click();
   await page.waitForFunction(() => document.documentElement.hasAttribute('data-hide'));
   const blur = await page.locator('.balance-card .amount').first().evaluate((el) => getComputedStyle(el).filter);
   if (!/blur/.test(blur)) throw new Error('amounts are not hidden: ' + blur);
+  await page.locator('[data-sonner-toast]').first().waitFor({ state: 'detached', timeout: 12000 }).catch(() => {});   // a message from the last step can cover the top bar
   await page.getByTestId('hide-money').click();
   await page.waitForFunction(() => !document.documentElement.hasAttribute('data-hide'));
   const list = page.getByTestId('start-checklist');
