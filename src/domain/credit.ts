@@ -4,7 +4,7 @@ import { assertCan } from '@/db/permissions';
 import { today, addDays } from '@/lib/dates';
 import { randomToken } from '@/lib/crypto';
 import { AppError, findByName, type Book } from './book';
-import { checkCreditLimit, recordDate } from './guard';
+import { checkCreditLimit, needOwner, OLD_RECORD_MS, recordDate } from './guard';
 
 /** The secret token behind a customer's statement link. Made on first share; renewing it stops the old link working. */
 export async function statementToken(ctx: Ctx, contactId: string, renew = false): Promise<string> {
@@ -87,6 +87,7 @@ export async function removeEntry(ctx: Ctx, id: string) {
   if (!e) throw new AppError('err.notFound');
   const own = !!ctx.memberId && e.created_by === ctx.memberId && Date.now() - e.created_at < 10 * 60_000;
   if (!own) assertCan(ctx.role, 'edit');
+  await needOwner(ctx, { kind: 'delete', payload: { entryId: id }, amount: e.amount, summary: `Delete ${e.type === 'gave' ? 'credit' : 'payment'} ${e.amount / 100} of ${e.date}` }, Date.now() - e.created_at > OLD_RECORD_MS);
   await update(ctx, 'ledger', id, { deleted: 1 }, `Removed ${e.type === 'gave' ? 'credit' : 'payment'} ${e.amount / 100}`);
 }
 
@@ -94,7 +95,10 @@ export async function addEntry(ctx: Ctx, i: EntryInput): Promise<LedgerEntry> {
   assertCan(ctx.role, 'record');
   if (!(i.amount > 0)) throw new AppError('err.amount');
   const date = recordDate(ctx, i.date);
-  if (i.type === 'gave') await checkCreditLimit(ctx, i.contactId, Math.round(i.amount));
+  if (i.type === 'gave') await checkCreditLimit(ctx, i.contactId, Math.round(i.amount)).catch((e) => {
+    if (e instanceof AppError && e.key === 'err.creditLimit') e.params.approval = { kind: 'credit', payload: { ...i }, amount: Math.round(i.amount), summary: `Credit ${i.amount / 100}${i.note ? `: ${i.note}` : ''}`.slice(0, 280) };
+    throw e;
+  });
   // A due date belongs to a debt: credit given to a customer, or goods a supplier gave the shop on credit.
   const supplier = i.type === 'got' && (await db.contacts.get(i.contactId))?.kind === 'supplier';
   return insert(ctx, 'ledger', {

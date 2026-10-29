@@ -6,6 +6,7 @@ import { assertCan } from '@/db/permissions';
 import { today } from '@/lib/dates';
 import { AppError } from './book';
 import { addEntry } from './credit';
+import { refundNeedsOwner } from './guard';
 import { itemsTotal } from './cash';
 
 /** Quantity of each line of a sale that has already been returned. */
@@ -41,6 +42,9 @@ export async function recordReturn(ctx: Ctx, saleId: string, lines: ReturnLine[]
     const onCredit = sale.method === 'credit';
     const method: Method = onCredit ? 'credit' : opts.method ?? sale.method;
     const date = today();
+    if (await refundNeedsOwner(ctx, amount)) {
+      throw new AppError('err.needsApproval', { approval: { kind: 'refund', payload: { saleId, lines, opts }, amount, summary: `Refund ${amount / 100}: ${items.map((i) => `${i.qty} ${i.name}`).join(', ')}`.slice(0, 280) } });
+    }
 
     const refund = await insert(ctx, 'transactions', {
       branch_id: ctx.branchId, type: 'out', category: 'refund', amount, method, contact_id: sale.contact_id,

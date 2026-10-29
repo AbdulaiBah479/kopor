@@ -84,6 +84,12 @@ const extra = {
     deleted: 'Account deleted',
   },
   errx: {
+    payoutDailyMax: 'Today’s limit for sending money is reached. Try tomorrow or raise the limit in Fraud watch → Stay safe.',
+    newPayee: 'New number: for your safety, the first payment to a new number can be sent after 24 hours. Try again tomorrow.',
+    newPayeeWait: 'This number was added less than 24 hours ago. For your safety, try again later.',
+    historyLocked: 'History cannot be changed.',
+    tooManyRequests: 'Too many requests today. Try tomorrow.',
+    deviceRevoked: 'The owner signed this phone out. Sign in again to use the cloud.',
     signIn: 'Please sign in first (More → Cloud & account).',
     role: 'Your role is not allowed to do this. Ask the owner.',
     trialUsed: 'This business has already used its free Pro trial.',

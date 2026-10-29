@@ -658,4 +658,62 @@ await test('refund alert: a refund by a manager makes an alert; a handover short
   assert.deepEqual(a.map((x) => [x.kind, x.detail, Number(x.amount)]), [['refund', 'no-sale', 900], ['short', a[1].detail, 500]]);
 });
 
+await test('two-person approval: a manager cannot make a big refund or delete an old sale; the request reaches the owner', async () => {
+  await as('owner');
+  await q(`update members set role = 'manager' where id = $1`, [CASHIER_M]);
+  await as('cashier');
+  await rejects(q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date)
+    values (gen_random_uuid(), $1, $2, $2, $3, 'out', 'refund', 200000, 'cash', current_date)`, [ORG, now(), CASHIER_M]), /err\.needsApproval/);
+  await q('reset role');
+  const old = (await q(`insert into transactions (id, org_id, created_at, updated_at, created_by, type, category, amount, method, date)
+    values (gen_random_uuid(), $1, $2, $2, $3, 'in', 'sale', 500, 'cash', current_date) returning id`, [ORG, now() - 3 * 86400000, OWNER_M])).rows[0].id;
+  await as('cashier');
+  await rejects(q(`update transactions set deleted = 1 where id = $1`, [old]), /err\.needsApproval/);
+  const aid = (await q(`select kopor_request_approval($1, 'delete', $2::jsonb, 500, 'Delete sale Le 5') as id`, [ORG, JSON.stringify({ txnId: old })])).rows[0].id;
+  await rejects(q('select kopor_decide_approval($1, true)', [aid]), /errx\.role/);        // a manager cannot approve
+  await as('owner');
+  assert.equal((await q(`select count(*)::int as c from alerts where kind = 'approval' and ref = $1`, [String(aid)])).rows[0].c, 1);
+  await q(`update transactions set deleted = 1, updated_at = $2 where id = $1`, [old, now() + 1000]);   // the owner may
+  await q('select kopor_decide_approval($1, true)', [aid]);
+  assert.equal((await q('select status from approvals where id = $1', [aid])).rows[0].status, 'done');
+  await q(`update members set role = 'cashier' where id = $1`, [CASHIER_M]);
+});
+
+await test('tamper-proof history: entries are chained; changing one is refused, and a change made behind the app is detected', async () => {
+  await as('owner');
+  for (const s of ['Sale 10', 'Sale 20', 'Deleted sale 20']) {
+    await q(`insert into audit (id, org_id, created_at, updated_at, created_by, member_name, action, entity, entity_id, summary, at)
+      values (gen_random_uuid(), $1, $2, $2, $3, 'Ama', 'create', 'transactions', gen_random_uuid(), $4, $2)`, [ORG, now(), OWNER_M, s]);
+  }
+  assert.equal((await q('select kopor_verify_audit($1) as v', [ORG])).rows[0].v.ok, true);
+  const row = (await q(`select id from audit where org_id = $1 and summary = 'Sale 20'`, [ORG])).rows[0].id;
+  // Through the app nobody can change or delete history: the access rules make it change nothing.
+  await q(`update audit set summary = 'Sale 2' where id = $1`, [row]).catch(() => {});
+  await q(`delete from audit where id = $1`, [row]).catch(() => {});
+  assert.equal((await q('select summary from audit where id = $1', [row])).rows[0]?.summary, 'Sale 20');
+  // Someone with direct database access edits an entry: the check finds it.
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  await q(`update audit set summary = 'Sale 2' where id = $1`, [row]);
+  await as('owner');
+  const v = (await q('select kopor_verify_audit($1) as v', [ORG])).rows[0].v;
+  assert.equal(v.ok, false);
+  assert.equal(v.summary, 'Sale 2');
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  await q(`update audit set summary = 'Sale 20' where id = $1`, [row]);
+});
+
+await test('phones list: a new phone alerts the owner; a signed-out phone is told so', async () => {
+  await as('cashier');
+  const dev = 'phone-' + 'a'.repeat(20);
+  assert.equal((await q('select kopor_device_seen($1, $2, $3) as r', [ORG, dev, 'Android · TECNO'])).rows[0].r, 'ok');
+  assert.equal((await q('select kopor_device_seen($1, $2, $3) as r', [ORG, dev, 'Android · TECNO'])).rows[0].r, 'ok');
+  await rejects(q('select kopor_device_revoke($1, $2)', [ORG, 'other-' + 'b'.repeat(20)]), /errx\.role/);
+  await as('owner');
+  assert.equal((await q(`select count(*)::int as c from alerts where kind = 'newDevice' and ref = $1`, [dev])).rows[0].c, 1);
+  assert.equal((await q('select count(*)::int as c from devices where org_id = $1', [ORG])).rows[0].c, 1);
+  await q('select kopor_device_revoke($1, $2)', [ORG, dev]);
+  await as('cashier');
+  assert.equal((await q('select kopor_device_seen($1, $2, $3) as r', [ORG, dev, 'Android · TECNO'])).rows[0].r, 'revoked');
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

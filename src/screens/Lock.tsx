@@ -5,6 +5,7 @@ import { useErrorText } from '@/ui/overlay';
 import { Icon } from '@/ui/Icon';
 import { initials } from '@/ui/widgets';
 import { checkPin, hasPin, removeOrgFromDevice, unsyncedCount } from '@/domain/org';
+import { protectScreen } from '@/features/privacy';
 import { db } from '@/db/schema';
 
 /** Lock screen with member picker (shared shop phone) and PIN pad. */
@@ -18,6 +19,7 @@ export function Lock() {
   const [pin, setPinText] = useState('');
   const [msg, setMsg] = useState('');
   const [withPin, setWithPin] = useState<Set<string>>(new Set());
+  useEffect(() => protectScreen(), []);   // no screenshots or recent-apps preview while the PIN is typed
 
   useEffect(() => {
     const active = book.members.filter((m) => m.active);

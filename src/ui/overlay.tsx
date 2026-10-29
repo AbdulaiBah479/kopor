@@ -61,8 +61,13 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
     // unexpected errors.
     if (!(e instanceof AppError) && !(e instanceof PermissionError) && !(e instanceof Error && /^errx?\./.test(e.message))) { console.error(e); reportError(e); }
     haptic(40);
+    const approval = e instanceof AppError ? (e.params as { approval?: unknown }).approval : undefined;
+    if (approval) {
+      sonner.error(errText(e), { duration: 12_000, action: { label: t('approve.ask'), onClick: () => window.dispatchEvent(new CustomEvent('kopor-approval', { detail: approval })) } });
+      return;
+    }
     toast(errText(e), { tone: 'error' });
-  }, [toast, errText]);
+  }, [toast, errText, t]);
 
   // Navigating (including the phone's back button) closes any open sheet.
   const { pathname } = useLocation();

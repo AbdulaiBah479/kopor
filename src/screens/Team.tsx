@@ -12,6 +12,8 @@ import { ROLES } from '@/db/permissions';
 import { saveMember, deactivateMember, addBranch, setPin, hasPin } from '@/domain/org';
 import { createInvite } from '@/cloud/invites';
 import { waLink } from '@/lib/phone';
+import { usePinCheck } from '@/ui/PinCheck';
+import { listDevices, revokeDevice, verifyHistory, deviceId, type Device } from '@/cloud/protect';
 import { APP_URL } from '@/features/pwa';
 
 export function Team() {
@@ -46,6 +48,7 @@ export function Team() {
       <div className="row between"><h2 style={{ fontSize: 15 }}>{t('team.branches')}</h2>
         {can('team') && <button className="btn sm" onClick={() => openSheet(t('team.addBranch'), <BranchSheet />)}><Icon name="plus" size={16} /> {t('team.addBranch')}</button>}</div>
       <div className="list">{book.branches.map((b) => <div key={b.id} className="item"><div className="avatar"><Icon name="store" size={18} /></div><div className="main"><div className="t">{b.name}</div><div className="s">{b.address}</div></div></div>)}</div>
+      {can('team') && <PhonesCard />}
       {can('reports') && <a className="btn block" href="#/audit"><Icon name="list" size={18} /> {t('team.audit')}</a>}
     </Page>
   );
@@ -59,10 +62,12 @@ function MemberSheet({ member }: { member?: Member }) {
   const [f, setF] = useState({ name: member?.name ?? '', phone: member?.phone ?? '', role: (member?.role ?? 'cashier') as Role, branch_id: member?.branch_id ?? null as string | null });
   const [pin, setPinText] = useState('');
   const isMe = member?.id === me?.id;
+  const askPin = usePinCheck();
   return (
     <form className="form" onSubmit={async (e) => {
       e.preventDefault();
       try {
+        if (!(await askPin())) return;
         if (can('team')) {
           const saved = await saveMember(ctx, f, member?.id);
           if (pin) await setPin(saved.id, pin);
@@ -138,10 +143,11 @@ function BranchSheet() {
 
 export function Audit() {
   const { t, i18n } = useTranslation();
-  const { ctx } = useApp();
+  const { ctx, can, sync } = useApp();
   const rows = useLiveQuery(() => db.audit.where('org_id').equals(ctx.orgId).reverse().sortBy('at').then((r) => r.slice(0, 300)), [ctx.orgId]);
   return (
     <Page title={t('team.audit')} sub={t('team.auditSub')} back="/team">
+      {can('business') && sync.status !== 'off' && <HistoryCheck />}
       <div className="list">
         {rows?.length ? rows.map((a) => (
           <div key={a.id} className="item audit-row">
@@ -154,5 +160,56 @@ export function Audit() {
         )) : <Empty icon="list" title={t('team.audit')} />}
       </div>
     </Page>
+  );
+}
+
+/** Owner: every phone signed in to the business; sign any one out (a lost or stolen phone, or someone who left). */
+function PhonesCard() {
+  const { t } = useTranslation();
+  const { ctx, sync } = useApp();
+  const { toast, fail } = useOverlay();
+  const askPin = usePinCheck();
+  const [list, setList] = useState<Device[] | null>(null);
+  const [mine, setMine] = useState('');
+  useEffect(() => {
+    if (sync.status === 'off') return;
+    deviceId().then(setMine).catch(() => {});
+    listDevices(ctx.orgId).then(setList).catch(() => setList(null));
+  }, [ctx.orgId, sync.status, sync.lastSync]);
+  if (!list?.length) return null;
+  return (
+    <div className="stack" data-testid="phones">
+      <div className="row between"><h2 style={{ fontSize: 15 }}>{t('phones.title')}</h2></div>
+      <div className="list">
+        {list.map((d) => (
+          <div key={d.device_id} className="item" style={{ opacity: d.revoked ? 0.5 : 1 }}>
+            <div className="avatar"><Icon name="install" size={18} /></div>
+            <div className="main"><div className="t with-badge"><span className="trunc">{d.member_name}</span>{d.device_id === mine && <span className="badge good">{t('phones.this')}</span>}{d.revoked && <span className="badge">{t('phones.out')}</span>}</div>
+              <div className="s">{d.label} · {t('phones.seen', { time: new Date(d.last_seen).toLocaleString() })}</div></div>
+            {!d.revoked && d.device_id !== mine && <button className="btn ghost sm" onClick={async () => {
+              if (!confirm(t('phones.confirm', { name: d.member_name })) || !(await askPin())) return;
+              try { await revokeDevice(ctx.orgId, d.device_id); setList(list.map((x) => (x.device_id === d.device_id ? { ...x, revoked: true } : x))); toast(t('phones.done')); } catch (e) { fail(e); }
+            }}>{t('phones.signOut')}</button>}
+          </div>
+        ))}
+      </div>
+      <div className="small muted">{t('phones.help')}</div>
+    </div>
+  );
+}
+
+/** Owner: check that no history entry was changed or removed behind the app (the server keeps a fingerprint chain). */
+function HistoryCheck() {
+  const { t } = useTranslation();
+  const { ctx } = useApp();
+  const { fail } = useOverlay();
+  const [r, setR] = useState<Awaited<ReturnType<typeof verifyHistory>> | null>(null);
+  return (
+    <div className="card stack" data-testid="history-check">
+      <div className="small muted">{t('history.help')}</div>
+      {r && (r.ok ? <div className="alert info"><Icon name="check" /><div>{t('history.ok', { count: r.checked })}</div></div>
+        : <div className="alert bad"><Icon name="alert" /><div>{t('history.broken', { when: new Date(r.broken_at ?? 0).toLocaleString(), what: r.summary ?? '' })}</div></div>)}
+      <button className="btn block" onClick={() => verifyHistory(ctx.orgId).then(setR).catch(fail)}><Icon name="shield" size={18} /> {t('history.check')}</button>
+    </div>
   );
 }

@@ -6,7 +6,7 @@ import { attendanceFlags } from './staff';
 import type { Book } from './book';
 
 export type FlagKind = 'short' | 'deleted' | 'refund' | 'discount' | 'lost' | 'belowCost' | 'unconfirmed' | 'momoShort' | 'attendance' | 'lateNight'
-  | 'underPriced' | 'backdated' | 'absentWork' | 'noClose' | 'ghostCredit' | 'selfCredit' | 'bigExpense' | 'dupRef' | 'refundNoSale' | 'noItems' | 'dupPhone' | 'habitDiscount' | 'staffDiscount';
+  | 'underPriced' | 'backdated' | 'absentWork' | 'noClose' | 'ghostCredit' | 'selfCredit' | 'bigExpense' | 'dupRef' | 'refundNoSale' | 'noItems' | 'dupPhone' | 'habitDiscount' | 'staffDiscount' | 'lowShift';
 /** branch: where it happened (null = the whole business or not known). */
 export interface Flag { kind: FlagKind; date: string; who: string; amount: number; detail: string; at?: number; branch?: string | null }
 
@@ -179,6 +179,24 @@ export function watchFlags(book: Book, audit: AuditEntry[], days = 30, now = tod
   }
   for (const [id, r] of disc) {
     if (r.n >= 5 && r.sales > 0 && r.total / r.sales >= HABIT_DISCOUNT) flags.push({ kind: 'habitDiscount', date: now, who: name(id), amount: r.total, detail: `${r.n}`, branch: r.branch });
+  }
+
+  // Much lower sales on the days one cashier sells than on the other days: money may be kept without a record.
+  const perDay = new Map<string, Map<string, number>>();   // member -> day -> sales
+  for (const t of sales) {
+    if (t.type !== 'in' || t.category !== 'sale') continue;
+    const m = perDay.get(t.created_by ?? '') ?? new Map<string, number>();
+    m.set(t.date, (m.get(t.date) ?? 0) + t.amount);
+    perDay.set(t.created_by ?? '', m);
+  }
+  if (perDay.size >= 2) for (const [id, days] of perDay) {
+    if (!staffOnly(id) || days.size < 5) continue;
+    const mine = [...days.values()].reduce((s, v) => s + v, 0) / days.size;
+    let otherSum = 0, otherDays = 0;
+    for (const [oid, od] of perDay) if (oid !== id) for (const v of od.values()) { otherSum += v; otherDays++; }
+    if (otherDays < 5) continue;
+    const others = otherSum / otherDays;
+    if (mine < others * 0.5) flags.push({ kind: 'lowShift', date: now, who: name(id), amount: Math.round(others - mine), detail: `${Math.round((mine / others) * 100)}%` });
   }
 
   // Discounts on sales to a staff member (their phone number on the customer).

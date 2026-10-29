@@ -16,11 +16,12 @@ import { updateOrg } from '@/domain/org';
 import { useOverlay } from '@/ui/overlay';
 import { useAlerts } from '@/features/alertStore';
 import type { AlertRow } from '@/cloud/alerts';
+import { ApprovalsCard } from './Approvals';
 import { MoneyInput, Field } from '@/ui/widgets';
 
 const ICON: Record<FlagKind, string> = {
   short: 'cash', momoShort: 'phone', deleted: 'trash', refund: 'undo', discount: 'tag', lost: 'box', belowCost: 'trendDown', unconfirmed: 'alert', attendance: 'users', lateNight: 'moon',
-  underPriced: 'tag', backdated: 'calendar', absentWork: 'users', noClose: 'lock', ghostCredit: 'book', selfCredit: 'book', bigExpense: 'up', dupRef: 'copy', refundNoSale: 'undo', noItems: 'box', dupPhone: 'phone', habitDiscount: 'tag', staffDiscount: 'tag',
+  underPriced: 'tag', backdated: 'calendar', absentWork: 'users', noClose: 'lock', ghostCredit: 'book', selfCredit: 'book', bigExpense: 'up', dupRef: 'copy', refundNoSale: 'undo', noItems: 'box', dupPhone: 'phone', habitDiscount: 'tag', staffDiscount: 'tag', lowShift: 'trendDown',
 };
 
 export function Watch() {
@@ -55,11 +56,13 @@ export function Watch() {
     : f.kind === 'noItems' ? t('watch.noItemsOf', { share: f.detail })
     : f.kind === 'habitDiscount' ? t('watch.habitOf', { n: f.detail })
     : f.kind === 'staffDiscount' ? t('watch.staffDiscBy', { who: f.detail })
+    : f.kind === 'lowShift' ? t('watch.lowShiftOf', { share: f.detail })
     : f.kind === 'dupRef' ? t('watch.refUsed', { ref: f.detail.split(' · ')[0], who: f.detail.split(' · ')[1] })
     : f.detail;
   return (
     <Page title={t('watch.title')} sub={t('watch.sub')} back="/more">
       <Seg value={tab} onChange={setTab} options={[['people', t('watch.people')], ...(branches.length ? [['branches', t('watch.branches')] as ['branches', string]] : []), ['all', t('watch.all', { n: flags.length })], ['safe', t('watch.safe')]]} />
+      {tab !== 'safe' && <ApprovalsCard />}
       {tab !== 'safe' && live.length > 0 && <LatestAlerts list={live} />}
       {tab !== 'safe' && reversals.length > 0 && (
         <div className="alert bad" data-testid="reversals"><Icon name="alert" /><div><b>{t('watch.reversals', { n: reversals.length })}</b><br />
@@ -138,12 +141,16 @@ function ProtectCard() {
   const { ctx, can } = useApp();
   const { toast, fail } = useOverlay();
   const [limit, setLimit] = useState(book.org.credit_limit ?? 0);
+  const [over, setOver] = useState(book.org.approve_over ?? 100_000);
+  const [payMax, setPayMax] = useState(book.org.payout_daily_max ?? 2_000_000);
   if (!can('business')) return null;
   return (
-    <form className="form card" data-testid="protect-form" onSubmit={(e) => { e.preventDefault(); updateOrg(ctx, { credit_limit: limit > 0 ? limit : null }).then(() => toast(t('common.saved'))).catch(fail); }}>
+    <form className="form card" data-testid="protect-form" onSubmit={(e) => { e.preventDefault(); updateOrg(ctx, { credit_limit: limit > 0 ? limit : null, approve_over: over, payout_daily_max: payMax > 0 ? payMax : null }).then(() => toast(t('common.saved'))).catch(fail); }}>
       <b><Icon name="shield" size={18} className="mr-1 inline" />{t('watch.protect')}</b>
       <div className="small">{t('watch.rules')}</div>
       <Field label={t('watch.creditLimit')} hint={t('watch.creditLimitHelp')}><MoneyInput name="credit_limit" value={limit} onChange={setLimit} /></Field>
+      <Field label={t('approve.over')} hint={t('approve.overHelp')}><MoneyInput name="approve_over" value={over} onChange={setOver} /></Field>
+      <Field label={t('approve.payMax')} hint={t('approve.payMaxHelp')}><MoneyInput name="payout_daily_max" value={payMax} onChange={setPayMax} /></Field>
       <button className="btn primary block">{t('common.save')}</button>
     </form>
   );

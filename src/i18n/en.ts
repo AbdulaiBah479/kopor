@@ -176,6 +176,7 @@ const base = {
     remindersSub: 'Who to remind today', offlineNote: 'Kopor works offline. Records are saved on this phone. Make backups or connect the cloud so you never lose them.' },
   public: { title: 'Invoice', notFound: 'This invoice link is not valid.', pay: 'Pay now', from: 'From', loadFail: 'Could not load this page. Check your internet connection.', retry: 'Try again' },
   err: {
+    needsApproval: 'This needs the owner’s approval.',
     handoverTo: 'Choose the cashier who takes over.',
     backdated: 'Cashiers can record only today or yesterday. Ask a manager to record an older day.',
     creditLimit: 'This would take the customer above the credit limit (Le {{limit}}; they owe Le {{owes}}). Ask a manager.',

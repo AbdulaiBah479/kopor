@@ -175,6 +175,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     remindersSub: 'Udat fɔ rimayn tide', offlineNote: 'Kopor de wok widawt nɛt. Rɛkɔd de sev na dis fon. Mek bakɔp ɔ kɔnɛkt di klawd so yu nɔ go lɔs am.' },
   public: { title: 'Invɔys', notFound: 'Dis invɔys link nɔ rayt.', pay: 'Pe naw', from: 'Frɔm', loadFail: 'A nɔ ebul lod dis pej. Chɛk yu intanɛt.', retry: 'Tray bak' },
   err: {
+    needsApproval: 'Dis nid di ɔna fɔ gri.',
     handoverTo: 'Pik di kashia we go tek ova.',
     backdated: 'Kashia kin rayt tide ɔ yestade nɔmɔ. Aks manija fɔ rayt ol de.',
     creditLimit: 'Dis go mek di kɔstɔma pas di kredit limit (Le {{limit}}; i de ɔw Le {{owes}}). Aks manija.',

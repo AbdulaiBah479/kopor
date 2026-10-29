@@ -107,3 +107,48 @@ describe('supplier due dates and more warning signs', () => {
     expect(flags.find((f) => f.kind === 'staffDiscount')).toMatchObject({ who: 'Sorie', amount: 100, detail: 'Ama' });
   });
 });
+
+describe('two-person approval and the shift sales check', () => {
+  it('a manager’s big refund and deleting an old sale go to the owner, with what to do', async () => {
+    const { recordReturn } = await import('@/domain/returns');
+    const { deleteTxn } = await import('@/domain/cash');
+    const mgr = await saveMember(ctx, { name: 'Kadi', phone: '078000111', role: 'manager', branch_id: null });
+    const m: Ctx = { ...ctx, memberId: mgr.id, memberName: mgr.name, role: 'manager' };
+    const p = await saveProduct(ctx, { name: 'TV', unit: 'pc', price: 500000, cost: 400000, low_at: 0, opening: 3 });
+    const sale = await recordSale(ctx, { method: 'cash', items: [{ product_id: p.id, name: 'TV', qty: 1 }] });
+    const err = await recordReturn(m, sale.id, [{ index: 0, qty: 1 }]).catch((e) => e);
+    expect(err.key).toBe('err.needsApproval');
+    expect(err.params.approval).toMatchObject({ kind: 'refund', amount: 500000, payload: { saleId: sale.id } });
+    // The owner does it from the request.
+    await recordReturn(ctx, err.params.approval.payload.saleId, err.params.approval.payload.lines);
+    // An old sale: a manager cannot delete it alone.
+    await db.transactions.update(sale.id, { created_at: Date.now() - 3 * 86_400_000 });
+    const del = await deleteTxn(m, sale.id).catch((e) => e);
+    expect(del.params.approval).toMatchObject({ kind: 'delete', payload: { txnId: sale.id } });
+    await deleteTxn(ctx, sale.id);
+  });
+
+  it('credit above the limit offers to ask the owner for that credit (or the whole sale on credit)', async () => {
+    const { addEntry, ensureContact } = await import('@/domain/credit');
+    await updateOrg(ctx, { credit_limit: 10000 });
+    const c = await ensureContact(cashier, 'Fatu', '076 555 444');
+    const e1 = await addEntry(cashier, { contactId: c.id, type: 'gave', amount: 20000 }).catch((e) => e);
+    expect(e1.params.approval).toMatchObject({ kind: 'credit', amount: 20000, payload: { contactId: c.id } });
+    const e2 = await recordSale(cashier, { method: 'credit', amount: 20000, customer: 'Fatu' }).catch((e) => e);
+    expect(e2.params.approval).toMatchObject({ kind: 'sale', amount: 20000, payload: { customer: 'Fatu' } });
+  });
+
+  it('flags a cashier whose days bring in much less than everyone else’s', async () => {
+    for (let d = 1; d <= 6; d++) {
+      await recordSale(ctx, { method: 'cash', amount: 10000, date: addDays(today(), -d) });
+      await db.transactions.where('date').equals(addDays(today(), -d)).modify({ created_at: Date.now() - d * 86_400_000 });
+    }
+    for (let d = 1; d <= 6; d++) await recordSale(cashier, { method: 'cash', amount: 2000, date: d === 1 ? addDays(today(), -1) : today() }).catch(() => {});
+    const b = await book();
+    // Spread the cashier's sales over 6 different days (as if they worked six shifts).
+    const mine = b.txns.filter((t) => t.created_by === cashier.memberId);
+    for (let i = 0; i < mine.length; i++) await db.transactions.update(mine[i].id, { date: addDays(today(), -(i + 1)) });
+    const f = watchFlags(await book(), []).find((x) => x.kind === 'lowShift');
+    expect(f).toMatchObject({ who: 'Sorie', detail: '20%' });
+  });
+});

@@ -86,6 +86,12 @@ const extra: ExtraDict = {
     deleted: 'Compte supprimé',
   },
   errx: {
+    payoutDailyMax: 'La limite d’envoi du jour est atteinte. Réessayez demain ou augmentez la limite dans Fraud watch → Stay safe.',
+    newPayee: 'Nouveau numéro : pour votre sécurité, le premier paiement vers un nouveau numéro peut partir après 24 heures. Réessayez demain.',
+    newPayeeWait: 'Ce numéro a été ajouté il y a moins de 24 heures. Pour votre sécurité, réessayez plus tard.',
+    historyLocked: 'L’historique ne peut pas être modifié.',
+    tooManyRequests: 'Trop de demandes aujourd’hui. Réessayez demain.',
+    deviceRevoked: 'Le propriétaire a déconnecté ce téléphone. Reconnectez-vous pour utiliser le cloud.',
     signIn: 'Connectez-vous d’abord (Plus → Cloud et compte).',
     role: 'Votre rôle ne permet pas cette action. Demandez au propriétaire.',
     trialUsed: 'Cette entreprise a déjà utilisé son essai gratuit de Pro.',

@@ -25,3 +25,17 @@ export async function checkCreditLimit(ctx: Ctx, contactId: string, extra: numbe
   const owes = rows.filter((e) => !e.deleted).reduce((s, e) => s + (e.type === 'gave' ? e.amount : -e.amount), 0);
   if (owes + extra > limit) throw new AppError('err.creditLimit', { limit: limit / 100, owes: Math.max(0, owes) / 100 });
 }
+
+/** Refunds above this need the owner (owner's setting; default Le 1,000; 0 = no approval needed). */
+export const DEFAULT_APPROVE_OVER = 100_000;
+export const OLD_RECORD_MS = 24 * 3600_000;
+
+/** Throws "needs the owner's approval" (with what to ask for) when a non-owner tries an action the owner must do. */
+export async function needOwner(ctx: Ctx, request: { kind: 'refund' | 'delete' | 'credit' | 'sale'; payload: Record<string, unknown>; amount: number; summary: string }, when: boolean) {
+  if (can(ctx.role, 'business') || !when) return;
+  throw new AppError('err.needsApproval', { approval: request });
+}
+export async function refundNeedsOwner(ctx: Ctx, amount: number) {
+  const lim = (await db.orgs.get(ctx.orgId))?.approve_over ?? DEFAULT_APPROVE_OVER;
+  return !can(ctx.role, 'business') && lim > 0 && amount > lim;
+}

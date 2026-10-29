@@ -86,6 +86,12 @@ const extra: ExtraDict = {
     deleted: 'Akawnt dɔn dilit',
   },
   errx: {
+    payoutDailyMax: 'Tide in limit fɔ sɛn mɔni dɔn rich. Tray tumara ɔ es di limit na Fraud watch → Stay safe.',
+    newPayee: 'Nyu nɔmba: fɔ yu sefti, di fɔs pemɛnt to nyu nɔmba kin go afta 24 awa. Tray bak tumara.',
+    newPayeeWait: 'Dɛn ad dis nɔmba nɔ rich 24 awa. Fɔ yu sefti, tray bak leta.',
+    historyLocked: 'Yu nɔ go chenj di istri.',
+    tooManyRequests: 'Bɔku aks tide. Tray tumara.',
+    deviceRevoked: 'Di ɔna dɔn sayn dis fon aut. Sayn in bak fɔ yuz di klawd.',
     signIn: 'Duya sayn in fɔs (More → Cloud & account).',
     role: 'Yu wok nɔ alaw yu fɔ du dis. Aks di ɔna.',
     trialUsed: 'Dis biznɛs dɔn yuz in fri Pro tray.',

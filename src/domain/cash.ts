@@ -5,7 +5,7 @@ import { today, addDays } from '@/lib/dates';
 import { AppError, findByName, type Book } from './book';
 import { ensureContact, addEntry } from './credit';
 import { computeTotals, taxSettings } from './tax';
-import { recordDate } from './guard';
+import { checkCreditLimit, needOwner, OLD_RECORD_MS, recordDate } from './guard';
 
 export const EXPENSE_CATEGORIES = ['stock', 'rent', 'transport', 'salaries', 'utilities', 'phone', 'fuel', 'food', 'repairs', 'taxes', 'loan', 'other'] as const;
 export const METHODS: Method[] = ['cash', 'orange', 'afrimoney', 'qmoney', 'bank', 'card', 'credit'];
@@ -53,6 +53,12 @@ export async function recordSale(ctx: Ctx, input: SaleInput): Promise<Txn> {
 
   return atomic(async () => {
     const contact = customer ? await ensureContact(ctx, customer, input.phone) : null;
+    if (input.method === 'credit' && contact) {
+      await checkCreditLimit(ctx, contact.id, total).catch((e) => {
+        if (e instanceof AppError && e.key === 'err.creditLimit') e.params.approval = { kind: 'sale', payload: { ...input }, amount: total, summary: `Sale on credit ${total / 100} to ${customer}`.slice(0, 280) };
+        throw e;
+      });
+    }
     let txn = await insert(ctx, 'transactions', {
       branch_id: ctx.branchId, type: 'in', category: 'sale', amount: total, method: input.method, contact_id: contact?.id ?? null,
       note: input.note?.trim() ?? '', date, items, ledger_id: null, invoice_id: input.invoiceId ?? null,
@@ -99,6 +105,7 @@ export async function deleteTxn(ctx: Ctx, id: string) {
     const txn = await db.transactions.get(id);
     if (!txn) throw new AppError('err.notFound');
     if (!isOwnRecent(ctx, txn)) assertCan(ctx.role, 'edit');
+    await needOwner(ctx, { kind: 'delete', payload: { txnId: id }, amount: txn.amount, summary: `Delete ${txn.type === 'in' ? 'sale' : 'expense'} ${txn.amount / 100} of ${txn.date}` }, Date.now() - txn.created_at > OLD_RECORD_MS);
     const undoOne = async (t: Txn) => {
       for (const m of await db.stock_moves.where('ref_id').equals(t.id).toArray()) if (!m.deleted) await update(ctx, 'stock_moves', m.id, { deleted: 1 });
       if (t.ledger_id) await update(ctx, 'ledger', t.ledger_id, { deleted: 1 });

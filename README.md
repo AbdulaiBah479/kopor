@@ -204,6 +204,22 @@ offline at the same time never overwrite each other's sales.
 
 **Money** is stored as integer cents everywhere (client and server), so there are no rounding errors.
 
+## Protection against fraud and attacks
+
+Every rule below is enforced by the server (Postgres rules in `supabase/migrations`), not only by the app.
+
+| Protection | How it works |
+|---|---|
+| Two-person approval | Refunds above the owner's amount (default Le 1,000), deleting records older than 24 hours, and credit above a customer's limit need the owner: staff send a request, the owner approves it on their phone (0036). |
+| Safer payouts | Daily limit (default Le 20,000) and a 24-hour wait before the first payout to a new number (monime function). |
+| Tamper-proof history | Each history entry carries a SHA-256 fingerprint chained to the one before; entries cannot be changed or deleted, and Team → History → Check the history finds any change made behind the app. |
+| Phones list | Every phone signed in, with a new-phone alert to the owner and per-phone sign-out (Team). |
+| PIN again | Exporting, backups, staff changes, removing a PIN, deleting the account or business, approvals and payouts ask for the PIN. |
+| Screen protection | Android: no screenshots or recent-apps preview on PIN screens (optionally everywhere). |
+| No back-dating, credit limits, fraud alerts | Migrations 0031, 0032, 0035; Fraud watch lists 25 kinds of warning sign. |
+| Backups that restore | Nightly encrypted backup; monthly restore test into a fresh database (`restore-test.yml`). |
+| Signed APKs | Each test APK has a Sigstore-signed build record: `gh attestation verify kopor-test.apk -R AbdulaiBah479/kopor`. |
+
 ## Known limits and next steps
 
 - Phone accounts have no SMS verification yet (no free option exists). Before scaling, turn on Supabase phone OTP

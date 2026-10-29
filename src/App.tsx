@@ -7,6 +7,7 @@ import { ErrorBoundary } from './ui/ErrorBoundary';
 import { Welcome } from './screens/Welcome';
 import { Home } from './screens/Home';
 import { CreditList } from './screens/Credit';
+import { ApprovalBridge } from './screens/Approvals';
 import { CashBook } from './screens/Cash';
 
 // Less-used screens load on demand to keep the first load small on slow networks (after the first visit they are
@@ -69,6 +70,7 @@ function Gate() {
   if (locked) return <Suspense fallback={<Boot />}><Lock /></Suspense>;
   return (
     <ErrorBoundary resetKey={pathname}>
+    <ApprovalBridge />
     <Suspense fallback={<Boot />}>
       <Routes>
         <Route path="/" element={<Home />} />

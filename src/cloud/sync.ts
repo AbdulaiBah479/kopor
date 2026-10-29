@@ -101,6 +101,12 @@ export function syncNow(orgId: string): Promise<void> {
     emit({ status: 'syncing', error: undefined });
     try {
       rejected = [];
+      const { deviceSeen } = await import('./protect');
+      if ((await deviceSeen(orgId).catch(() => 'ok')) === 'revoked') {
+        await sb.auth.signOut();
+        emit({ status: 'error', error: 'errx.deviceRevoked' });
+        return;
+      }
       const sent = await push(orgId);
       // New records may have made fraud alerts on the server: have them sent to the owner now.
       if (sent) void import('./alerts').then((m) => m.sendAlertsSoon(orgId));

@@ -25,6 +25,7 @@ import { Link } from 'react-router-dom';
 import { ActionButton } from '@/ui/extras';
 import { shareFile } from '@/lib/share';
 import { isPro } from '@/domain/plan';
+import { usePinCheck } from '@/ui/PinCheck';
 import { deleteCloudAccount } from '@/cloud/account-extra';
 
 const CloudSignIn = lazyRetry(() => import('./CloudSignIn'));
@@ -122,11 +123,13 @@ function ExportCard() {
   const { t } = useTranslation();
   const book = useBook();
   const { fail } = useOverlay();
+  const askPin = usePinCheck();
   return (
     <div className="card stack">
       <h2><Icon name="download" size={18} /> {t('export.title')}</h2>
       <div className="small muted">{t('export.help')}</div>
       <ActionButton icon="download" label={t('export.excel')} testId="export-excel" run={async () => {
+        if (!(await askPin())) return;
         try {
           const { businessWorkbook } = await import('@/features/excel');
           await shareFile(businessWorkbook(book, t), `kopor-${book.org.name.replace(/\W+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.xlsx`, book.org.name);
@@ -223,6 +226,7 @@ function SecurityCard() {
   const { t } = useTranslation();
   const { member, device, setDevice } = useApp();
   const { toast, fail } = useOverlay();
+  const askPin = usePinCheck();
   const [on, setOn] = useState(false);
   const [pin, setPinText] = useState('');
   useEffect(() => { if (member) hasPin(member.id).then(setOn); }, [member]);
@@ -237,8 +241,10 @@ function SecurityCard() {
       <Field label={t('settings.newPin')}><input type="password" inputMode="numeric" pattern="\d{4,8}" maxLength={8} required value={pin} onChange={(e) => setPinText(e.target.value.replace(/\D/g, ''))} autoComplete="new-password" /></Field>
       <div className="btn-row">
         <button className="btn primary">{on ? t('settings.changePin') : t('common.save')}</button>
-        {on && <button type="button" className="btn ghost" onClick={() => setPin(member.id, null).then(() => setOn(false))}>{t('settings.removePin')}</button>}
+        {on && <button type="button" className="btn ghost" onClick={async () => { if (await askPin()) await setPin(member.id, null).then(() => setOn(false)); }}>{t('settings.removePin')}</button>}
       </div>
+      <label className="check"><input type="checkbox" data-testid="screen-protect" checked={device.screenProtect} onChange={(e) => setDevice({ screenProtect: e.target.checked })} /> {t('safe.screen')}</label>
+      <div className="small muted">{t('safe.screenHelp')}</div>
       <label className="check"><input type="checkbox" data-testid="hide-money-setting" checked={device.hideMoney} onChange={(e) => setDevice({ hideMoney: e.target.checked })} /> {t('prefs.hide')}</label>
       <div className="small muted">{t('prefs.hideHelp')}</div>
       <Field label={t('settings.autoLock')}>
@@ -258,6 +264,7 @@ export function CloudCard() {
   const { t } = useTranslation();
   const { ctx, sync, can } = useApp();
   const { openSheet, fail, toast } = useOverlay();
+  const askPin = usePinCheck();
   const [cfg, setCfg] = useState<boolean | null>(null);
   const [user, setUser] = useState<{ email?: string; user_metadata?: { phone?: string } } | null>(null);
   const refresh = () => { getCloudConfig().then((c) => setCfg(!!c)); currentUser().then(setUser); };
@@ -287,7 +294,7 @@ export function CloudCard() {
           }}><Icon name="key" size={18} /> {t('recover.make')}</button>
           {can('business') && <button className="btn block" onClick={() => connectOrg(ctx.orgId, ctx.memberId!).then(() => toast(t('common.done'))).catch(fail)}><Icon name="upload" size={18} /> {t('settings.upload')}</button>}
           <button className="btn danger block" onClick={async () => {
-            if (!confirm(t('account.confirm'))) return;
+            if (!confirm(t('account.confirm')) || !(await askPin())) return;
             try { await deleteCloudAccount(); refresh(); toast(t('account.deleted')); } catch (e) { fail(e); }
           }}><Icon name="trash" size={18} /> {t('account.delete')}</button>
         </>
@@ -303,15 +310,17 @@ function BackupCard() {
   const { t } = useTranslation();
   const { ctx, switchSession } = useApp();
   const { toast, fail } = useOverlay();
+  const askPin = usePinCheck();
   const [pw, setPw] = useState('');
   const download = async () => {
+    if (!(await askPin())) return;
     const text = await exportOrg(ctx.orgId, pw || undefined);
     const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
     Object.assign(document.createElement('a'), { href: url, download: `kopor-backup-${new Date().toISOString().slice(0, 10)}${pw ? '-encrypted' : ''}.json` }).click();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
   const restore = async (file?: File) => {
-    if (!file) return;
+    if (!file || !(await askPin())) return;
     try {
       const text = await file.text();
       const pass = isEncrypted(text) ? prompt(t('settings.backupPassword')) ?? '' : undefined;
@@ -337,13 +346,14 @@ function BusinessesCard() {
   const { t } = useTranslation();
   const { ctx, switchSession, can, member } = useApp();
   const { fail } = useOverlay();
+  const askPin = usePinCheck();
   const orgs = useLocalOrgs();
   const open = async (orgId: string) => {
     const m = (await db.members.where('org_id').equals(orgId).toArray()).find((x) => x.active && !x.deleted && (x.user_id === member?.user_id || x.role === 'owner'));
     if (m) await switchSession({ orgId, memberId: m.id, branchId: m.branch_id });
   };
   const wipe = async () => {
-    if (!confirm(t('settings.resetConfirm'))) return;
+    if (!confirm(t('settings.resetConfirm')) || !(await askPin())) return;
     await removeOrgFromDevice(ctx.orgId);
     const other = orgs.find((o) => o.id !== ctx.orgId);
     if (other) await open(other.id); else await switchSession(null);

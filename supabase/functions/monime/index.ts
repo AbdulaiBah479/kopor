@@ -205,6 +205,21 @@ Deno.serve(async (req) => {
         const amount = Math.round(Number(body.amount));
         const phone = normalizeSlPhone(String(body.phone ?? '')) ?? String(body.phone ?? '').replace(/[^\d+]/g, '');
         if (!(amount > 0) || phone.length < 8 || !/^m\d+$/.test(String(body.providerId))) throw new HttpError(400, 'Invalid payout');
+        // Bank-style safety (migration 0036): a daily limit, and a 24-hour wait before the first payout to a new number,
+        // so a stolen phone or a "send it now" scam cannot empty the account in one go.
+        const { data: lim } = await db.from('orgs').select('payout_daily_max').eq('id', orgId).single();
+        const max = Number(lim?.payout_daily_max ?? 2_000_000);
+        const dayStart = new Date(); dayStart.setUTCHours(0, 0, 0, 0);
+        const { data: todays } = await db.from('payment_requests').select('amount').eq('org_id', orgId).eq('kind', 'payout')
+          .gte('created_at', dayStart.getTime()).not('status', 'in', '(failed,cancelled,expired)');
+        const sentToday = (todays ?? []).reduce((s, r) => s + Number(r.amount), 0);
+        if (sentToday + amount > max) throw new HttpError(409, 'errx.payoutDailyMax');
+        const { data: paidBefore } = await db.from('payment_requests').select('id').eq('org_id', orgId).eq('kind', 'payout').eq('phone', phone).eq('status', 'completed').limit(1);
+        if (!paidBefore?.length) {
+          const { data: payee } = await db.from('payout_payees').select('added_at').eq('org_id', orgId).eq('phone', phone).maybeSingle();
+          if (!payee) { await db.from('payout_payees').insert({ org_id: orgId, phone }); throw new HttpError(409, 'errx.newPayee'); }
+          if (Date.parse(payee.added_at) > Date.now() - 86_400_000) throw new HttpError(409, 'errx.newPayeeWait');
+        }
         const requestId = crypto.randomUUID();
         const c = await credsFor(orgId);
         const p = await monime<{ id: string; status: string }>(c, 'POST', '/payouts', {

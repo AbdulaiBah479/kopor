@@ -175,6 +175,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     remindersSub: 'Qui relancer aujourd’hui', offlineNote: 'Kopor fonctionne hors ligne. Les données sont sur ce téléphone. Faites des sauvegardes ou connectez le cloud pour ne rien perdre.' },
   public: { title: 'Facture', notFound: 'Ce lien de facture n’est pas valide.', pay: 'Payer maintenant', from: 'De', loadFail: 'Impossible de charger cette page. Vérifiez votre connexion Internet.', retry: 'Réessayer' },
   err: {
+    needsApproval: 'Cette action demande l’accord du propriétaire.',
     handoverTo: 'Choisissez le caissier qui prend le relais.',
     backdated: 'Les caissiers ne peuvent saisir qu’aujourd’hui ou hier. Demandez à un gérant pour un jour plus ancien.',
     creditLimit: 'Le client dépasserait son plafond de crédit (Le {{limit}} ; il doit Le {{owes}}). Demandez à un gérant.',

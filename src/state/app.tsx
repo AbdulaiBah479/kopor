@@ -12,6 +12,7 @@ import { setCurrencySymbol } from '@/lib/money';
 import { setDataSaver } from '@/lib/image';
 import { addDays, today } from '@/lib/dates';
 import { isOpenNow } from '@/domain/hours';
+import { setAlwaysProtect } from '@/features/privacy';
 import { syncNow, onSyncState, type SyncState } from '@/cloud/sync';
 
 export type Accent = 'emerald' | 'ocean' | 'royal' | 'sunset' | 'rose' | 'graphite';
@@ -20,12 +21,13 @@ export interface Appearance { theme: 'auto' | 'light' | 'dark'; accent: Accent; 
 /** simple: picture and voice mode on Home; voice: read things aloud. */
 // hideMoney blurs amounts (for counting in front of customers); closeHour = when "Close the day" rings (0 = never);
 // dataSaver sends smaller photos to the AI.
-export interface DeviceSettings extends Appearance { lang: string; autoLockMin: number; simple: boolean; voice: boolean; hideMoney: boolean; closeHour: number; dataSaver: boolean }
-const DEVICE_DEFAULTS: DeviceSettings = { lang: 'en', theme: 'auto', accent: 'emerald', text: 'normal', autoLockMin: 5, simple: false, voice: true, hideMoney: false, closeHour: 19, dataSaver: false };
+export interface DeviceSettings extends Appearance { lang: string; autoLockMin: number; simple: boolean; voice: boolean; hideMoney: boolean; closeHour: number; dataSaver: boolean; screenProtect: boolean }
+const DEVICE_DEFAULTS: DeviceSettings = { lang: 'en', theme: 'auto', accent: 'emerald', text: 'normal', autoLockMin: 5, simple: false, voice: true, hideMoney: false, closeHour: 19, dataSaver: false, screenProtect: false };
 
 function applyDevicePrivacy(d: DeviceSettings) {
   if (d.hideMoney) document.documentElement.dataset.hide = ''; else delete document.documentElement.dataset.hide;
   setDataSaver(d.dataSaver);
+  setAlwaysProtect(d.screenProtect);
 }
 
 interface AppState {

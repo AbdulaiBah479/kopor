@@ -1,0 +1,44 @@
+name: Backup restore test
+# Monthly proof that the nightly backups really work: the newest encrypted backup is downloaded, decrypted with the
+# BACKUP_PASSPHRASE secret and loaded into a fresh, empty copy of the Kopor database (all migrations); every table
+# must come back with every row. Nothing leaves this run and no live data is touched.
+on:
+  schedule:
+    - cron: '0 3 1 * *' # 03:00 on the 1st of each month
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read # to download the backup from the "Nightly backup" runs
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Download and decrypt the newest backup
+        run: |
+          set -euo pipefail
+          [ ${#BACKUP_PASSPHRASE} -ge 16 ] || { echo "::error::BACKUP_PASSPHRASE secret is missing"; exit 1; }
+          run=$(gh run list --workflow backup.yml --status success --limit 1 --json databaseId -q '.[0].databaseId')
+          [ -n "$run" ] || { echo "::error::No successful nightly backup found"; exit 1; }
+          name=$(gh api "repos/${{ github.repository }}/actions/runs/$run/artifacts" -q '.artifacts[] | select(.name | startswith("kopor-backup-")) | .name' | head -1)
+          [ -n "$name" ] || { echo "::error::The newest backup run has no backup file (expired?)"; exit 1; }
+          gh run download "$run" -n "$name" -D dl
+          echo "$BACKUP_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 -d "dl/$name.tar.gz.gpg" > backup.tar.gz
+          tar -xzf backup.tar.gz
+          echo "Testing **$name** (taken $(cat backup/taken_at.txt))" >> "$GITHUB_STEP_SUMMARY"
+      - name: Restore into a fresh database and count every row
+        run: node tools/restore-test.mjs backup | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Remove the decrypted copy
+        if: always()
+        run: rm -rf backup backup.tar.gz dl

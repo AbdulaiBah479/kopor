@@ -6,6 +6,9 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   android: { allowMixedContent: false },
   server: { androidScheme: 'https' },
+  // Screen protection starts off; Kopor switches it on for the PIN screens (and all the time if the owner chose that
+  // in Settings), so people can still take screenshots of ordinary screens.
+  plugins: { PrivacyScreen: { enable: false } },
 };
 
 export default config;
