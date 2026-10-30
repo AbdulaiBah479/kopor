@@ -651,6 +651,7 @@ const v3 = {
     creditLimit: 'Credit limit per customer',
     creditLimitHelp: 'Cashiers cannot give a customer credit above this. Managers and owners can. Leave empty for no limit.',
     alert: {
+      test: 'Test notification: Kopor alerts are working',
       approval: '{{who}} asks you to approve: {{m}}',
       newDevice: '{{who}} signed in on a new phone ({{m}})',
       refund: '{{who}} gave a refund of {{amount}}',

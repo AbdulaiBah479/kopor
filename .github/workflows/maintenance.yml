@@ -16,8 +16,9 @@ on:
           - check-setup
           - set-owner-phone
           - problem-summary
+          - test-notification
       phone:
-        description: Phone number (for issue-recovery-code or set-owner-phone), e.g. 072082348 or +23272082348
+        description: Phone number (for issue-recovery-code, set-owner-phone or test-notification), e.g. 072082348 or +23272082348
         required: false
         type: string
 
@@ -35,6 +36,7 @@ jobs:
       - name: ${{ inputs.action }}
         env:
           PHONE: ${{ inputs.phone }}
+          ANON: ${{ vars.VITE_SUPABASE_ANON_KEY }}
           PRIVATE_REPO: ${{ github.event.repository.private }}
         run: |
           set -euo pipefail
@@ -88,9 +90,18 @@ jobs:
               echo "select to_char(created_at, 'YYYY-MM-DD') as day, kind, count(*) filter (where coalesce(app_info->>'automatic', '') <> 'true') as people, count(*) filter (where app_info->>'automatic' = 'true') as automatic, string_agg(distinct coalesce(app_info->>'version', '?') || '/' || case when app_info->>'ua' ilike '%wv)%' or app_info->>'ua' ilike '%; wv%' then 'android-app' else 'browser' end, ', ') as builds from public.reports where created_at > now() - interval '21 days' group by 1, 2 order by 1 desc, 2" | sql | jq -r '.[] | [.day, .kind, "people=\(.people)", "auto=\(.automatic)", .builds] | @tsv' | tee -a "$GITHUB_STEP_SUMMARY"
               echo "--- automatic crash reports (latest first) ---" | tee -a "$GITHUB_STEP_SUMMARY"
               echo "select to_char(created_at, 'MM-DD HH24:MI') as at, left(split_part(split_part(message, E'\n', 2), E'\n', 1), 140) as error, left(coalesce(app_info->>'screen', ''), 40) as screen, coalesce(app_info->>'version', '?') as v from public.reports where app_info->>'automatic' = 'true' and created_at > now() - interval '21 days' order by created_at desc limit 40" | sql | jq -r '.[] | [.at, .v, .screen, .error] | @tsv' | tee -a "$GITHUB_STEP_SUMMARY";;
+            # A "Test notification" to every owner and manager phone of the business whose owner has this phone number.
+            test-notification)
+              d=$(echo "$PHONE" | tr -cd '0-9+')
+              case "$d" in +*) d=${d#+};; 00*) d=${d#00};; 232*) [ ${#d} -gt 9 ] || d=232$d;; 0*) d=232${d#0};; *) d=232$d;; esac
+              [[ "$d" =~ ^[0-9]{10,15}$ ]] || { echo "::error::Give the owner's phone number"; exit 1; }
+              n=$(echo "select count(*) as n from (select kopor_alert(m.org_id, 'test', 'test-' || extract(epoch from now())::bigint, 'Kopor', 0, '') from public.members m where m.role = 'owner' and m.deleted = 0 and m.active = 1 and right(regexp_replace(m.phone, '[^0-9]', '', 'g'), 8) = right('$d', 8)) x" | sql | jq -r '.[0].n')
+              [ "$n" -ge 1 ] || { echo "::error::No business has an owner with that phone"; exit 1; }
+              curl -fsS -X POST "https://$PROJECT.supabase.co/functions/v1/push" -H "Authorization: Bearer $ANON" -H "apikey: $ANON" \
+                -H 'Content-Type: application/json' -d '{"action":"alerts"}' | tee -a "$GITHUB_STEP_SUMMARY";;
             check-setup)
               names=$(curl -fsS "https://api.supabase.com/v1/projects/$PROJECT/secrets" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | jq -r '.[].name')
-              for n in KOPOR_ADMIN_PHONES KOPOR_PIN_PEPPER GROQ_API_KEY GEMINI_API_KEY OLLAMA_API_KEY OMNIROUTE_URL CEREBRAS_API_KEY MISTRAL_API_KEY GITHUB_MODELS_TOKEN OPENROUTER_API_KEY NVIDIA_API_KEY SAMBANOVA_API_KEY HF_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_API_TOKEN MONIME_WEBHOOK_SECRET; do
+              for n in KOPOR_ADMIN_PHONES KOPOR_PIN_PEPPER GROQ_API_KEY GEMINI_API_KEY OLLAMA_API_KEY FCM_SERVICE_ACCOUNT OMNIROUTE_URL CEREBRAS_API_KEY MISTRAL_API_KEY GITHUB_MODELS_TOKEN OPENROUTER_API_KEY NVIDIA_API_KEY SAMBANOVA_API_KEY HF_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_API_TOKEN MONIME_WEBHOOK_SECRET; do
                 if grep -qx "$n" <<<"$names"; then echo "set      $n"; else echo "MISSING  $n"; fi
               done | tee -a "$GITHUB_STEP_SUMMARY";;
           esac

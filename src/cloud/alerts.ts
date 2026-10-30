@@ -2,7 +2,7 @@
 // that just sent records asks the server to send them to owners and managers straight away.
 import { getSupabase } from './supabase';
 
-export interface AlertRow { id: number; kind: 'short' | 'deleted' | 'away' | 'left' | 'fake' | 'refund' | 'approval' | 'newDevice'; who: string; amount: number; detail: string; at: string }
+export interface AlertRow { id: number; kind: 'short' | 'deleted' | 'away' | 'left' | 'fake' | 'refund' | 'approval' | 'newDevice' | 'test'; who: string; amount: number; detail: string; at: string }
 
 let last = 0;
 /** Ask the server to send new alerts now (at most every 20 seconds; never fails the caller). */

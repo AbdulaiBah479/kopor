@@ -653,6 +653,7 @@ const v3: V3Dict = {
     creditLimit: 'Kredit limit fɔ wan kɔstɔma',
     creditLimitHelp: 'Kashia nɔ go ebul gi kɔstɔma kredit pas dis. Manija ɛn ɔna kin du am. Lɛf am ɛmti if yu nɔ want limit.',
     alert: {
+      test: 'Tɛst: Kopor wɔnin de wok',
       approval: '{{who}} de aks yu fɔ gri: {{m}}',
       newDevice: '{{who}} sayn in pan nyu fon ({{m}})',
       refund: '{{who}} gi {{amount}} bak',

@@ -653,6 +653,7 @@ const v3: V3Dict = {
     creditLimit: 'Plafond de crédit par client',
     creditLimitHelp: 'Les caissiers ne peuvent pas dépasser ce crédit pour un client. Les gérants et propriétaires peuvent. Laissez vide pour aucun plafond.',
     alert: {
+      test: 'Test : les alertes Kopor fonctionnent',
       approval: '{{who}} vous demande d’approuver : {{m}}',
       newDevice: '{{who}} s’est connecté sur un nouveau téléphone ({{m}})',
       refund: '{{who}} a remboursé {{amount}}',
