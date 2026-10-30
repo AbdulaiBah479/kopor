@@ -1,0 +1,9 @@
+# Secret scanning (gitleaks): the built-in rules, plus one explained exception.
+[extend]
+useDefault = true
+
+[allowlist]
+# Firebase's google-services.json carries a Google API key that is MEANT to ship inside the Android app (Google:
+# "API keys for Firebase are not secret"); access is controlled by Firebase rules and the app's package name.
+description = "Firebase client configuration for the Android app"
+paths = ['''android-config/google-services\.json''']

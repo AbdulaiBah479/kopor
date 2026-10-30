@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "606041860111",
+    "project_id": "kopor-6e421",
+    "storage_bucket": "kopor-6e421.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:606041860111:android:ee1e698267995738799b7a",
+        "android_client_info": {
+          "package_name": "app.kopor.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWll70OW0zZkO9QcfDq9OHspUEXbNnW6Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

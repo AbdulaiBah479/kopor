@@ -112,6 +112,22 @@ Deno.serve(async (req) => {
       case 'weekly':
         return json(await weeklyReports(await vapid(), SUBJECT, APP));
 
+      case 'subscribe-fcm': {
+        const orgId = String(body.orgId ?? ''), token = String(body.token ?? '');
+        if (!/^[0-9a-f-]{36}$/.test(orgId) || token.length < 20 || token.length > 4096) throw new HttpError(400, 'Bad request');
+        const { user, level } = await caller(req, orgId);
+        if (level < 2) throw new HttpError(403, 'errx.role');
+        const lang = ['en', 'kri', 'fr'].includes(body.lang) ? body.lang : 'en';
+        const { error } = await db.from('fcm_tokens').upsert({ token, org_id: orgId, user_id: user.id, lang, last_seen: new Date().toISOString() });
+        if (error) throw new Error(error.message);
+        return json({ ok: true });
+      }
+
+      case 'unsubscribe-fcm': {
+        await db.from('fcm_tokens').delete().eq('token', String(body.token ?? ''));
+        return json({ ok: true });
+      }
+
       case 'unsubscribe': {
         await db.from('push_subscriptions').delete().eq('endpoint', String(body.endpoint ?? ''));
         return json({ ok: true });

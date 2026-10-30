@@ -4,6 +4,7 @@ import { admin } from './util.ts';
 import { sendPush, type VapidKeys } from './webpush.ts';
 import { gateFor, leones, sendText, sentToday } from './smsgate.ts';
 import { normalizeSlPhone } from './momo.ts';
+import { sendFcm } from './fcm.ts';
 
 type Lang = 'en' | 'kri' | 'fr';
 export interface Alert { id: number; org_id: string; kind: string; who: string; amount: number; detail: string; at: string }
@@ -51,20 +52,28 @@ interface Sub { endpoint: string; p256dh: string; auth: string; lang: Lang }
 
 async function recipients(orgId: string) {
   const db = admin();
-  const [{ data: subs }, { data: members }, { data: org }] = await Promise.all([
+  const [{ data: subs }, { data: members }, { data: org }, { data: fcm }] = await Promise.all([
     db.from('push_subscriptions').select('endpoint, p256dh, auth, lang').eq('org_id', orgId).eq('scope', 'org'),
     db.from('members').select('phone, role').eq('org_id', orgId).eq('deleted', 0).eq('active', 1).in('role', ['owner', 'manager']),
     db.from('orgs').select('name, phone').eq('id', orgId).single(),
+    db.from('fcm_tokens').select('token, lang').eq('org_id', orgId),
   ]);
   const phones = new Set<string>();
   for (const m of members ?? []) { const p = normalizeSlPhone(m.phone ?? ''); if (p) phones.add(p); }
-  return { subs: (subs ?? []) as Sub[], phones: [...phones], name: org?.name ?? 'Kopor' };
+  return { subs: (subs ?? []) as Sub[], fcm: (fcm ?? []) as { token: string; lang: Lang }[], phones: [...phones], name: org?.name ?? 'Kopor' };
 }
 
-async function pushAll(subs: Sub[], msg: (lang: Lang) => { title: string; body: string; url: string; tag: string }, keys: VapidKeys, subject: string) {
+/** Phone notifications: Web Push (browsers, installed web app) and Firebase (the Android app). */
+async function pushAll(r: { subs: Sub[]; fcm: { token: string; lang: Lang }[] }, msg: (lang: Lang) => { title: string; body: string; url: string; tag: string }, keys: VapidKeys, subject: string) {
   const db = admin();
   let sent = 0;
-  for (const s of subs) {
+  for (const f of r.fcm) {
+    const m = msg(L[f.lang] ? f.lang : 'en');
+    const res = await sendFcm(f.token, { ...m, url: m.url.slice(m.url.indexOf('#')) });
+    if (res === 'ok') sent++;
+    else if (res === 'gone') await db.from('fcm_tokens').delete().eq('token', f.token);
+  }
+  for (const s of r.subs) {
     try {
       const status = await sendPush(s, msg(L[s.lang] ? s.lang : 'en'), keys, subject);
       if (status === 404 || status === 410) await db.from('push_subscriptions').delete().eq('endpoint', s.endpoint);
@@ -108,7 +117,7 @@ export async function flushAlerts(keys: VapidKeys, subject: string, app: string,
     const r = await recipients(org);
     for (const a of list) {
       const kind = a.kind as keyof typeof L.en;
-      pushed += await pushAll(r.subs, (lang) => {
+      pushed += await pushAll(r, (lang) => {
         const [title, body] = (L[lang][kind] as (a: Alert) => string[])(a);
         return { title: `${r.name}: ${title}`, body, url: `${app}#/watch`, tag: `alert-${a.id}` };
       }, keys, subject);
@@ -137,7 +146,7 @@ export async function weeklyReports(keys: VapidKeys, subject: string, app: strin
     const warn = r.warnings.slice(0, 4).map((w) => `${(w.who || '?').split(' ')[0]} ×${w.n}`).join(', ');
     const profit = Number(r.sales) - Number(r.cost) - Number(r.expenses);
     const text = (lang: Lang) => L[lang].week(leones(Number(r.sales)), leones(Number(r.expenses)), leones(profit), late, warn);
-    sent += await pushAll(rec.subs, (lang) => ({ title: L[lang].weekly(r.name), body: text(lang), url: `${app}#/report`, tag: `weekly-${week}` }), keys, subject);
+    sent += await pushAll(rec, (lang) => ({ title: L[lang].weekly(r.name), body: text(lang), url: `${app}#/report`, tag: `weekly-${week}` }), keys, subject);
     sent += await textAll(r.org_id, rec.phones, `Kopor weekly (${r.name}): ${text('en')}`, 'weekly');
   }
   await db.from('weekly_runs').update({ sent }).eq('week', week);

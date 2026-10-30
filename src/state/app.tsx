@@ -143,6 +143,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!watching || !orgId) return;
     let stop: (() => void) | undefined;
     import('@/features/alertWatch').then((m) => { m.startAlertWatch(orgId, i18n.t); stop = m.stopAlertWatch; }).catch(() => {});
+    // Android app: alerts also arrive when Kopor is closed (Firebase).
+    import('@/features/fcm').then((m) => m.registerForAlerts(orgId, i18n.language)).catch(() => {});
     return () => stop?.();
   }, [watching, orgId]);
   useEffect(() => {
