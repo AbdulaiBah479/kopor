@@ -84,6 +84,7 @@ const extra = {
     deleted: 'Account deleted',
   },
   errx: {
+    updated: 'Kopor was just updated. Close Kopor completely and open it again.',
     signInOrRole: 'Kopor’s server refused this. Sign in first (More → Cloud & account), or ask the owner if your role allows it.',
     payoutDailyMax: 'Today’s limit for sending money is reached. Try tomorrow or raise the limit in Fraud watch → Stay safe.',
     newPayee: 'New number: for your safety, the first payment to a new number can be sent after 24 hours. Try again tomorrow.',

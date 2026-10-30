@@ -33,6 +33,23 @@ jobs:
           VITE_SUPPORT_WHATSAPP: ${{ vars.VITE_SUPPORT_WHATSAPP }}
           VITE_SUPPORT_EMAIL: ${{ vars.VITE_SUPPORT_EMAIL }}
           VITE_PUBLIC_APP_URL: ${{ vars.VITE_PUBLIC_APP_URL }}
+      # Phones still running the previous version (an installed web app updates itself in the background) ask for
+      # its code files by name. Keep those files online next to the new version, or the old copy cannot finish
+      # loading (it showed "no internet" at sign-in).
+      - name: Keep the previous version's files online
+        env:
+          BASE: ${{ vars.VITE_PUBLIC_APP_URL || 'https://abdulaibah479.github.io/kopor/' }}
+        run: |
+          set -u
+          base="${BASE%/}"
+          curl -fsS --max-time 30 "$base/sw.js" -o old-sw.js || { echo "No live copy yet: nothing to keep"; exit 0; }
+          n=0
+          for f in $(grep -o 'url:"assets/[^"]*"' old-sw.js | sed 's/^url:"//; s/"$//' | sort -u); do
+            [ -e "dist/$f" ] && continue
+            curl -fsS --max-time 30 "$base/$f" -o "dist/$f" && n=$((n + 1)) || rm -f "dist/$f"
+          done
+          rm -f old-sw.js
+          echo "Kept $n code files of the previous version online" | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
