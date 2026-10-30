@@ -86,6 +86,7 @@ const extra: ExtraDict = {
     deleted: 'Akawnt dɔn dilit',
   },
   errx: {
+    signInOrRole: 'Kopor in sava nɔ gri. Sayn in fɔs (More → Cloud & account), ɔ aks di ɔna if yu wok alaw am.',
     payoutDailyMax: 'Tide in limit fɔ sɛn mɔni dɔn rich. Tray tumara ɔ es di limit na Fraud watch → Stay safe.',
     newPayee: 'Nyu nɔmba: fɔ yu sefti, di fɔs pemɛnt to nyu nɔmba kin go afta 24 awa. Tray bak tumara.',
     newPayeeWait: 'Dɛn ad dis nɔmba nɔ rich 24 awa. Fɔ yu sefti, tray bak leta.',

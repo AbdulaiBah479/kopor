@@ -14,6 +14,8 @@ export async function initMonitoring() {
     environment: import.meta.env.VITE_APP_BUILD ? 'android' : 'web',
     // Sentry v11 collects no personal data by default; beforeSend below scrubs anything left.
     tracesSampleRate: 0,
+    // A page from before an update asking for a file the update replaced: handled by reloading (see main.tsx).
+    ignoreErrors: [/Failed to fetch dynamically imported module/, /Importing a module script failed/, /error loading dynamically imported module/, /Unable to preload CSS/],
     beforeSend(event) {
       delete event.user;
       if (event.request) {

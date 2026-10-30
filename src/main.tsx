@@ -32,7 +32,8 @@ const reloadOnce = () => {
   if (navigator.onLine) location.reload();
   return navigator.onLine;
 };
-window.addEventListener('vite:preloadError', (e) => { if (reloadOnce()) e.preventDefault(); });
+// (No preventDefault: that makes the import "succeed" with nothing in it, which crashed whatever used it.)
+window.addEventListener('vite:preloadError', () => { reloadOnce(); });
 window.addEventListener('unhandledrejection', (e) => {
   if (STALE.test(String((e.reason as Error)?.message ?? e.reason)) && reloadOnce()) { e.preventDefault(); return; }
   reportError(e.reason);

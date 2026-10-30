@@ -11,7 +11,6 @@ import { QrCode } from '@/ui/QrCode';
 import { formatMoney, setCurrencySymbol } from '@/lib/money';
 import { publicLink } from '@/lib/links';
 import { shareText } from '@/lib/share';
-import { getSupabase } from '@/cloud/supabase';
 import { syncNow } from '@/cloud/sync';
 import { listPassports, makePassport, openPassport, revokePassport, type Passport as P, type PassportRow } from '@/cloud/passport';
 import { LoadFailed } from './PublicStatement';
@@ -19,16 +18,17 @@ import { LoadFailed } from './PublicStatement';
 export function Passport() {
   const { t } = useTranslation();
   const book = useBook();
-  const { ctx, can } = useApp();
+  const { ctx, can, sync } = useApp();
   const { toast, fail } = useOverlay();
   const { fmt } = useDate();
-  const [cloud, setCloud] = useState<boolean | null>(null);
+  // Signed in to the cloud (the server makes the passport from the records it has).
+  const cloud = sync.status !== 'off';
   const [rows, setRows] = useState<(PassportRow & { live: boolean })[]>([]);
   const [busy, setBusy] = useState(false);
   const [shown, setShown] = useState('');
   const load = () => listPassports(ctx.orgId).then((list) => { const now = Date.now(); setRows(list.map((r) => ({ ...r, live: !r.revoked && new Date(r.expires_at).getTime() > now }))); }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { getSupabase().then((s) => { setCloud(!!s); if (s) load(); }); }, [ctx.orgId]);
+  useEffect(() => { if (cloud) load(); }, [ctx.orgId, cloud]);
   if (!can('business')) return <Page title={t('pass.title')} back="/more"><Empty icon="lock" title={t('pass.ownerOnly')} /></Page>;
   const link = (tok: string) => publicLink(`/p/${tok}`);
   const create = async () => {

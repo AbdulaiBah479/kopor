@@ -86,6 +86,7 @@ const extra: ExtraDict = {
     deleted: 'Compte supprimé',
   },
   errx: {
+    signInOrRole: 'Le serveur de Kopor a refusé. Connectez-vous d’abord (Plus → Cloud et compte), ou demandez au propriétaire si votre rôle le permet.',
     payoutDailyMax: 'La limite d’envoi du jour est atteinte. Réessayez demain ou augmentez la limite dans Fraud watch → Stay safe.',
     newPayee: 'Nouveau numéro : pour votre sécurité, le premier paiement vers un nouveau numéro peut partir après 24 heures. Réessayez demain.',
     newPayeeWait: 'Ce numéro a été ajouté il y a moins de 24 heures. Pour votre sécurité, réessayez plus tard.',

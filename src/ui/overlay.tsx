@@ -30,6 +30,8 @@ export function useErrorText() {
     const msg = e instanceof Error ? e.message : String(e);
     // Dropped connections are common: say so plainly instead of showing a technical message.
     if (/failed to fetch|networkerror|load failed|network request failed|err_name_not_resolved|timeout/i.test(msg) || !navigator.onLine) return t('errx.offline');
+    // The server refusing a request (not signed in, or the role does not allow it): plain words, not database text.
+    if (/permission denied|JWT|not authorized|row-level security/i.test(msg)) return t('errx.signInOrRole');
     return /^errx?\./.test(msg) ? t(msg) : msg || t('err.generic');
   };
 }
