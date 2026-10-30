@@ -27,6 +27,7 @@ describe('shift handover', () => {
     let x = cashSinceLastCount(await book());
     expect(x.expected).toBe(5000);
     await handOver(cashier, { counted: 4500, expected: x.expected, to: ctx.memberId! });   // Le 5 short
+    await new Promise((r) => setTimeout(r, 5));   // the next sale comes after the handover, not in the same millisecond
     await recordSale(ctx, { method: 'cash', amount: 2000 });
     x = cashSinceLastCount(await book());
     expect(x).toMatchObject({ start: 4500, sales: 2000, expected: 6500 });
