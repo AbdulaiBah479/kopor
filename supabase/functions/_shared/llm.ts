@@ -27,7 +27,9 @@ function providers(): Provider[] {
     // Ollama: its free cloud (OLLAMA_API_KEY from ollama.com/settings/keys) or your own Ollama computer (OLLAMA_BASE_URL,
     // e.g. https://my-pc.example/v1; no key needed). Both speak the same OpenAI-style API.
     { name: 'ollama', base: e('OLLAMA_BASE_URL') ?? (e('OLLAMA_API_KEY') ? 'https://ollama.com/v1' : ''), key: e('OLLAMA_API_KEY') ?? (e('OLLAMA_BASE_URL') ? 'ollama' : undefined),
-      text: list(e('OLLAMA_MODELS'), ['gpt-oss:120b', 'gpt-oss:20b']), vision: list(e('OLLAMA_VISION_MODELS'), ['qwen3-vl:235b']) },
+      // Models in Ollama's free cloud plan (tested 2026-10-30); gemma4 reads photos. gpt-oss is told to think briefly,
+      // or its thinking can use up the whole answer.
+      text: list(e('OLLAMA_MODELS'), ['gpt-oss:120b', 'gpt-oss:20b']), vision: list(e('OLLAMA_VISION_MODELS'), ['gemma4:31b']), extra: gptOss },
     { name: 'cerebras', base: 'https://api.cerebras.ai/v1', key: e('CEREBRAS_API_KEY'), text: list(e('CEREBRAS_MODELS'), ['gpt-oss-120b']), vision: [], extra: gptOss },
     { name: 'mistral', base: 'https://api.mistral.ai/v1', key: e('MISTRAL_API_KEY'),
       text: list(e('MISTRAL_MODELS'), ['mistral-small-latest']), vision: list(e('MISTRAL_VISION_MODELS'), ['mistral-small-latest']) },
