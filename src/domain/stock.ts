@@ -105,7 +105,7 @@ export async function recordPurchase(ctx: Ctx, input: PurchaseInput) {
       } else if (cost > 0 && cost !== p.cost) {
         p = await update(ctx, 'products', p.id, { cost }, `Cost of ${p.name} now ${cost / 100}`);
       }
-      await insert(ctx, 'stock_moves', { branch_id: ctx.branchId, product_id: p.id, qty: l.qty, reason: 'restock', ref_id: txn?.id ?? null, date, expiry: l.expiry || null }, `Bought ${l.qty} ${p.name}`);
+      await insert(ctx, 'stock_moves', { branch_id: ctx.branchId, product_id: p.id, qty: l.qty, reason: 'restock', ref_id: txn?.id ?? null, date, expiry: l.expiry || null, unit_cost: cost > 0 ? cost : null, supplier: input.supplier?.trim().slice(0, 80) ?? '' }, `Bought ${l.qty} ${p.name}`);
     }
     return { txn, created };
   });

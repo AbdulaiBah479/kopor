@@ -420,6 +420,13 @@
   .pin-dots i { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--foreground); }
   .pin-dots i.on { background: var(--foreground); }
   .code-box { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 24px; font-weight: 700; letter-spacing: .04em; text-align: center; padding: 18px; border-radius: 14px; background: var(--fill); }
+  /* "Wait for Paid" (ui/WaitForPaid.tsx): grey while waiting, green when paid, red when it failed. */
+  .paid-box { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 22px 16px; border-radius: 18px; background: var(--fill); }
+  .paid-box b { font-size: 30px; }
+  .paid-box .paid-title { font-size: 20px; font-weight: 700; }
+  .paid-box.paid { background: var(--good-soft); color: var(--good); }
+  .paid-box.failed { background: var(--bad-soft); color: var(--bad); }
+  .paid-box .spinner { width: 40px; height: 40px; border-radius: 50%; border: 4px solid var(--line, currentColor); border-top-color: var(--good); animation: spin 1s linear infinite; }
   .scan-preview { display: block; width: 100%; max-height: 160px; object-fit: contain; border-radius: 14px; background: var(--fill); }
   .audit-row .s { white-space: normal; }
 
@@ -527,6 +534,7 @@
 }
 
 @keyframes pulse { 50% { opacity: .3; } }
+@keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .fade-in { animation: fade-in .15s ease-out; }
 

@@ -748,4 +748,22 @@ await test('payment reversals: server-only tables, and the reversal alert kind',
   assert.equal((await q(`select count(*)::int as c from alerts where kind = 'reversal'`)).rows[0].c, 1);
 });
 
+await test('closing summary: closing the day sends the owner sales, profit, cash short and what customers owe; not a warning', async () => {
+  const now = '(extract(epoch from now()) * 1000)::bigint';
+  await as('cashier');
+  await q(`insert into transactions (id, org_id, created_at, updated_at, type, category, amount, method, date, items)
+           values (gen_random_uuid(), $1, ${now}, ${now}, 'in', 'sale', 900000, 'cash', current_date, '[{"qty": 3, "cost": 200000}]')`, [ORG]);
+  await q(`insert into closings (id, org_id, created_at, updated_at, date, expected, counted, difference)
+           values (gen_random_uuid(), $1, ${now}, ${now}, current_date, 900000, 850000, -50000)`, [ORG]);
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  const a = (await q(`select * from alerts where org_id = $1 and kind = 'closing' order by id desc limit 1`, [ORG])).rows[0];
+  assert.ok(a, 'a closing summary');
+  const d = JSON.parse(a.detail);
+  assert.ok(Number(d.sales) >= 900000);
+  assert.equal(Number(d.diff), -50000);
+  assert.ok('owed' in d && 'warnings' in d && 'cost' in d);
+  const counted = (await q(`select count(*)::int as c from alerts where org_id = $1 and at::date = current_date and kind not in ('closing', 'test')`, [ORG])).rows[0].c;
+  assert.equal(Number(d.warnings) <= counted, true);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

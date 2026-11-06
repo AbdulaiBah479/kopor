@@ -18,6 +18,7 @@ import { ActionButton, ScanToggle, TotalsBlock } from '@/ui/extras';
 import { MoneyInput } from '@/ui/widgets';
 import { shareFile } from '@/lib/share';
 import { createCheckout, createUssdCode } from '@/cloud/payments';
+import { WaitForPaid } from '@/ui/WaitForPaid';
 
 const isOverdue = (i: Invoice) => i.status === 'unpaid' && !!i.due_date && i.due_date < today();
 const badgeOf = (i: Invoice): [string, string] =>
@@ -80,14 +81,16 @@ export function InvoiceDetail() {
     try {
       const r = await createCheckout(ctx.orgId, inv.id);
       openSheet(t('inv.payLink'), <div className="stack"><input className="input" readOnly value={r.url} onFocus={(e) => e.target.select()} />
-        <a className="btn get block" target="_blank" rel="noopener noreferrer" href={waLink(inv.phone, `${share}\n\n${t('public.pay')}: ${r.url}`, org.country_code)}><Icon name="chat" size={18} /> {t('common.whatsapp')}</a></div>);
+        <a className="btn get block" target="_blank" rel="noopener noreferrer" href={waLink(inv.phone, `${share}\n\n${t('public.pay')}: ${r.url}`, org.country_code)}><Icon name="chat" size={18} /> {t('common.whatsapp')}</a>
+        <WaitForPaid orgId={ctx.orgId} requestId={r.requestId} amount={total} /></div>);
     } catch (e) { fail(e); }
   };
   const ussd = async () => {
     try {
       const r = await createUssdCode(ctx.orgId, { invoiceId: inv.id, amount: total, name: `${org.name} ${inv.number}`.slice(0, 60), phone: inv.phone });
       openSheet(t('inv.ussd'), <div className="stack"><div className="code-box">{r.ussdCode}</div>
-        <a className="btn get block" target="_blank" rel="noopener noreferrer" href={waLink(inv.phone, `${share}\n\nUSSD: ${r.ussdCode}`, org.country_code)}><Icon name="chat" size={18} /> {t('common.whatsapp')}</a></div>);
+        <a className="btn get block" target="_blank" rel="noopener noreferrer" href={waLink(inv.phone, `${share}\n\nUSSD: ${r.ussdCode}`, org.country_code)}><Icon name="chat" size={18} /> {t('common.whatsapp')}</a>
+        <WaitForPaid orgId={ctx.orgId} requestId={r.requestId} amount={total} /></div>);
     } catch (e) { fail(e); }
   };
 

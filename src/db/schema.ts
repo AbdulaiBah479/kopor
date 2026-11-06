@@ -72,6 +72,7 @@ export interface StockMove extends Base {
   branch_id: string | null; product_id: string; qty: number;
   reason: 'opening' | 'sale' | 'restock' | 'adjust' | 'reversal' | 'return'; ref_id: string | null; date: string;
   expiry?: string | null; // expiry date of the goods received (restock / opening)
+  unit_cost?: number | null; supplier?: string; // restock: what one item cost and who sold it (price watch)
 }
 export interface GroupMember { id: string; name: string; phone: string }
 export interface Group extends Base {

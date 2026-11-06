@@ -24,6 +24,10 @@ export const createPayLink = (orgId: string, args: { amount: number; name: strin
 export const createUssdCode = (orgId: string, args: { invoiceId?: string; groupId?: string; amount: number; name: string; phone?: string }) =>
   call<{ ussdCode: string; requestId: string }>({ action: 'ussd', orgId, ...args });
 
+/** Whether a payment link or code has been paid (confirmed by Monime and double-checked by Kopor's server). */
+export const paymentStatus = (orgId: string, requestId: string) =>
+  call<{ status: 'pending' | 'processing' | 'completed' | 'failed' | 'expired' | 'cancelled' | 'reversed'; amount: number; kind: string }>({ action: 'request', orgId, requestId });
+
 export const momoProviders = (orgId: string) => call<{ providers: { id: string; name: string }[] }>({ action: 'providers', orgId });
 
 /** Send money out (osusu pot, supplier payment, salary). Owner only, enforced on the server. */

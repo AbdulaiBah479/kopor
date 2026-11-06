@@ -1110,5 +1110,26 @@ const v3: V3Dict = {
     note: 'Salari {{month}} · {{name}}',
     sentNote: 'Sɛn wit mobayl mɔni',
   },
+  paid: {
+    title: 'Wet fɔ di pemɛnt',
+    waiting: 'I de wet fɔ di pemɛnt…',
+    waitingHelp: 'Lɛf dis opin. Gi di gudz nɔmɔ we i tɔn grin.',
+    paid: 'I DƆN PE',
+    paidHelp: 'Monime dɔn kɔnfam am ɛn Kopor dɔn chɛk am. Yu kin gi di gudz.',
+    failed: 'I nɔ pe',
+    failedHelp: 'Di pemɛnt nɔ wok, i dɔn ɛkspay ɔ dɛn kansul am. Nɔ gi di gudz.',
+    stopped: 'I nɔ pe yet',
+    stoppedHelp: 'Natin nɔ kam insay 15 minit. Tɛl di kɔstɔma fɔ tray bak.',
+    again: 'Chɛk bak',
+  },
+  prices: {
+    title: 'Wach prayz',
+    loss: '{{name}}: yu de sɛl am {{price}} bɔt naw i kɔst {{now}}. Yu de lɔs mɔni pan ɛni wan.',
+    up: '{{name}} dɔn dia {{pct}}%: {{old}} → {{now}}.',
+    down: '{{name}} dɔn chip {{pct}}%: {{old}} → {{now}}. Yu kin sɛl am chip ɛn sɛl bɔku.',
+    use: 'Sɛl am {{price}}',
+    updated: '{{name}} naw de sɛl {{price}}',
+    help: 'Frɔm wetin yu pe di las tɛm dɛn we yu bay. Di prayz we wi tɛl yu de kip di sem prɔfit lɛk bifo.',
+  },
 };
 export default v3;

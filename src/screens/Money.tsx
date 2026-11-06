@@ -14,6 +14,7 @@ import { Avatar, ContactPick, Empty, Field, MoneyInput, Seg, useDate, Verified }
 import { formatMoney, currencySymbol } from '@/lib/money';
 import { shareText } from '@/lib/share';
 import { getSupabase } from '@/cloud/supabase';
+import { WaitForPaid } from '@/ui/WaitForPaid';
 import { createPayLink, createUssdCode, monimeStatus, walletBalance, walletHistory, type WalletAccount, type WalletTxn } from '@/cloud/payments';
 import { updateOrg } from '@/domain/org';
 import { recordSale, recordExpense, itemsLabel, EXPENSE_CATEGORIES } from '@/domain/cash';
@@ -259,8 +260,11 @@ function ReceiveSheet({ monime }: { monime: boolean }) {
     setBusy(true);
     try {
       const name = f.reason.trim() || f.from.trim() || book.org.name;
-      if (kind === 'link') { const r = await createPayLink(ctx.orgId, { amount: f.amount, name }); await shareText(message(r.url), contact?.phone, book.org.country_code); }
-      else { const r = await createUssdCode(ctx.orgId, { amount: f.amount, name, phone: contact?.phone }); await shareText(`${message('')}\nUSSD: ${r.ussdCode}`, contact?.phone, book.org.country_code); toast(`USSD: ${r.ussdCode}`); }
+      let requestId: string, extra = null;
+      if (kind === 'link') { const r = await createPayLink(ctx.orgId, { amount: f.amount, name }); requestId = r.requestId; await shareText(message(r.url), contact?.phone, book.org.country_code); }
+      else { const r = await createUssdCode(ctx.orgId, { amount: f.amount, name, phone: contact?.phone }); requestId = r.requestId; extra = <div className="code-box">{r.ussdCode}</div>; await shareText(`${message('')}\nUSSD: ${r.ussdCode}`, contact?.phone, book.org.country_code); toast(`USSD: ${r.ussdCode}`); }
+      // Keep this on screen and hand over the goods only when it turns green.
+      openSheet(t('paid.title'), <div className="stack">{extra}<WaitForPaid orgId={ctx.orgId} requestId={requestId} amount={f.amount} /></div>);
     } catch (err) { fail(err); } finally { setBusy(false); }
   };
 

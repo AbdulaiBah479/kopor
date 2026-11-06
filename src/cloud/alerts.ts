@@ -16,7 +16,7 @@ export function sendAlertsSoon(orgId: string) {
 export async function recentAlerts(orgId: string, afterId = 0): Promise<AlertRow[]> {
   const sb = await getSupabase();
   if (!sb) return [];
-  const { data, error } = await sb.from('alerts').select('id, kind, who, amount, detail, at').eq('org_id', orgId).gt('id', afterId)
+  const { data, error } = await sb.from('alerts').select('id, kind, who, amount, detail, at').eq('org_id', orgId).gt('id', afterId).neq('kind', 'closing')
     .order('id', { ascending: false }).limit(30).abortSignal(AbortSignal.timeout(15_000));
   if (error) throw new Error(error.message);
   return data as AlertRow[];

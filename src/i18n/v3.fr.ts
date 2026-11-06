@@ -1110,5 +1110,26 @@ const v3: V3Dict = {
     note: 'Salaire {{month}} · {{name}}',
     sentNote: 'Envoyé par mobile money',
   },
+  paid: {
+    title: 'Attendre le paiement',
+    waiting: 'En attente du paiement…',
+    waitingHelp: 'Gardez cet écran ouvert. Ne donnez la marchandise que quand il devient vert.',
+    paid: 'PAYÉ',
+    paidHelp: 'Monime l’a confirmé et Kopor l’a vérifié. Vous pouvez donner la marchandise.',
+    failed: 'Non payé',
+    failedHelp: 'Le paiement a échoué, expiré ou été annulé. Ne donnez pas la marchandise.',
+    stopped: 'Toujours pas payé',
+    stoppedHelp: 'Rien en 15 minutes. Demandez au client de réessayer.',
+    again: 'Vérifier encore',
+  },
+  prices: {
+    title: 'Suivi des prix',
+    loss: '{{name}} : vous vendez à {{price}} mais il coûte maintenant {{now}}. Vous perdez de l’argent sur chacun.',
+    up: '{{name}} coûte {{pct}} % de plus : {{old}} → {{now}}.',
+    down: '{{name}} coûte {{pct}} % de moins : {{old}} → {{now}}. Vous pourriez vendre moins cher et vendre plus.',
+    use: 'Vendre à {{price}}',
+    updated: '{{name}} se vend maintenant à {{price}}',
+    help: 'D’après vos derniers achats. Le prix suggéré garde le même bénéfice qu’avant.',
+  },
 };
 export default v3;

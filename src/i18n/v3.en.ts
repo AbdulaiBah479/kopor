@@ -1108,6 +1108,27 @@ const v3 = {
     note: 'Salary {{month}} · {{name}}',
     sentNote: 'Sent by mobile money',
   },
+  paid: {
+    title: 'Wait for the payment',
+    waiting: 'Waiting for the payment…',
+    waitingHelp: 'Keep this open. Hand over the goods only when it turns green.',
+    paid: 'PAID',
+    paidHelp: 'Monime confirmed it and Kopor checked it. You can hand over the goods.',
+    failed: 'Not paid',
+    failedHelp: 'The payment failed, expired or was cancelled. Do not hand over the goods.',
+    stopped: 'Still not paid',
+    stoppedHelp: 'Nothing arrived in 15 minutes. Ask the customer to try again.',
+    again: 'Check again',
+  },
+  prices: {
+    title: 'Price watch',
+    loss: '{{name}}: you sell at {{price}} but it now costs {{now}}. You lose money on each one.',
+    up: '{{name}} costs {{pct}}% more: {{old}} → {{now}}.',
+    down: '{{name}} costs {{pct}}% less: {{old}} → {{now}}. You could sell cheaper and sell more.',
+    use: 'Sell at {{price}}',
+    updated: '{{name}} now sells at {{price}}',
+    help: 'From what you paid at your last purchases. The suggested price keeps the same profit as before.',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

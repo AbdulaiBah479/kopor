@@ -47,6 +47,7 @@ export function useEntryConfirm() {
   };
 }
 import { createUssdCode } from '@/cloud/payments';
+import { WaitForPaid } from '@/ui/WaitForPaid';
 
 /** Polite reminder message in the current language. */
 export function useReminderText() {
@@ -132,7 +133,8 @@ export function ContactDetail() {
     try {
       const r = await createUssdCode(ctx.orgId, { amount: b, name: `${book.org.name}`.slice(0, 60), phone: c.phone });
       openSheet(t('inv.ussd'), <div className="stack"><div className="code-box">{r.ussdCode}</div>
-        <a className="btn get block" target="_blank" rel="noopener noreferrer" href={waLink(c.phone, `${remind(c)}\n\nUSSD: ${r.ussdCode}`, cc)}><Icon name="chat" size={18} /> {t('common.whatsapp')}</a></div>);
+        <a className="btn get block" target="_blank" rel="noopener noreferrer" href={waLink(c.phone, `${remind(c)}\n\nUSSD: ${r.ussdCode}`, cc)}><Icon name="chat" size={18} /> {t('common.whatsapp')}</a>
+        <WaitForPaid orgId={ctx.orgId} requestId={r.requestId} amount={b} /></div>);
     } catch (e) { fail(e); }
   };
 

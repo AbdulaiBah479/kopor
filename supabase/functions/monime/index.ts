@@ -2,13 +2,13 @@
 //  - easy: the owner only enters a mobile money number. Payments land in the business's own money box inside Kopor's
 //    Monime account and are sent on to that number straight away (sweepToOwner), so money does not stay with Kopor.
 //  - own: the business connects its own Monime account (Space ID + token) and the money stays there.
-// Actions: easy | connect | status | disconnect | checkout | link | ussd | providers | payout | wallet | history
+// Actions: easy | connect | status | request | disconnect | checkout | link | ussd | providers | payout | wallet | history
 import { admin, caller, cors, json, requireLevel, seal, HttpError, env, nowMs, randomSecret } from '../_shared/util.ts';
 import { credsFor, easyAvailable, ensurePlatformWebhook, monime, WEBHOOK_EVENTS, monimeList, platformCreds, settleTo, SLE, sweepToOwner, type MonimeCreds } from '../_shared/monime.ts';
 import { maskPhone, networkOf, normalizeSlPhone } from '../_shared/momo.ts';
 
 // wallet / history: the business's own Monime balances and money movements (managers and owners only).
-const LEVEL = { easy: 3, connect: 3, disconnect: 3, status: 0, checkout: 2, link: 2, ussd: 2, providers: 3, payout: 3, wallet: 2, history: 2 } as const;
+const LEVEL = { easy: 3, connect: 3, disconnect: 3, status: 0, request: 1, checkout: 2, link: 2, ussd: 2, providers: 3, payout: 3, wallet: 2, history: 2 } as const;
 
 interface MonimeAccount { id: string; name: string; currency: string; uvan?: string; balance?: { available?: { currency: string; value: number } } | null }
 interface MonimeTxn {
@@ -71,6 +71,15 @@ Deno.serve(async (req) => {
           ...(typeof body.auto === 'boolean' ? { easy_auto: body.auto } : {}), updated_at: new Date().toISOString(),
         });
         return json({ ok: true, phone: maskPhone(phone), providerId: provider });
+      }
+      // Has this payment link or code been paid? ("Wait for Paid" on the cashier's screen). Paid only once Monime's
+      // message arrived and was double-checked (monime-webhook), so the screen never says paid too early.
+      case 'request': {
+        const id = String(body.requestId ?? '');
+        if (!/^[0-9a-f-]{36}$/.test(id)) throw new HttpError(400, 'Bad request');
+        const { data } = await db.from('payment_requests').select('status, amount, kind').eq('id', id).eq('org_id', orgId).maybeSingle();
+        if (!data) throw new HttpError(404, 'Not found');
+        return json(data);
       }
       case 'status': {
         const { data } = await db.from('org_secrets').select('monime_space_id, easy_on, easy_fac_id, payout_phone, payout_provider, easy_auto').eq('org_id', orgId).maybeSingle();
