@@ -4,7 +4,7 @@
 //   { orgId, action: 'trial' }     -> 14 days of Pro free, once per business (owner only).
 //   { action: 'status' }           -> whether paying for Pro is open yet.
 import { admin, caller, cors, json, requireLevel, HttpError, nowMs } from '../_shared/util.ts';
-import { monime, SLE } from '../_shared/monime.ts';
+import { ensurePlatformWebhook, monime, SLE } from '../_shared/monime.ts';
 
 const DAY = 86_400_000, TRIAL_DAYS = 14;
 const platform = () => {
@@ -34,6 +34,8 @@ Deno.serve(async (req) => {
 
     const p = platform();
     if (!p) throw new HttpError(503, 'errx.proNotReady');
+    // Without the webhook, Monime could never tell Kopor the payment arrived.
+    await ensurePlatformWebhook(p);
     const months = body.months === 12 ? 12 : 1;
     const monthly = Number(Deno.env.get('PRO_PRICE_MINOR') ?? 7500);
     const amount = months === 12 ? monthly * 10 : monthly; // yearly = 2 months free

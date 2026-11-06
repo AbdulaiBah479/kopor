@@ -4,21 +4,8 @@
 //  - own: the business connects its own Monime account (Space ID + token) and the money stays there.
 // Actions: easy | connect | status | disconnect | checkout | link | ussd | providers | payout | wallet | history
 import { admin, caller, cors, json, requireLevel, seal, HttpError, env, nowMs, randomSecret } from '../_shared/util.ts';
-import { credsFor, easyAvailable, monime, monimeList, platformCreds, settleTo, SLE, sweepToOwner, type MonimeCreds } from '../_shared/monime.ts';
+import { credsFor, easyAvailable, ensurePlatformWebhook, monime, WEBHOOK_EVENTS, monimeList, platformCreds, settleTo, SLE, sweepToOwner, type MonimeCreds } from '../_shared/monime.ts';
 import { maskPhone, networkOf, normalizeSlPhone } from '../_shared/momo.ts';
-
-const WEBHOOK_EVENTS = ['payment_code.completed', 'payment_code.expired', 'checkout_session.completed', 'checkout_session.expired', 'checkout_session.cancelled', 'payout.completed', 'payout.failed'];
-
-/** Kopor's own Monime account needs one webhook (shared by every easy-payments business and Kopor Pro billing). */
-async function ensurePlatformWebhook(c: MonimeCreds) {
-  const url = `${env('SUPABASE_URL')}/functions/v1/monime-webhook`;
-  const { items } = await monimeList<{ url: string }>(c, '/webhooks?limit=50');
-  if (items.some((w) => w.url === url)) return;
-  await monime(c, 'POST', '/webhooks', {
-    name: 'Kopor', url, apiRelease: 'caph', enabled: true, events: WEBHOOK_EVENTS,
-    headers: { 'x-kopor-secret': env('KOPOR_WEBHOOK_SECRET') }, verificationMethod: { type: 'HS256', secret: randomSecret(48) }, metadata: { platform: 'kopor' },
-  }, `kopor-platform-webhook-${Math.floor(Date.now() / 86_400_000)}`);
-}
 
 // wallet / history: the business's own Monime balances and money movements (managers and owners only).
 const LEVEL = { easy: 3, connect: 3, disconnect: 3, status: 0, checkout: 2, link: 2, ussd: 2, providers: 3, payout: 3, wallet: 2, history: 2 } as const;

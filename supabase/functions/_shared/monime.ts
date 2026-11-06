@@ -1,5 +1,5 @@
 // Minimal Monime API client (https://docs.monime.io, API version caph.2025-08-23).
-import { HttpError, admin, unseal, nowMs } from './util.ts';
+import { HttpError, admin, env, randomSecret, unseal, nowMs } from './util.ts';
 
 const BASE = 'https://api.monime.io/v1';
 
@@ -90,4 +90,17 @@ export async function monimeList<T>(c: MonimeCreds, path: string): Promise<{ ite
   const j = await res.json().catch(() => ({}));
   if (!res.ok || j.success === false) throw new HttpError(502, String(j?.error?.message ?? j?.messages?.[0]?.message ?? `Monime error ${res.status}`));
   return { items: (j.result ?? []) as T[], next: j.pagination?.next ?? null };
+}
+
+export const WEBHOOK_EVENTS = ['payment_code.completed', 'payment_code.expired', 'checkout_session.completed', 'checkout_session.expired', 'checkout_session.cancelled', 'payout.completed', 'payout.failed'];
+
+/** Kopor's own Monime account needs one webhook (shared by every easy-payments business and Kopor Pro billing). */
+export async function ensurePlatformWebhook(c: MonimeCreds) {
+  const url = `${env('SUPABASE_URL')}/functions/v1/monime-webhook`;
+  const { items } = await monimeList<{ url: string }>(c, '/webhooks?limit=50');
+  if (items.some((w) => w.url === url)) return;
+  await monime(c, 'POST', '/webhooks', {
+    name: 'Kopor', url, apiRelease: 'caph', enabled: true, events: WEBHOOK_EVENTS,
+    headers: { 'x-kopor-secret': env('KOPOR_WEBHOOK_SECRET') }, verificationMethod: { type: 'HS256', secret: randomSecret(48) }, metadata: { platform: 'kopor' },
+  }, `kopor-platform-webhook-${Math.floor(Date.now() / 86_400_000)}`);
 }
