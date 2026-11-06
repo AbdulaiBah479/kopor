@@ -45,7 +45,7 @@ const ParsedSchema = z.object({
 export async function fixTranscript(text: string, book: Book, timeoutMs = 7000, alt = '', krio = ''): Promise<string> {
   const names = book.contacts.slice(0, 60).map((c) => c.name).join(', ') || 'none';
   const items = book.products.slice(0, 60).map((p) => p.name).join(', ') || 'none';
-  const sys = `You fix speech-to-text slips in ONE short shop record (Sierra Leone English or Krio). Make the SMALLEST possible change.
+  const sys = `You fix speech-to-text slips in ONE short shop record (Sierra Leone English, Krio or Nigerian Pidgin). Make the SMALLEST possible change.
 - Only correct a word that is clearly a misheard customer or product name from the lists below, or a number written oddly
   ("to thousand" -> 2000, "tri hundred" -> 300, "liones" -> Leones).
 - Keep every other word exactly as it is, in the same language. Never translate, summarise, add or remove information.
@@ -92,9 +92,9 @@ export function keepsMeaning(original: string, fixed: string, book: Pick<Book, '
   const shared = wb.filter((w) => pool.has(w)).length;
   return shared >= Math.min(longest, wb.length) * 0.5;               // mostly words that were really heard
 }
-/** Structured record from free text (English/Krio). Amount returned in minor units. */
+/** Structured record from free text (English/Krio/Nigerian Pidgin). Amount returned in minor units. */
 export async function aiParse(text: string, book: Book): Promise<Parsed> {
-  const sys = `You turn a shopkeeper's message (English or Sierra Leone Krio) into ONE bookkeeping record.
+  const sys = `You turn a shopkeeper's message (English, Sierra Leone Krio or Nigerian Pidgin) into ONE bookkeeping record.
 Reply ONLY with JSON: {"action":"sale|purchase|expense|credit_given|payment_received|unknown","amount":number,"name":string,"item":string,"qty":number,"method":"cash|orange|afrimoney|qmoney|bank|credit","category":string,"note":string}
 - amount = total money in major units (Leones). sale bought on credit => method "credit" and name = buyer.
 - credit_given: someone took goods/money and owes. payment_received: someone paid a debt.
@@ -104,6 +104,8 @@ Reply ONLY with JSON: {"action":"sale|purchase|expense|credit_given|payment_rece
 - Krio (standard spelling, often typed without ɛ/ɔ): "dɔn pe"/"don pay"=has paid, "pe bak"=paid back, "tek"=took, "sɛl"/"sel"=sold, "bay"=bought,
   "spɛn"=spent, "trɔs"/"trust"=credit, "ɔw"=owes, "dɛt"=debt, "lɛnt"=lent, "kopor"/"mɔni"=money, "tide"=today, "yɛstade"=yesterday,
   numbers: wan, tu, tri, fo, fayv, siks, sɛvin, et, nayn, tɛn, ɔndrɛd=hundred, tawzin=thousand (e.g. "tri tawzin"=3000).
+- Nigerian Pidgin: "don pay"=has paid, "never pay"=has not paid, "dey owe"=owes, "carry am for credit"=took on credit, "I don sell"=I sold,
+  "I buy"=I bought, "collect"=took/received, "drop money"=paid, "gain"=profit, "remain"=balance left.
 Known customers: ${book.contacts.slice(0, 80).map((c) => c.name).join(', ') || 'none'}.
 Known products: ${book.products.slice(0, 80).map((p) => p.name).join(', ') || 'none'}.`;
   const out = ParsedSchema.parse(extractJson(await complete([{ role: 'system', content: sys }, { role: 'user', content: text }], { json: true })));
@@ -161,7 +163,7 @@ function privateContext(book: Book, now: string): string[] {
 export async function askAssistant(question: string, history: { role: 'user' | 'assistant'; content: string }[], book: Book, lang: string, opts: { private?: boolean } = {}): Promise<string> {
   const language = lang === 'kri' ? 'Sierra Leone Krio' : lang === 'fr' ? 'French' : 'simple English';
   const sys = `You are Kopor, a friendly, practical business advisor for small businesses in Sierra Leone and Africa.
-Answer in ${language}, short and concrete (max ~120 words), using the business data below. Use exact numbers from the data.
+Answer in ${language} (but if the person writes in Krio or Nigerian Pidgin, answer in that same language), short and concrete (max ~120 words), using the business data below. Use exact numbers from the data.
 Give practical advice (collect debts, restock, cut costs, pricing, expiring stock, staff, theft). Never invent numbers not in the data. If asked for something outside the data, say so.
 Warning signs about staff are not proof: suggest checking the records and talking to the person, never accuse.
 DATA:

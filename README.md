@@ -67,6 +67,15 @@ takes mobile money payments, and answers questions about the business in English
 | Linting | ESLint + typescript-eslint, react-hooks, jsx-a11y (accessibility) |
 | Testing | Vitest, PGlite (real Postgres in-process), Playwright |
 
+## Krio and Nigerian Pidgin
+
+When someone writes in Sierra Leone Krio or Nigerian Pidgin, the `ai` Edge Function sends the matching entries of
+Kopor's language pack with the request, so every AI service understands the words
+([supabase/functions/_shared/lang.ts](supabase/functions/_shared/lang.ts)). The pack holds Kopor's own shop and money
+words, Kopor's Krio screen text, the Krio-Corpus stories, 12,000 Pidgin sentence pairs from the Okwu corpus and
+Wiktionary's Krio and Pidgin words. Sources and licences:
+[supabase/functions/_shared/lang/README.md](supabase/functions/_shared/lang/README.md).
+
 ## AI that never runs out
 
 The `ai` Edge Function tries free providers in order and moves on when one is rate-limited, down or has retired a

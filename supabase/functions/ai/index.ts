@@ -5,6 +5,7 @@
 // Signed-in businesses get a daily allowance per business; everyone else a smaller one per network address.
 import { admin, cors, json, HttpError, env } from '../_shared/util.ts';
 import { complete, transcribe } from '../_shared/llm.ts';
+import { withLanguageHelp } from '../_shared/lang.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1';
 
 const FREE_LIMIT = Number(Deno.env.get('AI_DAILY_LIMIT') ?? 50);
@@ -59,7 +60,8 @@ Deno.serve(async (req) => {
 
     const { messages, vision } = await req.json();
     if (!Array.isArray(messages) || messages.length > 24 || JSON.stringify(messages).length > 2_500_000) throw new HttpError(400, 'Request too large');
-    const out = await complete(messages, { vision: !!vision });
+    // Krio and Nigerian Pidgin: the matching dictionary entries go with the request (_shared/lang.ts).
+    const out = await complete(withLanguageHelp(messages), { vision: !!vision });
     // Count only answered requests, so provider outages never use up anyone's daily allowance.
     await q.bump();
     return json({ content: out.content, provider: out.provider });
