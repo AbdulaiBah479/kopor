@@ -73,12 +73,25 @@ async function apply(orgId: string, c: MonimeCreds, rev: MonimeTxn, page: Monime
   return true;
 }
 
-/** Look at every connected business (at most once every 5 minutes, however often it is asked). */
-export async function scanReversals() {
+/**
+ * Look for new reversals. `active`: every minute (the database's own timer), only businesses that took a Monime
+ * payment in the last 14 days, since only those can have one pulled back. Otherwise every connected business, at
+ * most every 5 minutes (the 10-minute backup timer). Asking more often than that does nothing.
+ */
+export async function scanReversals(opts: { active?: boolean } = {}) {
   const db = admin();
-  const { error: busy } = await db.from('job_claims').insert({ name: 'reversals', slot: Math.floor(Date.now() / 300_000) });
-  if (busy) return { skipped: 'ran in the last 5 minutes' };
-  const { data: orgs } = await db.from('org_secrets').select('org_id, monime_space_id, easy_on, easy_fac_id');
+  const every = opts.active ? 60_000 : 300_000, name = opts.active ? 'reversals-active' : 'reversals';
+  const slot = Math.floor(Date.now() / every);
+  const { error: busy } = await db.from('job_claims').insert({ name, slot });
+  if (busy) return { skipped: `ran in the last ${every / 60_000} minute${every > 60_000 ? 's' : ''}` };
+  await db.from('job_claims').delete().eq('name', name).lt('slot', slot - Math.ceil(86_400_000 / every)); // keep one day
+  let { data: orgs } = await db.from('org_secrets').select('org_id, monime_space_id, easy_on, easy_fac_id');
+  if (opts.active) {
+    const { data: paid } = await db.from('payment_requests').select('org_id').eq('status', 'completed').neq('kind', 'payout')
+      .gt('updated_at', Date.now() - 14 * 86_400_000).limit(5000);
+    const recent = new Set((paid ?? []).map((r) => r.org_id));
+    orgs = (orgs ?? []).filter((o) => recent.has(o.org_id));
+  }
   let checked = 0, found = 0, failed = 0;
   for (const o of orgs ?? []) {
     if (!o.monime_space_id && !(o.easy_on && o.easy_fac_id)) continue;

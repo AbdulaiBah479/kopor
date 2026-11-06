@@ -110,9 +110,10 @@ Deno.serve(async (req) => {
         return json(await flushAlerts(await vapid(), SUBJECT, APP, orgId));
       }
 
-      // Mobile money payments pulled back by the customer (at most every 5 minutes; then the alerts go out).
+      // Mobile money payments pulled back by the customer: every minute for businesses with recent payments
+      // (active: the database's timer), every 5 minutes for all of them. New alerts go out straight away.
       case 'reversals': {
-        const r = await scanReversals();
+        const r = await scanReversals({ active: body.active === true });
         if ('found' in r && r.found) await flushAlerts(await vapid(), SUBJECT, APP);
         return json(r);
       }

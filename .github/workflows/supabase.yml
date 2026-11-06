@@ -1,7 +1,8 @@
 name: Update the server
 # Keeps the Supabase server in step with the code, with no computer needed:
 #   1. applies new database migrations (supabase/migrations/*.sql) once each, in order, recording what was applied;
-#   2. deploys every server function.
+#   2. sets up the database's own timers (supabase/timers.sql);
+#   3. deploys every server function.
 # Needs one repository secret, SUPABASE_ACCESS_TOKEN (Settings → Secrets and variables → Actions). Without it, nothing runs.
 on:
   push:
@@ -49,6 +50,17 @@ jobs:
             sql < "$f" >/dev/null
             echo "insert into public.kopor_migrations (name) values ('$name')" | sql >/dev/null
           done
+      - name: Set up the server's own timers
+        if: env.SUPABASE_ACCESS_TOKEN != ''
+        env:
+          URL: ${{ vars.VITE_SUPABASE_URL }}
+          KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }} # the public app key (already inside the app), not a secret
+        run: |
+          set -euo pipefail
+          [ -n "$URL" ] && [ -n "$KEY" ] || { echo "::warning::VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not set: no timers"; exit 0; }
+          sed -e "s|__URL__|${URL%/}|g" -e "s|__KEY__|$KEY|g" supabase/timers.sql | jq -Rs '{query: .}' |
+            curl -fsS -X POST "https://api.supabase.com/v1/projects/$PROJECT/database/query" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"               -H 'Content-Type: application/json' --data-binary @- -o /dev/null
+          echo "Timers set: payment reversals every minute" | tee -a "$GITHUB_STEP_SUMMARY"
       - if: env.SUPABASE_ACCESS_TOKEN != ''
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
