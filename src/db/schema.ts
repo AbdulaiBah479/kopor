@@ -87,6 +87,11 @@ export interface GroupLoan extends Base {
 /** Money set aside for a purpose ("cashbox"): Kopor only keeps the record; the money stays where it is kept. */
 export interface SavingsGoal extends Base { name: string; target: number; due_date: string | null; kept_in: string; archived: 0 | 1 }
 export interface SavingsMove extends Base { goal_id: string; amount: number; date: string; note: string }
+/** Mobile money agent book (domain/agent.ts): deposits, withdrawals, commission, float swaps and balance checks. */
+export interface AgentMove extends Base {
+  branch_id: string | null; date: string; kind: 'deposit' | 'withdraw' | 'commission' | 'buy_float' | 'sell_float' | 'count';
+  network: 'orange' | 'afrimoney' | 'qmoney' | 'cash'; amount: number; phone: string; note: string;
+}
 /** One staff member's day: one row per member per day (id made from member + date, see domain/staff.ts). */
 export interface Attendance extends Base {
   member_id: string; date: string; status: 'present' | 'late' | 'half' | 'absent' | 'leave' | 'off';
@@ -126,7 +131,7 @@ export interface Closing extends Base {
 }
 export interface PaymentRequest extends Base {
   kind: 'checkout' | 'ussd' | 'payout'; invoice_id: string | null; group_id: string | null; amount: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'expired' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'expired' | 'cancelled' | 'reversed';
   provider_ref: string | null; url: string | null; ussd_code: string | null; phone: string | null; note: string;
 }
 export interface AuditEntry extends Base { member_name: string; action: 'create' | 'update' | 'delete'; entity: string; entity_id: string; summary: string; at: number }
@@ -135,7 +140,7 @@ export interface Meta { key: string; value: unknown }
 export const SYNC_TABLES = [
   'orgs', 'branches', 'members', 'contacts', 'ledger', 'transactions', 'products', 'stock_moves',
   'groups', 'contributions', 'invoices', 'payment_requests', 'closings', 'group_loans', 'savings_goals', 'savings_moves', 'group_claims',
-  'attendance', 'staff_terms', 'staff_pay', 'audit',
+  'attendance', 'staff_terms', 'staff_pay', 'agent_moves', 'audit',
 ] as const;
 export type SyncTable = (typeof SYNC_TABLES)[number];
 
@@ -143,7 +148,7 @@ export interface RowOf {
   orgs: Org; branches: Branch; members: Member; contacts: Contact; ledger: LedgerEntry; transactions: Txn;
   products: Product; stock_moves: StockMove; groups: Group; contributions: Contribution; invoices: Invoice;
   payment_requests: PaymentRequest; closings: Closing; group_loans: GroupLoan; savings_goals: SavingsGoal; savings_moves: SavingsMove; group_claims: GroupClaim;
-  attendance: Attendance; staff_terms: StaffTerms; staff_pay: StaffPay; audit: AuditEntry;
+  attendance: Attendance; staff_terms: StaffTerms; staff_pay: StaffPay; agent_moves: AgentMove; audit: AuditEntry;
 }
 
 export class KoporDB extends Dexie {
@@ -167,6 +172,7 @@ export class KoporDB extends Dexie {
   attendance!: Table<Attendance, string>;
   staff_terms!: Table<StaffTerms, string>;
   staff_pay!: Table<StaffPay, string>;
+  agent_moves!: Table<AgentMove, string>;
   audit!: Table<AuditEntry, string>;
   meta!: Table<Meta, string>;
 
@@ -196,6 +202,8 @@ export class KoporDB extends Dexie {
     this.version(4).stores({ group_claims: 'id, org_id, group_id, dirty' });
     // v5: staff attendance and pay.
     this.version(5).stores({ attendance: 'id, org_id, member_id, date, dirty', staff_terms: 'id, org_id, member_id, dirty', staff_pay: 'id, org_id, member_id, dirty' });
+    // v6: mobile money agent book.
+    this.version(6).stores({ agent_moves: 'id, org_id, date, dirty' });
   }
   /** Typed access to a synced table by name. */
   t<K extends SyncTable>(name: K): Table<RowOf[K], string> {

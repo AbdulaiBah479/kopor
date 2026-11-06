@@ -13,8 +13,8 @@ const seenKey = (orgId: string) => `alertSeen:${orgId}`;
 const notifiedKey = (orgId: string) => `alertNotified:${orgId}`;
 
 /** One alert as a sentence, in the app's language. */
-export const alertText = (t: TFunction, a: AlertRow) => t(`watch.alert.${a.kind}${a.kind === 'short' && a.detail.includes('handover') ? 'Handover' : a.kind === 'refund' && a.detail === 'no-sale' ? 'NoSale' : ''}`, {
-  who: a.who || '—', amount: formatMoney(a.amount), m: a.detail, date: a.detail.slice(0, 10), what: t(a.detail === 'ledger' ? 'watch.alert.credit' : 'watch.alert.sale'),
+export const alertText = (t: TFunction, a: AlertRow) => t(`watch.alert.${a.kind}${a.kind === 'short' && a.detail.includes('handover') ? 'Handover' : a.kind === 'refund' && a.detail === 'no-sale' ? 'NoSale' : a.kind === 'reversal' && a.detail === 'outside' ? 'Outside' : ''}`, {
+  who: a.kind === 'reversal' ? (a.who ? ` (${a.who})` : '') : a.who || '—', amount: formatMoney(a.amount), m: a.detail, date: a.detail.slice(0, 10), what: t(a.detail === 'ledger' ? 'watch.alert.credit' : 'watch.alert.sale'),
 });
 
 export async function checkAlerts(orgId: string, t: TFunction) {

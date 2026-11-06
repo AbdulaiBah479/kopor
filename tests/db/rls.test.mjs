@@ -720,4 +720,32 @@ await test('phones list: a new phone alerts the owner; a signed-out phone is tol
   assert.equal((await q('select count(*)::int as c from devices where org_id = $1 and device_id = $2', [ORG, dev])).rows[0].c, 2);
 });
 
+await test('agent book: cashiers record deposits, cannot delete or back-date them; strangers see nothing', async () => {
+  const now = '(extract(epoch from now()) * 1000)::bigint';
+  await as('cashier');
+  const id = 'c4c4c4c4-c4c4-4c4c-8c4c-c4c4c4c4c4c4';
+  await q(`insert into agent_moves (id, org_id, created_at, updated_at, date, kind, network, amount) values ($1, $2, ${now} - 1200000, ${now} - 1200000, current_date, 'deposit', 'orange', 50000)`, [id, ORG]);
+  await rejects(q(`insert into agent_moves (id, org_id, created_at, updated_at, date, kind, network, amount) values (gen_random_uuid(), $1, ${now}, ${now}, current_date - 5, 'withdraw', 'orange', 100)`, [ORG]), /backdated/);
+  await rejects(q(`insert into agent_moves (id, org_id, created_at, updated_at, date, kind, network, amount) values (gen_random_uuid(), $1, ${now}, ${now}, current_date, 'deposit', 'cash', 100)`, [ORG]));
+  // Older than the 10-minute undo: refused (or quietly ignored by the access rules), so the record stays.
+  await q('update agent_moves set deleted = 1 where id = $1', [id]).catch(() => {});
+  assert.equal((await q('select deleted from agent_moves where id = $1', [id])).rows[0].deleted, 0);
+  await as('stranger');
+  assert.equal((await q('select * from agent_moves')).rows.length, 0);
+  await as('owner');
+  await q(`insert into agent_moves (id, org_id, created_at, updated_at, date, kind, network, amount) values (gen_random_uuid(), $1, ${now}, ${now}, current_date, 'count', 'cash', 0)`, [ORG]);
+  assert.equal((await q('select count(*)::int as c from agent_moves')).rows[0].c, 2);
+});
+
+await test('payment reversals: server-only tables, and the reversal alert kind', async () => {
+  await as('owner');
+  const hidden = (t) => q(`select * from ${t}`).then((r) => r.rows.length === 0, (e) => /permission denied/.test(e.message));
+  assert.ok(await hidden('monime_reversals'));
+  assert.ok(await hidden('job_claims'));
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  await q(`select kopor_alert($1, 'reversal', 'txn-1', 'Musa', 50000, 'INV-0001')`, [ORG]);
+  await q(`select kopor_alert($1, 'reversal', 'txn-1', 'Musa', 50000, 'INV-0001')`, [ORG]); // the same reversal only once
+  assert.equal((await q(`select count(*)::int as c from alerts where kind = 'reversal'`)).rows[0].c, 1);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

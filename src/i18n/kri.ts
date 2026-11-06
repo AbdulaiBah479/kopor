@@ -19,6 +19,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   nav: { home: 'Om', credit: 'Kredit', cash: 'Kesh', stock: 'Stɔk', more: 'Mɔ' },
   methods: { cash: 'Kesh', orange: 'Orange Money', afrimoney: 'Afrimoney', qmoney: 'QMoney', bank: 'Bank', card: 'Kad', credit: 'Trɔst (kredit)' },
   categories: {
+    reversal: 'Pemɛnt we dɛn pul bak',
     sale: 'Sɛl', stock: 'Bay stɔk', rent: 'Rɛnt', transport: 'Transpɔt', salaries: 'Wok pe', utilities: 'Layt ɛn wata',
     phone: 'Fon ɛn data', fuel: 'Fyuɛl', food: 'Chɔp', repairs: 'Fiks tin', taxes: 'Taks ɛn fi', loan: 'Pe lon bak', other: 'Ɔda',
   },
@@ -113,7 +114,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     tokenHelp: 'Mek dɛn na yu Monime dashbɔd → Developers. Dɛn de sev am wit ɛnkripshɔn na Kopor sava, nɔto na dis fon.',
     disconnect: 'Disknɛkt', requests: 'Pement we yu aks', noRequests: 'Yu nɔ aks fɔ pement yet', payout: 'Sɛn mɔni', payoutHelp: 'Pe sɔplaya, wok pe ɔ osusu pɔt frɔm yu Monime balans.',
     provider: 'Nɛtwɔk', recipient: 'Fon fɔ di wan we go get am', sent: 'Di pement dɔn stat', needCloud: 'Pement nid Kopor klawd akawnt. Go na Sɛtin → Klawd ɛn akawnt.',
-    status: { pending: 'I de wet', processing: 'I de wok', completed: 'I dɔn', failed: 'I nɔ wok', expired: 'I dɔn ɛkspay', cancelled: 'Dɛn kansul am' },
+    status: { pending: 'I de wet', processing: 'I de wok', completed: 'I dɔn', failed: 'I nɔ wok', expired: 'I dɔn ɛkspay', cancelled: 'Dɛn kansul am', reversed: 'Kɔstɔma pul am bak' },
     fee: 'Monime de tek bɔt 1.5% pan ɛni pement. No fi fɔ stat.', getStarted: 'Aw fɔ get Monime akawnt', steps: '1. Sayn ɔp na monime.io  2. Sɛn yu biznɛs tin dɛn  3. Mek akses tokɛn  4. Put am ya',
   },
   rem: {

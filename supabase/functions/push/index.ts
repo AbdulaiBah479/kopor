@@ -11,6 +11,7 @@
 import { admin, caller, cors, json, HttpError } from '../_shared/util.ts';
 import { generateVapidKeys, sendPush, type VapidKeys } from '../_shared/webpush.ts';
 import { flushAlerts, weeklyReports } from '../_shared/alerts.ts';
+import { scanReversals } from '../_shared/reversals.ts';
 
 const SUBJECT = Deno.env.get('PUSH_SUBJECT') ?? 'mailto:babdulai225.2@gmail.com';
 const APP = (Deno.env.get('PUBLIC_APP_URL') ?? 'https://abdulaibah479.github.io/kopor/').replace(/\/?$/, '/');
@@ -107,6 +108,13 @@ Deno.serve(async (req) => {
         const orgId = body.orgId ? String(body.orgId) : undefined;
         if (orgId && !/^[0-9a-f-]{36}$/.test(orgId)) throw new HttpError(400, 'Bad request');
         return json(await flushAlerts(await vapid(), SUBJECT, APP, orgId));
+      }
+
+      // Mobile money payments pulled back by the customer (at most every 5 minutes; then the alerts go out).
+      case 'reversals': {
+        const r = await scanReversals();
+        if ('found' in r && r.found) await flushAlerts(await vapid(), SUBJECT, APP);
+        return json(r);
       }
 
       case 'weekly':

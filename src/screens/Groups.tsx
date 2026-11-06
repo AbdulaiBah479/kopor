@@ -408,7 +408,7 @@ function MembersSheet({ group }: { group: Group }) {
 }
 
 /** Send money by mobile money via the business's Monime account (owner only). */
-export function PayoutSheet({ amount: initial, phone: initialPhone = '', note: initialNote = '', onDone }: { amount: number; phone?: string; note?: string; onDone?: () => Promise<unknown> }) {
+export function PayoutSheet({ amount: initial, phone: initialPhone = '', note: initialNote = '', onDone }: { amount: number; phone?: string; note?: string; onDone?: (sent: { amount: number; providerId: string }) => Promise<unknown> }) {
   const { t } = useTranslation();
   const { ctx } = useApp();
   const { closeSheet, toast, fail } = useOverlay();
@@ -429,7 +429,7 @@ export function PayoutSheet({ amount: initial, phone: initialPhone = '', note: i
       try {
         // Money leaving the business: the owner's own PIN, so nobody else holding this phone can send it.
         if (needPin && !(await checkPin(ctx.memberId!, pin))) { setPin(''); throw new Error(t('err.login')); }
-        await createPayout(ctx.orgId, f); await onDone?.(); closeSheet(); toast(t('pay.sent')); } catch (err) { fail(err); }
+        await createPayout(ctx.orgId, f); await onDone?.({ amount: f.amount, providerId: f.providerId }); closeSheet(); toast(t('pay.sent')); } catch (err) { fail(err); }
     }}>
       <div className="small muted">{t('pay.payoutHelp')}</div>
       <Field label={t('common.amount')}><MoneyInput big required value={f.amount} onChange={(amount) => setF({ ...f, amount })} /></Field>

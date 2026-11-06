@@ -1,10 +1,10 @@
 // Staff attendance and salaries: today's register (staff tap in and out for themselves, managers mark anyone),
 // the month at a glance, and pay (managers and owners only): salary or daily rate, advances, bonuses, deductions,
 // paying the salary (a cash-book expense) and a payslip to share on WhatsApp.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
-import { useOverlay } from '@/ui/overlay';
+import { useErrorText, useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
 import { Empty, Field, MoneyInput, Seg, useDate } from '@/ui/widgets';
@@ -15,6 +15,10 @@ import type { Member, StaffPay } from '@/db/schema';
 import { updateOrg } from '@/domain/org';
 import { awayFrom, locate } from '@/lib/geo';
 import { LiveConsent, LiveMap, LiveSwitch } from './LiveStaff';
+import { PayoutSheet } from './Groups';
+import { createPayout } from '@/cloud/payments';
+import { networkOf } from '@/lib/momo';
+import { checkPin, hasPin } from '@/domain/org';
 import { STATUSES, attendanceFlags, dayOf, markDay, monthCounts, monthOf, payFor, recordPay, saveTerms, staffOf, tapIn, tapOut, termsOf, workingDays, type Status } from '@/domain/staff';
 
 type Tab = 'today' | 'month' | 'pay';
@@ -161,13 +165,16 @@ function MonthView({ month }: { month: string }) {
 function PayView({ month }: { month: string }) {
   const { t } = useTranslation();
   const book = useBook();
-  const { can } = useApp();
+  const { can, ctx } = useApp();
   const { openSheet } = useOverlay();
   const { fmt } = useDate();
   const staff = staffOf(book);
   return (
     <>
       <div className="card flat small">{t('staff.payIntro')}</div>
+      {can('payouts') && staff.some((m) => m.phone && payFor(book, m.id, month).balance > 0) && (
+        <button className="btn get block" data-testid="payday" onClick={() => openSheet(t('payday.title'), <PaydaySheet month={month} />)}><Icon name="send" size={18} /> {t('payday.button')}</button>
+      )}
       <div className="stack" data-testid="staff-pay">
         {staff.map((m) => {
           const p = payFor(book, m.id, month);
@@ -200,6 +207,12 @@ function PayView({ month }: { month: string }) {
               )}
               <div className="btn-row" style={{ flexWrap: 'wrap' }}>
                 {can('team') && <button className="btn sm" data-testid="set-pay" onClick={() => openSheet(t('staff.setPay'), <TermsSheet member={m} />)}>{t('staff.setPay')}</button>}
+                {can('payouts') && m.phone && p.balance > 0 && (
+                  <button className="btn sm get" data-testid="send-salary" onClick={() => openSheet(t('payday.sendOne'), <PayoutSheet amount={p.balance} phone={m.phone} note={t('payday.note', { month, name: m.name })}
+                    onDone={({ amount, providerId }) => recordPay(ctx, m, 'salary', amount, { month, method: providerId === 'm18' ? 'afrimoney' : 'orange', note: t('payday.sentNote') })} />)}>
+                    <Icon name="send" size={16} /> {t('payday.sendOne')}
+                  </button>
+                )}
                 {p.terms && <button className="btn sm get" data-testid="pay-salary" onClick={() => openSheet(t('staff.paySalary'), <PaySheet member={m} kind="salary" month={month} suggest={Math.max(0, p.balance)} />)}><Icon name="cash" size={16} /> {t('staff.paySalary')}</button>}
                 <button className="btn sm" data-testid="give-advance" onClick={() => openSheet(t('staff.k.advance'), <PaySheet member={m} kind="advance" month={month} />)}>{t('staff.k.advance')}</button>
                 <button className="btn sm" onClick={() => openSheet(t('staff.k.bonus'), <PaySheet member={m} kind="bonus" month={month} />)}>{t('staff.k.bonus')}</button>
@@ -211,6 +224,68 @@ function PayView({ month }: { month: string }) {
         })}
       </div>
     </>
+  );
+}
+
+/** Payday: send every worker what they are still owed this month by mobile money, with one PIN. Each payment goes
+ * through the same server checks as any payout (owner only, daily limit, 24-hour wait for a new number). */
+function PaydaySheet({ month }: { month: string }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx } = useApp();
+  const { closeSheet, fail } = useOverlay();
+  const errorText = useErrorText();
+  const due = staffOf(book).map((m) => ({ m, amount: payFor(book, m.id, month).balance })).filter((r) => r.m.phone && r.amount > 0);
+  const [chosen, setChosen] = useState<Set<string>>(() => new Set(due.map((r) => r.m.id)));
+  const [pin, setPin] = useState('');
+  const [needPin, setNeedPin] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<Record<string, string>>({});
+  useEffect(() => { if (ctx.memberId) hasPin(ctx.memberId).then(setNeedPin).catch(() => {}); }, [ctx.memberId]);
+  const picked = due.filter((r) => chosen.has(r.m.id));
+  const total = picked.reduce((s, r) => s + r.amount, 0);
+  const done = Object.keys(result).length > 0;
+  return (
+    <form className="form" data-testid="payday-form" onSubmit={async (e) => {
+      e.preventDefault();
+      if (done) { closeSheet(); return; }
+      if (!picked.length || !confirm(t('payday.confirm', { n: picked.length, amount: formatMoney(total) }))) return;
+      setBusy(true);
+      try {
+        // Money leaving the business: the owner's own PIN, once for the whole payday.
+        if (needPin && !(await checkPin(ctx.memberId!, pin))) { setPin(''); throw new Error(t('err.login')); }
+        const out: Record<string, string> = {};
+        for (const { m, amount } of picked) {
+          const providerId = networkOf(m.phone);
+          if (!providerId) { out[m.id] = t('payday.noNetwork'); continue; }
+          try {
+            await createPayout(ctx.orgId, { amount, phone: m.phone, providerId, note: t('payday.note', { month, name: m.name }) });
+            await recordPay(ctx, m, 'salary', amount, { month, method: providerId === 'm18' ? 'afrimoney' : 'orange', note: t('payday.sentNote') });
+            out[m.id] = '✓ ' + t('payday.sent');
+          } catch (err) { out[m.id] = errorText(err); }
+          setResult({ ...out });
+        }
+        setResult(out);
+      } catch (err) { fail(err); } finally { setBusy(false); }
+    }}>
+      <div className="small muted">{t('payday.help')}</div>
+      <div className="list">
+        {due.map(({ m, amount }) => (
+          <label key={m.id} className="item" data-testid="payday-row">
+            <input type="checkbox" checked={chosen.has(m.id)} disabled={busy || done} onChange={(e) => { const s = new Set(chosen); if (e.target.checked) s.add(m.id); else s.delete(m.id); setChosen(s); }} />
+            <div className="main">
+              <div className="t">{m.name}</div>
+              <div className="s">{result[m.id] ?? m.phone}</div>
+            </div>
+            <div className="amt num">{formatMoney(amount)}</div>
+          </label>
+        ))}
+      </div>
+      <div className="row between"><b>{t('payday.total')}</b><b className="num">{formatMoney(total)}</b></div>
+      {!done && (needPin ? <Field label={t('safe.pinToSend')}><input type="password" inputMode="numeric" autoComplete="off" required name="payday_pin" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} /></Field>
+        : <div className="small muted">{t('safe.setPinFirst')}</div>)}
+      <button className="btn primary block" disabled={busy || (!done && !picked.length)}>{done ? t('common.done') : <><Icon name="send" size={18} /> {t('payday.sendAll', { amount: formatMoney(total) })}</>}</button>
+    </form>
   );
 }
 

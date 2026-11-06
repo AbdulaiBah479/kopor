@@ -16,6 +16,7 @@ const base = {
   nav: { home: 'Home', credit: 'Credit', cash: 'Cash', stock: 'Stock', more: 'More' },
   methods: { cash: 'Cash', orange: 'Orange Money', afrimoney: 'Afrimoney', qmoney: 'QMoney', bank: 'Bank', card: 'Card', credit: 'On credit' },
   categories: {
+    reversal: 'Payment pulled back',
     sale: 'Sale', stock: 'Stock purchase', rent: 'Rent', transport: 'Transport', salaries: 'Salaries', utilities: 'Electricity & water',
     phone: 'Phone & data', fuel: 'Fuel', food: 'Food', repairs: 'Repairs', taxes: 'Taxes & fees', loan: 'Loan repayment', other: 'Other',
   },
@@ -114,7 +115,7 @@ const base = {
     tokenHelp: 'Create these in your Monime dashboard → Developers. They are stored encrypted on the Kopor server, never on this phone.',
     disconnect: 'Disconnect', requests: 'Payment requests', noRequests: 'No payment requests yet', payout: 'Send money', payoutHelp: 'Pay a supplier, salary or osusu pot from your Monime balance.',
     provider: 'Network', recipient: 'Recipient phone', sent: 'Payout started', needCloud: 'Payments need a Kopor cloud account. Go to Settings → Cloud & account.',
-    status: { pending: 'Pending', processing: 'Processing', completed: 'Completed', failed: 'Failed', expired: 'Expired', cancelled: 'Cancelled' },
+    status: { pending: 'Pending', processing: 'Processing', completed: 'Completed', failed: 'Failed', expired: 'Expired', cancelled: 'Cancelled', reversed: 'Pulled back by the customer' },
     fee: 'Monime charges about 1.5% per payment. No setup fee.', getStarted: 'How to get a Monime account', steps: '1. Sign up at monime.io  2. Submit your business details  3. Create an access token  4. Paste it here',
   },
   rem: {

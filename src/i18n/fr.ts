@@ -19,6 +19,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   nav: { home: 'Accueil', credit: 'Crédit', cash: 'Caisse', stock: 'Stock', more: 'Plus' },
   methods: { cash: 'Espèces', orange: 'Orange Money', afrimoney: 'Afrimoney', qmoney: 'QMoney', bank: 'Banque', card: 'Carte', credit: 'À crédit' },
   categories: {
+    reversal: 'Paiement annulé',
     sale: 'Vente', stock: 'Achat de stock', rent: 'Loyer', transport: 'Transport', salaries: 'Salaires', utilities: 'Électricité et eau',
     phone: 'Téléphone et data', fuel: 'Carburant', food: 'Nourriture', repairs: 'Réparations', taxes: 'Taxes et frais', loan: 'Remboursement de prêt', other: 'Autre',
   },
@@ -113,7 +114,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
     tokenHelp: 'Créez-les dans votre tableau de bord Monime → Developers. Ils sont stockés chiffrés sur le serveur Kopor, jamais sur ce téléphone.',
     disconnect: 'Déconnecter', requests: 'Demandes de paiement', noRequests: 'Aucune demande de paiement', payout: "Envoyer de l'argent", payoutHelp: 'Payez un fournisseur, un salaire ou une cagnotte depuis votre solde Monime.',
     provider: 'Réseau', recipient: 'Téléphone du bénéficiaire', sent: 'Paiement lancé', needCloud: 'Les paiements nécessitent un compte cloud Kopor. Allez dans Réglages → Cloud et compte.',
-    status: { pending: 'En attente', processing: 'En cours', completed: 'Terminé', failed: 'Échoué', expired: 'Expiré', cancelled: 'Annulé' },
+    status: { pending: 'En attente', processing: 'En cours', completed: 'Terminé', failed: 'Échoué', expired: 'Expiré', cancelled: 'Annulé', reversed: 'Annulé par le client' },
     fee: 'Monime prélève environ 1,5 % par paiement. Pas de frais d’ouverture.', getStarted: 'Obtenir un compte Monime', steps: '1. Inscrivez-vous sur monime.io  2. Envoyez les informations de votre entreprise  3. Créez un jeton d’accès  4. Collez-le ici',
   },
   rem: {

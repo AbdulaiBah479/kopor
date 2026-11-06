@@ -94,7 +94,7 @@ export function Payments() {
           <div key={p.id} className="item">
             <div className="avatar"><Icon name={p.kind === 'payout' ? 'send' : p.kind === 'ussd' ? 'phone' : 'link'} size={18} /></div>
             <div className="main"><div className="t">{p.note || p.kind}</div><div className="s">{fmt(new Date(p.created_at).toISOString().slice(0, 10))}{p.ussd_code && ` · ${p.ussd_code}`}</div></div>
-            <div className="amt num">{formatMoney(p.amount)}<small className={p.status === 'completed' ? 'good' : p.status === 'failed' ? 'bad' : ''}>{t(`pay.status.${p.status}`)}</small></div>
+            <div className="amt num">{formatMoney(p.amount)}<small className={p.status === 'completed' ? 'good' : p.status === 'failed' || p.status === 'reversed' ? 'bad' : ''}>{t(`pay.status.${p.status}`)}</small></div>
           </div>
         )) : <Empty icon="phone" title={t('pay.noRequests')} />}
       </div>

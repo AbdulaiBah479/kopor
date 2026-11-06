@@ -12,6 +12,7 @@ export interface Alert { id: number; org_id: string; kind: string; who: string; 
 const L = {
   en: {
     short: (a: Alert) => [`Cash short: ${leones(a.amount)}`, a.detail.includes('handover') ? `${a.who || 'Someone'} handed over the drawer ${leones(a.amount)} short.` : `${a.who || 'Someone'} closed ${a.detail.slice(0, 10)} short by ${leones(a.amount)}${a.detail.includes('momo') ? ' (mobile money too)' : ''}.`],
+    reversal: (a: Alert) => [`Payment pulled back: ${leones(a.amount)}`, a.detail === 'outside' ? `A mobile money payment of ${leones(a.amount)} was reversed. Check who paid it.` : `A customer${a.who ? ` (${a.who})` : ''} had ${leones(a.amount)} reversed after paying${a.detail && a.detail !== 'group' ? ` (${a.detail})` : ''}. Kopor has put it back as unpaid.`],
     test: () => ['Test notification', 'Kopor alerts are working on this phone. You can ignore this message.'],
     approval: (a: Alert) => ['Approval needed', `${a.who} asks you to approve: ${a.detail}. Open Fraud watch.`],
     newDevice: (a: Alert) => ['New phone signed in', `${a.who} signed in on a new phone (${a.detail}). If this was not them, sign it out in Team.`],
@@ -24,6 +25,7 @@ const L = {
     week: (s: string, e: string, p: string, late: string, warn: string) => `Sales ${s} · expenses ${e} · profit about ${p}.${late ? ` Late/absent: ${late}.` : ''}${warn ? ` Warnings: ${warn}.` : ' No warnings.'}`,
   },
   kri: {
+    reversal: (a: Alert) => [`Dɛn pul pemɛnt bak: ${leones(a.amount)}`, a.detail === 'outside' ? `Dɛn pul mobayl mɔni pemɛnt fɔ ${leones(a.amount)} bak. Chɛk udat pe am.` : `Kɔstɔma${a.who ? ` (${a.who})` : ''} pul ${leones(a.amount)} bak afta i pe${a.detail && a.detail !== 'group' ? ` (${a.detail})` : ''}. Kopor dɔn mek am nɔ pe yet.`],
     test: () => ['Tɛst nɔtifikeshɔn', 'Kopor wɔnin de wok na dis fon. Yu kin lɛf dis mɛsej.'],
     approval: (a: Alert) => ['Yu fɔ gri', `${a.who} de aks yu fɔ gri: ${a.detail}. Opin Fraud watch.`],
     newDevice: (a: Alert) => ['Nyu fon dɔn sayn in', `${a.who} sayn in pan nyu fon (${a.detail}). If nɔto am, sayn am aut na Team.`],
@@ -37,6 +39,7 @@ const L = {
     week: (s: string, e: string, p: string, late: string, warn: string) => `Sel ${s} · ɛkspɛns ${e} · prɔfit lɛk ${p}.${late ? ` Lat/nɔ kam: ${late}.` : ''}${warn ? ` Wɔnin: ${warn}.` : ' No wɔnin.'}`,
   },
   fr: {
+    reversal: (a: Alert) => [`Paiement annulé : ${leones(a.amount)}`, a.detail === 'outside' ? `Un paiement mobile money de ${leones(a.amount)} a été annulé. Vérifiez qui l’avait payé.` : `Un client${a.who ? ` (${a.who})` : ''} a fait annuler ${leones(a.amount)} après avoir payé${a.detail && a.detail !== 'group' ? ` (${a.detail})` : ''}. Kopor l’a remis comme impayé.`],
     test: () => ['Notification de test', 'Les alertes Kopor fonctionnent sur ce téléphone. Vous pouvez ignorer ce message.'],
     approval: (a: Alert) => ['Approbation demandée', `${a.who} vous demande d’approuver : ${a.detail}. Ouvrez Fraud watch.`],
     newDevice: (a: Alert) => ['Nouveau téléphone connecté', `${a.who} s’est connecté sur un nouveau téléphone (${a.detail}). Si ce n’est pas lui, déconnectez-le dans Équipe.`],

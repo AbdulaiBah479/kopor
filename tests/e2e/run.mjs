@@ -1037,6 +1037,31 @@ await step('plan, help and public legal pages', async () => {
   await noOverflow();
 });
 
+await step('mobile money agent: starting balances, a deposit, then a check that finds Le 500 missing', async () => {
+  await go('/agent');
+  await page.getByTestId('agent-check').click();
+  let f = page.getByTestId('agent-check-form');
+  await f.locator('[name=count_cash]').fill('5000');
+  await f.locator('[name=count_orange]').fill('10000');
+  await tapInSheet(f.getByRole('button', { name: 'Save the check' }));
+  await page.waitForFunction(() => !document.querySelector('[data-testid=agent-check-form]'));
+  await page.getByTestId('agent-deposit').click();
+  const d = page.getByTestId('agent-form');
+  await d.locator('[name=amount]').fill('2000');
+  await tapInSheet(d.getByRole('button', { name: 'Save' }));
+  await page.waitForFunction(() => !document.querySelector('[data-testid=agent-form]'));
+  await page.waitForTimeout(5); // the check comes after the deposit
+  await page.getByTestId('agent-check').click();
+  f = page.getByTestId('agent-check-form');
+  await f.locator('[name=count_cash]').fill('6500');
+  await tapInSheet(f.getByRole('button', { name: 'Save the check' }));
+  await page.getByTestId('agent-diff').getByText(/Le 500 short/).waitFor();
+  const orange = await page.locator('[data-account=orange]').innerText();
+  if (!/8,000/.test(orange)) throw new Error('orange float: ' + orange);
+  await noOverflow();
+  await shot('12c-agent');
+});
+
 await step('health report', async () => {
   await go('/health');
   await page.getByText('Record keeping').waitFor();
