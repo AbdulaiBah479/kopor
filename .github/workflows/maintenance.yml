@@ -17,6 +17,7 @@ on:
           - set-owner-phone
           - problem-summary
           - test-notification
+          - copy-monime-to-server
       phone:
         description: Phone number (for issue-recovery-code, set-owner-phone or test-notification), e.g. 072082348 or +23272082348
         required: false
@@ -38,6 +39,8 @@ jobs:
           PHONE: ${{ inputs.phone }}
           ANON: ${{ vars.VITE_SUPABASE_ANON_KEY }}
           PRIVATE_REPO: ${{ github.event.repository.private }}
+          MONIME_SPACE: ${{ secrets.KOPOR_MONIME_SPACE_ID }}
+          MONIME_TOKEN: ${{ secrets.KOPOR_MONIME_TOKEN }}
         run: |
           set -euo pipefail
           [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN secret is missing"; exit 1; }
@@ -99,6 +102,13 @@ jobs:
               [ "$n" -ge 1 ] || { echo "::error::No business has an owner with that phone"; exit 1; }
               curl -fsS -X POST "https://$PROJECT.supabase.co/functions/v1/push" -H "Authorization: Bearer $ANON" -H "apikey: $ANON" \
                 -H 'Content-Type: application/json' -d '{"action":"alerts"}' | tee -a "$GITHUB_STEP_SUMMARY";;
+            # Copies Kopor's own Monime Space ID and token from this repository's secrets into the server's secrets
+            # (afterwards the repository copies can be deleted). The values are never printed.
+            copy-monime-to-server)
+              [[ "$MONIME_SPACE" == spc-* && -n "$MONIME_TOKEN" ]] || { echo "::error::Add the KOPOR_MONIME_SPACE_ID and KOPOR_MONIME_TOKEN repository secrets first"; exit 1; }
+              jq -n --arg s "$MONIME_SPACE" --arg t "$MONIME_TOKEN" '[{name: "KOPOR_MONIME_SPACE_ID", value: $s}, {name: "KOPOR_MONIME_TOKEN", value: $t}]' |
+                curl -fsS -X POST "https://api.supabase.com/v1/projects/$PROJECT/secrets" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"                   -H 'Content-Type: application/json' --data-binary @- -o /dev/null
+              echo "Monime Space ID and token saved on the server" | tee -a "$GITHUB_STEP_SUMMARY";;
             check-setup)
               names=$(curl -fsS "https://api.supabase.com/v1/projects/$PROJECT/secrets" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | jq -r '.[].name')
               for n in KOPOR_ADMIN_PHONES KOPOR_PIN_PEPPER GROQ_API_KEY GEMINI_API_KEY OLLAMA_API_KEY FCM_SERVICE_ACCOUNT OMNIROUTE_URL CEREBRAS_API_KEY MISTRAL_API_KEY GITHUB_MODELS_TOKEN OPENROUTER_API_KEY NVIDIA_API_KEY SAMBANOVA_API_KEY HF_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_API_TOKEN KOPOR_MONIME_SPACE_ID KOPOR_MONIME_TOKEN KOPOR_WEBHOOK_SECRET KOPOR_EASY_PAY PUBLIC_APP_URL; do
