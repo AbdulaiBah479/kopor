@@ -20,3 +20,16 @@ reason = "Fixed in xlsx 0.20.2; Kopor uses 0.20.3 from cdn.sheetjs.com"
 id = "GHSA-gcqx-w48m-w2h4"
 ignoreUntil = 2027-01-31
 reason = "Build-time only (workbox-build); not in the shipped app; no fixed version published yet"
+
+# glob and minimatch are used only by build and lint tools (rimraf in @capacitor/cli, typescript-eslint, workbox-build)
+# on our own file names, never on data from users, and they are not shipped in the app. The fixes are new major
+# versions those tools do not accept yet; re-check by the date below.
+[[IgnoredVulns]]
+id = "GHSA-3g3m-2fjr-6pw4"
+ignoreUntil = 2027-02-28
+reason = "glob: build/lint tools only, on our own file names; not in the shipped app; parents do not accept the fixed major yet"
+
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2027-02-28
+reason = "minimatch: build/lint tools only, on our own file patterns; not in the shipped app; parents do not accept the fixed major yet"
