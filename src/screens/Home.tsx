@@ -1,3 +1,4 @@
+import { TargetCard } from '@/ui/TargetCard';
 import { Suspense, useEffect, useState } from 'react';
 import { lazyRetry } from '@/ui/lazy';
 import { Link, useNavigate } from 'react-router-dom';
@@ -116,6 +117,7 @@ export function Home() {
       {can('reports') && unseenAlerts > 0 && (
         <Link to="/watch" className="alert bad" data-testid="alert-banner"><Icon name="alert" /><div><b>{t('watch.alert.banner', { count: unseenAlerts })}</b><br />{t('watch.alert.bannerHelp')}</div></Link>
       )}
+      <TargetCard book={book} />
       {member?.role === 'owner' && <WeekCard book={book} />}
       {can('reports') && <MoneyNow book={book} />}
       {canPickBranch && (

@@ -1131,5 +1131,22 @@ const v3: V3Dict = {
     updated: '{{name}} se vend maintenant à {{price}}',
     help: 'D’après vos derniers achats. Le prix suggéré garde le même bénéfice qu’avant.',
   },
+  trust: {
+    new: 'Nouveau client',
+    newHelp: 'Pas encore assez d’historique de crédit. Commencez petit.',
+    good: 'Rembourse bien',
+    slow: 'Rembourse lentement',
+    risky: 'Risqué : rembourse souvent mal',
+    help: '{{n}} crédits avant, remboursés en {{days}} jours en moyenne ; {{pct}} % en moins de 2 semaines.',
+    open: 'Un crédit est encore ouvert depuis {{days}} jours.',
+  },
+  target: {
+    title: 'Objectif de ventes du jour',
+    set: 'Fixer un objectif de ventes',
+    amount: 'Ventes visées chaque jour',
+    help: 'Tout le monde voit sur l’accueil où en est la journée. Laissez vide pour retirer l’objectif.',
+    left: 'Encore {{amount}} ({{pct}} % fait)',
+    reached: 'Objectif atteint. Bravo !',
+  },
 };
 export default v3;

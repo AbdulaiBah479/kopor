@@ -1131,5 +1131,22 @@ const v3: V3Dict = {
     updated: '{{name}} naw de sɛl {{price}}',
     help: 'Frɔm wetin yu pe di las tɛm dɛn we yu bay. Di prayz we wi tɛl yu de kip di sem prɔfit lɛk bifo.',
   },
+  trust: {
+    new: 'Nyu kɔstɔma',
+    newHelp: 'I nɔ gɛt bɔku trɔs yet. Stat wit smɔl mɔni.',
+    good: 'I de pe bak fayn',
+    slow: 'I de pe bak slo slo',
+    risky: 'Wach am: plɛnti tɛm i nɔ de pe bak',
+    help: '{{n}} trɔs bifo, i pe bak insay {{days}} de pan avrej; {{pct}}% insay 2 wik.',
+    open: 'Wan trɔs stil nɔ pe afta {{days}} de.',
+  },
+  target: {
+    title: 'Tide sɛl tagɛt',
+    set: 'Sɛt sɛl tagɛt fɔ ɛni de',
+    amount: 'Ɔmɔs fɔ sɛl ɛni de',
+    help: 'Ɔlman go si na Om aw tide de go. Lɛf am ɛmti fɔ pul di tagɛt.',
+    left: '{{amount}} lɛf ({{pct}}% dɔn)',
+    reached: 'Yu dɔn rich di tagɛt. Yu du wɛl!',
+  },
 };
 export default v3;

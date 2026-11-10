@@ -1129,6 +1129,23 @@ const v3 = {
     updated: '{{name}} now sells at {{price}}',
     help: 'From what you paid at your last purchases. The suggested price keeps the same profit as before.',
   },
+  trust: {
+    new: 'New customer',
+    newHelp: 'Not enough credit history yet. Start with small amounts.',
+    good: 'Pays back well',
+    slow: 'Pays back slowly',
+    risky: 'Risky: often does not pay back',
+    help: '{{n}} credits before, paid back in {{days}} days on average; {{pct}}% within 2 weeks.',
+    open: 'One credit is still open after {{days}} days.',
+  },
+  target: {
+    title: 'Today’s sales target',
+    set: 'Set a daily sales target',
+    amount: 'Sales to aim for each day',
+    help: 'Everyone on Home sees how far today has got. Leave it empty to remove the target.',
+    left: '{{amount}} to go ({{pct}}% done)',
+    reached: 'Target reached. Well done!',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

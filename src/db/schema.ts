@@ -34,6 +34,7 @@ export interface Org extends Base {
   catalog_token?: string | null; // secret link to the public price list
   pro_trial_at?: string | null; // when this business used its free Pro trial (set by the server)
   credit_limit?: number | null;
+  daily_target?: number | null; // sales the owner aims for each day (Home shows progress)
   approve_over?: number | null; // refunds above this need the owner (default Le 1,000; 0 = off)
   payout_daily_max?: number | null; // most money that can be sent out in one day (default Le 20,000) // minor units: cashiers cannot take one customer above this (null = no limit)
   open_at?: string | null;     // business hours (HH:MM) for live location; default 08:00-18:00

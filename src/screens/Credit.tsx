@@ -48,6 +48,7 @@ export function useEntryConfirm() {
 }
 import { createUssdCode } from '@/cloud/payments';
 import { WaitForPaid } from '@/ui/WaitForPaid';
+import { trustOf } from '@/domain/trust';
 
 /** Polite reminder message in the current language. */
 export function useReminderText() {
@@ -152,6 +153,7 @@ export function ContactDetail() {
         <div className={`big num ${b > 0 ? 'good' : b < 0 ? 'bad' : ''}`}>{formatMoney(Math.abs(b))}</div>
         {od && <span className="badge bad">{t('credit.overdue')} · {fmt(od)}</span>}
       </div>
+      {c.kind !== 'supplier' && <TrustCard contactId={c.id} />}
       <div className="contact-actions">
         <a href={waLink(c.phone, remind(c), cc)} target="_blank" rel="noopener noreferrer"><Icon name="chat" />{t('credit.remind')}</a>
         <a href={smsLink(c.phone, remind(c), cc)}><Icon name="sms" />{t('common.sms')}</a>
@@ -243,6 +245,21 @@ function EntryFields({ type, f, setF, supplier = false }: { type: 'gave' | 'got'
 interface EntryForm { amount: number; note: string; date: string; due: string }
 const newEntry = (): EntryForm => ({ amount: 0, note: '', date: today(), due: addDays(today(), 14) });
 
+/** How well this customer paid back before (domain/trust.ts). warnOnly: shown only for slow or risky payers. */
+function TrustCard({ contactId, warnOnly = false }: { contactId: string; warnOnly?: boolean }) {
+  const { t } = useTranslation();
+  const book = useBook();
+  const s = trustOf(book.ledger, contactId);
+  if (warnOnly && s.level !== 'slow' && s.level !== 'risky') return null;
+  return (
+    <div className={`alert ${s.level === 'risky' ? 'bad' : 'info'}`} data-testid="trust" data-level={s.level}>
+      <Icon name={s.level === 'good' ? 'shield' : 'alert'} />
+      <div><b>{t(`trust.${s.level}`)}</b><br /><span className="small">{s.level === 'new' ? t('trust.newHelp')
+        : t('trust.help', { n: s.credits, days: s.avgDays, pct: s.onTime })}{s.oldestOpenDays > 30 ? ` ${t('trust.open', { days: s.oldestOpenDays })}` : ''}</span></div>
+    </div>
+  );
+}
+
 function EntrySheet({ contact, type }: { contact: Contact; type: 'gave' | 'got' }) {
   const { t } = useTranslation();
   const confirm = useEntryConfirm();
@@ -258,6 +275,7 @@ function EntrySheet({ contact, type }: { contact: Contact; type: 'gave' | 'got' 
         closeSheet(); toast(t('common.saved'), { undo: () => removeEntry(ctx, entry.id), share });
       } catch (err) { fail(err); }
     }}>
+      {type === 'gave' && contact.kind !== 'supplier' && <TrustCard contactId={contact.id} warnOnly />}
       <EntryFields type={type} f={f} setF={setF} supplier={contact.kind === 'supplier' && type === 'got'} />
       <button className={`btn ${type === 'gave' ? 'give' : 'get'} block`}>{t('common.save')}</button>
     </form>
