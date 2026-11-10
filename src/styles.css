@@ -420,6 +420,11 @@
   .pin-dots i { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--foreground); }
   .pin-dots i.on { background: var(--foreground); }
   .code-box { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 24px; font-weight: 700; letter-spacing: .04em; text-align: center; padding: 18px; border-radius: 14px; background: var(--fill); }
+  /* Quantity buttons on the public price list (order by WhatsApp). */
+  .qty-step { display: inline-flex; align-items: center; gap: 6px; }
+  .qty-step button { width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--line, #ccc); background: var(--fill); font: inherit; font-weight: 700; color: inherit; }
+  .qty-step button:disabled { opacity: .4; }
+  .qty-step b { min-width: 1.5em; text-align: center; }
   /* "Wait for Paid" (ui/WaitForPaid.tsx): grey while waiting, green when paid, red when it failed. */
   .paid-box { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 22px 16px; border-radius: 18px; background: var(--fill); }
   .paid-box b { font-size: 30px; }

@@ -35,6 +35,7 @@ const PublicPassport = lazyRetry(() => import('./screens/Passport').then((m) => 
 const PublicCatalog = lazyRetry(() => import('./screens/PublicCatalog').then((m) => ({ default: m.PublicCatalog })));
 const Passport = lazyRetry(() => import('./screens/Passport').then((m) => ({ default: m.Passport })));
 const PublicGroup = lazyRetry(() => import('./screens/PublicGroup').then((m) => ({ default: m.PublicGroup })));
+const Bills = lazyRetry(() => import('./screens/Bills').then((m) => ({ default: m.Bills })));
 const Agent = lazyRetry(() => import('./screens/Agent').then((m) => ({ default: m.Agent })));
 const Savings = lazyRetry(() => import('./screens/Savings').then((m) => ({ default: m.Savings })));
 const Staff = lazyRetry(() => import('./screens/Staff').then((m) => ({ default: m.Staff })));
@@ -100,6 +101,7 @@ function Gate() {
         <Route path="/pnl" element={<ProfitLoss />} />
         <Route path="/savings" element={<Savings />} />
         <Route path="/agent" element={<Agent />} />
+        <Route path="/bills" element={<Bills />} />
         <Route path="/staff" element={<Staff />} />
         <Route path="/gst" element={<Gst />} />
         <Route path="/watch" element={<Watch />} />

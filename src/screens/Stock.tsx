@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ImportSheet } from './ImportSheet';
 import { SeasonCard } from '@/ui/SeasonCard';
 import { PriceWatchCard } from '@/ui/PriceWatch';
+import { countLines, countTotals, saveCount } from '@/domain/stockCount';
 import { batchesLeft, expiring, supplierDebts } from '@/domain/expiry';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
@@ -68,6 +69,7 @@ export function StockList() {
       <Seg value={filter} onChange={setFilter} options={[['all', t('common.all')], ['low', t('stock.lowTab')], ...(soon.length ? [['expiring', t('pack.expiringTab')] as [typeof filter, string]] : [])]} />
       <Search value={q} onChange={setQ} placeholder={t('stock.searchPh')} />
       <ScanToggle onCode={setQ} label={t('scan.find')} />
+      {can('stock') && book.products.length > 0 && <button type="button" className="btn tinted block" data-testid="stock-count" onClick={() => openSheet(t('count.title'), <CountSheet />)}><Icon name="check" size={18} /> {t('count.title')}</button>}
       {can('stock') && <PriceWatchCard />}
       {can('stock') && <SeasonCard book={book} full />}
       <div className="list" id="products">
@@ -140,6 +142,58 @@ function ProductSheet({ product }: { product?: Product }) {
       <Field label={t('stock.sku')}><input value={f.sku} placeholder={t('common.optional')} onChange={(e) => setF({ ...f, sku: e.target.value })} /></Field>
       <ScanToggle onCode={(sku) => setF((x) => ({ ...x, sku }))} />
       <button className="btn primary block">{t('common.save')}</button>
+    </form>
+  );
+}
+
+/** Stock count (domain/stockCount.ts): type what is on the shelf; Kopor shows what is missing and what it is worth. */
+function CountSheet() {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx } = useApp();
+  const { closeSheet, toast, fail } = useOverlay();
+  const levels = useMemo(() => stockLevels(book), [book]);
+  const [counted, setCounted] = useState<Record<string, number | undefined>>({});
+  const [q, setQ] = useState('');
+  const products = [...book.products].filter((p) => !p.deleted).sort((a, b) => a.name.localeCompare(b.name));
+  const lines = countLines(products, levels, counted);
+  const tot = countTotals(lines);
+  return (
+    <form className="form" data-testid="count-form" onSubmit={async (e) => {
+      e.preventDefault();
+      if (!lines.length) return;
+      try {
+        const r = await saveCount(ctx, lines);
+        closeSheet();
+        toast(r.missingItems ? t('count.savedMissing', { n: r.missingItems, amount: formatMoney(r.missingValue) }) : t('count.savedOk', { n: r.checked }));
+      } catch (err) { fail(err); }
+    }}>
+      <div className="small muted">{t('count.help')}</div>
+      {products.length > 8 && <Search value={q} onChange={setQ} placeholder={t('stock.searchPh')} />}
+      <div className="list">
+        {products.filter((p) => !q || p.name.toLowerCase().includes(q.toLowerCase())).map((p) => {
+          const line = lines.find((l) => l.product.id === p.id);
+          return (
+            <div key={p.id} className="item" data-testid="count-row" data-product={p.name}>
+              <div className="main">
+                <div className="t">{p.name}</div>
+                <div className={`s${line && line.diff < 0 ? ' bad' : ''}`}>
+                  {t('count.expected', { n: levels.get(p.id) ?? 0, unit: p.unit })}
+                  {line && line.diff !== 0 && ` · ${line.diff < 0 ? t('count.missing', { n: -line.diff, amount: formatMoney(-line.value) }) : t('count.extra', { n: line.diff })}`}
+                </div>
+              </div>
+              <input className="input" style={{ width: 84 }} type="number" inputMode="decimal" min={0} step="any" name={`count_${p.name}`} aria-label={t('count.on', { name: p.name })}
+                value={counted[p.id] ?? ''} onChange={(e) => setCounted({ ...counted, [p.id]: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })} />
+            </div>
+          );
+        })}
+      </div>
+      {lines.length > 0 && (
+        <div className={`alert ${tot.missingItems ? 'bad' : 'info'}`} data-testid="count-summary"><Icon name={tot.missingItems ? 'alert' : 'check'} />
+          <div>{tot.missingItems ? t('count.sumMissing', { n: tot.missingItems, amount: formatMoney(tot.missingValue) }) : t('count.sumOk', { n: tot.checked })}
+            {tot.extraItems > 0 && <><br />{t('count.sumExtra', { n: tot.extraItems })}</>}</div></div>
+      )}
+      <button className="btn primary block" disabled={!lines.length}>{t('count.save', { n: lines.length })}</button>
     </form>
   );
 }

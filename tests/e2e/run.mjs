@@ -1062,6 +1062,22 @@ await step('mobile money agent: starting balances, a deposit, then a check that 
   await shot('12c-agent');
 });
 
+await step('stock count: count one item, Kopor shows what is missing and corrects the stock', async () => {
+  await go('/stock');
+  await page.getByTestId('stock-count').click();
+  const f = page.getByTestId('count-form');
+  const row = f.locator('[data-testid=count-row][data-product="Gari 1kg"]');
+  const expected = Number((await row.locator('.s').innerText()).match(/expects (\d+)/)[1]);
+  await row.locator('input').fill(String(expected - 2));
+  await f.getByTestId('count-summary').getByText(/1 items missing/).waitFor();
+  await tapInSheet(f.getByRole('button', { name: /Save the count/ }));
+  await page.waitForFunction(() => !document.querySelector('[data-testid=count-form]'));
+  await page.getByTestId('stock-count').click();
+  const again = page.getByTestId('count-form').locator('[data-testid=count-row][data-product="Gari 1kg"] .s');
+  if (!(await again.innerText()).includes(`expects ${expected - 2}`)) throw new Error('stock not corrected: ' + (await again.innerText()));
+  await page.keyboard.press('Escape');
+});
+
 await step('health report', async () => {
   await go('/health');
   await page.getByText('Record keeping').waitFor();

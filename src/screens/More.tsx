@@ -73,6 +73,7 @@ export function More() {
       <div className="list">
         <MenuItem to="/groups" icon="users" tile="orange" title={t('groups.title')} sub={t('more.groupsSub', { count: book.groups.length })} />
         <MenuItem to="/savings" icon="wallet" tile="green" title={t('save.title')} sub={t('save.menuSub')} />
+        {can('business') && <MenuItem to="/bills" icon="calendar" tile="red" title={t('bills.title')} sub={t('bills.menuSub')} />}
         <MenuItem to="/agent" icon="phone" tile="orange" title={t('agent.title')} sub={t('agent.menuSub')} />
         <MenuItem to="/invoices" icon="file" tile="blue" title={t('inv.title')} sub={t('more.invoicesSub', { count: book.invoices.length })} />
         {can('payments') && <MenuItem to="/payments" icon="wallet" tile="green" title={t('more.payments')} sub={t('more.paymentsSub')} />}
