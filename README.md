@@ -67,6 +67,15 @@ takes mobile money payments, and answers questions about the business in English
 | Linting | ESLint + typescript-eslint, react-hooks, jsx-a11y (accessibility) |
 | Testing | Vitest, PGlite (real Postgres in-process), Playwright |
 
+## Free outside services
+
+No account or key is needed for either; both are named in the app's Content-Security-Policy (`vite.config.ts`).
+
+| Service | Used for | Terms |
+|---|---|---|
+| [Open Food Facts](https://world.openfoodfacts.org) | Fills in a new product's name from its barcode | Data under the Open Database License; credited in the app |
+| [ExchangeRate-API open endpoint](https://www.exchangerate-api.com/docs/free) | Today's US dollar rate in Leones (Money screen), kept 12 hours on the phone | Free with attribution, shown under the rate |
+
 ## Krio and Nigerian Pidgin
 
 When someone writes in Sierra Leone Krio or Nigerian Pidgin, the `ai` Edge Function sends the matching entries of

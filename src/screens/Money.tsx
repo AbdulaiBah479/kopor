@@ -15,6 +15,7 @@ import { formatMoney, currencySymbol } from '@/lib/money';
 import { shareText } from '@/lib/share';
 import { getSupabase } from '@/cloud/supabase';
 import { WaitForPaid } from '@/ui/WaitForPaid';
+import { DollarCard } from '@/ui/DollarCard';
 import { createPayLink, createUssdCode, monimeStatus, walletBalance, walletHistory, type WalletAccount, type WalletTxn } from '@/cloud/payments';
 import { updateOrg } from '@/domain/org';
 import { recordSale, recordExpense, itemsLabel, EXPENSE_CATEGORIES } from '@/domain/cash';
@@ -71,6 +72,8 @@ export function Money() {
         <button className="btn primary" onClick={receive} data-testid="money-receive"><Icon name="down" size={20} /> {t('money.receive')}</button>
         <button className="btn tinted" onClick={send} data-testid="money-send"><Icon name="up" size={20} /> {t('money.send')}</button>
       </div>
+
+      <DollarCard />
 
       <div className="section-title"><span>{t('money.wallets')}</span>{has && can('business') && <button className="link" onClick={wallets}>{t('money.edit')}</button>}</div>
       {has ? (

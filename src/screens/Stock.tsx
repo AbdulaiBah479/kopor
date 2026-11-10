@@ -140,7 +140,13 @@ function ProductSheet({ product }: { product?: Product }) {
         <div className="small muted">{t('pack.help')}</div>
       </details>
       <Field label={t('stock.sku')}><input value={f.sku} placeholder={t('common.optional')} onChange={(e) => setF({ ...f, sku: e.target.value })} /></Field>
-      <ScanToggle onCode={(sku) => setF((x) => ({ ...x, sku }))} />
+      <ScanToggle onCode={(sku) => {
+        setF((x) => ({ ...x, sku }));
+        // A new product: fill in its name from Open Food Facts (free; nothing happens offline or for unknown codes).
+        if (!f.name.trim()) void import('@/lib/freeApis').then((m) => m.productName(sku)).then((name) => {
+          if (name) { setF((x) => (x.name.trim() ? x : { ...x, name })); toast(t('fx.named', { name })); }
+        });
+      }} />
       <button className="btn primary block">{t('common.save')}</button>
     </form>
   );

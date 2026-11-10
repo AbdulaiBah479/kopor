@@ -1266,5 +1266,12 @@ const v3: V3Dict = {
     waDone: 'Ɔl dɔn go na WhatsApp',
     respect: 'Sɛn nyus we gɛt yus nɔmɔ, nɔ ɛvride: kɔstɔma we gɛt tumɔs mɛsej kin stɔp fɔ rid dɛn.',
   },
+  fx: {
+    title: 'Dɔla ret tide: $1 = Le {{rate}}',
+    old: 'di las ret we wi sev',
+    usd: 'Dɔla',
+    source: 'Frɔm ExchangeRate-API (open.er-api.com), dɛn de chenj am wan tɛm ɛvride. Bank ɛn mɔni chenja kin gi smɔl difrɛn ret.',
+    named: 'Wi put di nem frɔm Open Food Facts: {{name}}',
+  },
 };
 export default v3;

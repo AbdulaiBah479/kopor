@@ -1264,6 +1264,13 @@ const v3 = {
     waDone: 'All sent on WhatsApp',
     respect: 'Send only useful news, not every day: customers who get too many messages stop reading them.',
   },
+  fx: {
+    title: 'Dollar rate today: $1 = Le {{rate}}',
+    old: 'last saved rate',
+    usd: 'US dollars',
+    source: 'From ExchangeRate-API (open.er-api.com), updated once a day. Banks and money changers may give a slightly different rate.',
+    named: 'Name filled in from Open Food Facts: {{name}}',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;
