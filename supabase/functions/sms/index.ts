@@ -5,13 +5,15 @@
 //   { action: 'disconnect', orgId }                               (owner)
 //   { action: 'test', orgId }                                     -> a test text to the business's own phone (owner)
 //   { action: 'remind', orgId, contactId }                        -> text one customer what they owe now (managers+)
+//   { action: 'broadcast', orgId, contactIds, text }              -> one message to chosen customers, {name} filled in
+//                                                                    (managers+; within the daily text limit)
 //   { action: 'run' }                                             -> daily: automatic reminders for every business that
 //                                                                    turned them on (at most once a day, like push)
 import { admin, caller, cors, env, HttpError, json, randomSecret, requireLevel, seal } from '../_shared/util.ts';
 import { gate, gateFor, leones, sendText, sentToday } from '../_shared/smsgate.ts';
 import { normalizeSlPhone } from '../_shared/momo.ts';
 
-const LEVEL: Record<string, number> = { status: 2, connect: 3, settings: 3, disconnect: 3, test: 3, remind: 2 };
+const LEVEL: Record<string, number> = { status: 2, connect: 3, settings: 3, disconnect: 3, test: 3, remind: 2, broadcast: 2 };
 const WEEK = 7 * 86_400_000;
 type Entry = { contact_id: string; type: 'gave' | 'got'; amount: number; date: string; due_date: string | null; created_at: number };
 
@@ -152,6 +154,29 @@ Deno.serve(async (req) => {
         await sendText(g, to, reminderText(org!.name, c.name, bal, g.bal));
         await db.from('sms_log').insert({ org_id: orgId, contact_id: c.id, kind: 'reminder' });
         return json({ ok: true });
+      }
+      // Messages to customers (new stock, offers, opening hours), sent from the shop's own phone. The shop's name is
+      // added so customers know who wrote; numbers are taken from the business's own customers only.
+      case 'broadcast': {
+        const g = await gateFor(orgId);
+        if (!g) throw new HttpError(400, 'Connect the phone first');
+        const text = String(body.text ?? '').trim();
+        const ids = Array.isArray(body.contactIds) ? body.contactIds.map(String).filter((x: string) => /^[0-9a-f-]{36}$/.test(x)).slice(0, 500) : [];
+        if (text.length < 5 || text.length > 300 || !ids.length) throw new HttpError(400, 'Bad request');
+        const { data: org } = await db.from('orgs').select('name').eq('id', orgId).single();
+        const { data: people } = await db.from('contacts').select('id, name, phone').eq('org_id', orgId).eq('deleted', 0).in('id', ids);
+        let left = g.limit - (await sentToday(orgId)), sent = 0, skipped = 0;
+        const seen = new Set<string>();
+        for (const c of people ?? []) {
+          const to = normalizeSlPhone(c.phone);
+          if (!to || seen.has(to)) { skipped++; continue; }
+          if (left-- <= 0) break;
+          seen.add(to);
+          await sendText(g, to, `${org!.name}: ${text.replaceAll('{name}', String(c.name).split(' ')[0])}`);
+          await db.from('sms_log').insert({ org_id: orgId, contact_id: c.id, kind: 'broadcast' });
+          sent++;
+        }
+        return json({ sent, skipped, notSent: Math.max(0, (people ?? []).length - sent - skipped) });
       }
     }
     throw new HttpError(400, 'Unknown action');

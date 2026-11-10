@@ -15,4 +15,6 @@ export const smsConnect = (orgId: string, a: { user: string; pass: string; signi
 export const smsSettings = (orgId: string, a: { auto?: boolean; bal?: boolean; limit?: number; signingKey?: string }) => call<{ ok: true }>({ action: 'settings', orgId, ...a });
 export const smsDisconnect = (orgId: string) => call<{ ok: true }>({ action: 'disconnect', orgId });
 export const smsTest = (orgId: string) => call<{ ok: true; to: string }>({ action: 'test', orgId });
+/** One message to chosen customers from the shop's phone ({name} becomes each customer's first name). */
+export const smsBroadcast = (orgId: string, contactIds: string[], text: string) => call<{ sent: number; skipped: number; notSent: number }>({ action: 'broadcast', orgId, contactIds, text });
 export const smsRemind = (orgId: string, contactId: string) => call<{ ok: true }>({ action: 'remind', orgId, contactId });

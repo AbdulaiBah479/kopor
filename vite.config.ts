@@ -83,13 +83,15 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: false,
       manifest: false, // public/manifest.webmanifest is the source of truth
-      includeAssets: ['icons/*.png', 'icons/*.svg', 'manifest.webmanifest'],
+      includeAssets: ['icons/*.svg', 'manifest.webmanifest'], // the PNG icons are already in globPatterns (listing them twice stored them twice)
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
         // Mobile data is expensive: precache only the core app. Heavy optional tools (scanner, PDF, Excel,
         // printer, cloud, crash reporting) are cached the first time someone uses them.
         globIgnores: ['**/Scanner-*', '**/pdf-*', '**/excel-*', '**/xlsx-*', '**/html2canvas*', '**/purify*', '**/index.es-*', '**/printer-*', '**/cloud-*', '**/sentry-*', '**/tour-*',
-          '**/tesseract/**', '**/inter-cyrillic*', '**/inter-greek*', '**/inter-vietnamese*', '**/og.*'],
+          '**/tesseract/**',
+          // French screens: most people in Sierra Leone use English or Krio, so French downloads the first time it is chosen.
+          '**/fr-*', '**/inter-cyrillic*', '**/inter-greek*', '**/inter-vietnamese*', '**/og.*'],
         runtimeCaching: [{
           urlPattern: ({ url }) => url.pathname.includes('/tesseract/'),
           handler: 'CacheFirst',
