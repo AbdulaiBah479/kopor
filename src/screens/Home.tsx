@@ -1,4 +1,5 @@
 import { TargetCard } from '@/ui/TargetCard';
+import { TodayCard } from '@/ui/TodayCard';
 import { BillsCard } from './Bills';
 import { Suspense, useEffect, useState } from 'react';
 import { lazyRetry } from '@/ui/lazy';
@@ -118,6 +119,7 @@ export function Home() {
       {can('reports') && unseenAlerts > 0 && (
         <Link to="/watch" className="alert bad" data-testid="alert-banner"><Icon name="alert" /><div><b>{t('watch.alert.banner', { count: unseenAlerts })}</b><br />{t('watch.alert.bannerHelp')}</div></Link>
       )}
+      {can('reports') && <TodayCard book={book} unseenAlerts={unseenAlerts} />}
       {can('business') && <BillsCard book={book} />}
       <TargetCard book={book} />
       {member?.role === 'owner' && <WeekCard book={book} />}

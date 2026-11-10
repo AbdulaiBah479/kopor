@@ -1078,6 +1078,26 @@ await step('stock count: count one item, Kopor shows what is missing and correct
   await page.keyboard.press('Escape');
 });
 
+await step('pay small-small: start a plan with a first payment, pay the rest, the customer takes the goods', async () => {
+  await go('/layaway');
+  await page.getByTestId('new-layaway').click();
+  const f = page.getByTestId('lay-form');
+  await f.locator('[name=customer]').fill('Isatu Conteh');
+  await f.locator('[name=item]').fill('Mattress');
+  await f.locator('[name=total]').fill('500');
+  await f.locator('[name=first]').fill('200');
+  await tapInSheet(f.getByRole('button', { name: 'Save' }));
+  const plan = page.getByTestId('layaway').filter({ hasText: 'Mattress' });
+  await plan.getByText(/300\.00 left to pay|Le 300 left to pay/).waitFor();
+  await plan.getByTestId('lay-pay').click();
+  const pay = page.getByTestId('lay-pay-form');
+  await pay.locator('[name=amount]').fill('300');
+  await tapInSheet(pay.getByRole('button', { name: 'Save' }));
+  await plan.getByTestId('lay-collect').click();
+  await page.getByText(/Mattress collected/).waitFor();
+  if (await page.getByTestId('layaway').filter({ hasText: 'Mattress' }).count()) throw new Error('plan still open after collecting');
+});
+
 await step('health report', async () => {
   await go('/health');
   await page.getByText('Record keeping').waitFor();

@@ -44,7 +44,7 @@ function GoalCard({ goal }: { goal: SavingsGoal }) {
       <div className="row between" style={{ alignItems: 'flex-start' }}>
         <div>
           <b style={{ fontSize: 17 }}>{goal.name}</b>
-          <div className="small muted">{t(`methods.${goal.kept_in}`)}{goal.due_date ? ` · ${t('save.by', { date: fmt(goal.due_date) })}` : ''}</div>
+          <div className="small muted">{goal.auto_pct ? `${t('jars.badge', { pct: goal.auto_pct })} · ` : ''}{t(`methods.${goal.kept_in}`)}{goal.due_date ? ` · ${t('save.by', { date: fmt(goal.due_date) })}` : ''}</div>
         </div>
         {can('record') && <button className="icon-btn" aria-label={t('common.edit')} onClick={() => openSheet(t('common.edit'), <GoalSheet goal={goal} />)}><Icon name="edit" size={18} /></button>}
       </div>
@@ -69,7 +69,7 @@ function GoalSheet({ goal }: { goal?: SavingsGoal }) {
   const { t } = useTranslation();
   const { ctx } = useApp();
   const { closeSheet, toast, fail } = useOverlay();
-  const [f, setF] = useState({ name: goal?.name ?? '', target: goal?.target ?? 0, due_date: goal?.due_date ?? addMonths(today(), 3), kept_in: goal?.kept_in ?? 'cash' });
+  const [f, setF] = useState({ name: goal?.name ?? '', target: goal?.target ?? 0, due_date: goal?.due_date ?? addMonths(today(), 3), kept_in: goal?.kept_in ?? 'cash', auto_pct: goal?.auto_pct ?? 0 });
   return (
     <form className="form" data-testid="goal-form" onSubmit={async (e) => {
       e.preventDefault();
@@ -81,6 +81,7 @@ function GoalSheet({ goal }: { goal?: SavingsGoal }) {
       <Field label={t('save.keptIn')}><Seg value={f.kept_in} onChange={(kept_in) => setF({ ...f, kept_in })} options={KEPT_IN.slice(0, 3).map((k) => [k, t(`methods.${k}`)])} /></Field>
       <div className="chips">{KEPT_IN.slice(3).map((k) => <button type="button" key={k} className={`chip${f.kept_in === k ? ' on' : ''}`} onClick={() => setF({ ...f, kept_in: k })}>{t(`methods.${k}`)}</button>)}</div>
       <div className="small muted">{t('save.keptHelp')}</div>
+      <Field label={t('jars.pct')} hint={t('jars.pctHelp')}><input name="auto_pct" type="number" inputMode="decimal" min={0} max={100} value={f.auto_pct || ''} placeholder="0" onChange={(e) => setF({ ...f, auto_pct: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} /></Field>
       <button className="btn primary block">{t('common.save')}</button>
     </form>
   );

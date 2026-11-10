@@ -12,17 +12,28 @@ const GOOD_DAYS = 14, SLOW_DAYS = 30, RISKY_OPEN = 60;
 export function trustOf(ledger: LedgerEntry[], contactId: string, now = today()): TrustScore {
   const rows = ledger.filter((e) => e.contact_id === contactId && !e.deleted)
     .sort((a, b) => a.date.localeCompare(b.date) || a.created_at - b.created_at);
-  const credits = rows.filter((e) => e.type === 'gave').map((e) => ({ date: e.date, left: e.amount, cleared: null as string | null }));
-  // Payments clear the oldest credit first.
-  let i = 0;
-  for (const p of rows.filter((e) => e.type === 'got')) {
-    let money = p.amount;
-    while (money > 0 && i < credits.length) {
-      if (credits[i].date > p.date) break; // a payment before this credit was given (an advance): not a repayment of it
-      const used = Math.min(money, credits[i].left);
-      credits[i].left -= used; money -= used;
-      if (credits[i].left <= 0) { credits[i].cleared = p.date; i++; }
+  // Payments clear the oldest open credit first; money paid before any credit (an advance, or paying small-small
+  // towards goods) clears the next credit the day it is given.
+  const credits: { date: string; left: number; cleared: string | null }[] = [];
+  let advance = 0;
+  for (const e of rows) {
+    if (e.type === 'gave') {
+      const c = { date: e.date, left: e.amount, cleared: null as string | null };
+      const used = Math.min(advance, c.left);
+      c.left -= used; advance -= used;
+      if (c.left <= 0) c.cleared = e.date;
+      credits.push(c);
+      continue;
     }
+    let money = e.amount;
+    for (const c of credits) {
+      if (money <= 0) break;
+      if (c.cleared) continue;
+      const used = Math.min(money, c.left);
+      c.left -= used; money -= used;
+      if (c.left <= 0) c.cleared = e.date;
+    }
+    advance += money;
   }
   const days = credits.map((c) => Math.max(0, daysBetween(c.date, c.cleared ?? now)));
   const cleared = credits.filter((c) => c.cleared);

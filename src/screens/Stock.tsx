@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ImportSheet } from './ImportSheet';
 import { SeasonCard } from '@/ui/SeasonCard';
 import { PriceWatchCard } from '@/ui/PriceWatch';
+import { RestockCard } from '@/ui/Restock';
 import { countLines, countTotals, saveCount } from '@/domain/stockCount';
 import { batchesLeft, expiring, supplierDebts } from '@/domain/expiry';
 import { useTranslation } from 'react-i18next';
@@ -70,6 +71,7 @@ export function StockList() {
       <Search value={q} onChange={setQ} placeholder={t('stock.searchPh')} />
       <ScanToggle onCode={setQ} label={t('scan.find')} />
       {can('stock') && book.products.length > 0 && <button type="button" className="btn tinted block" data-testid="stock-count" onClick={() => openSheet(t('count.title'), <CountSheet />)}><Icon name="check" size={18} /> {t('count.title')}</button>}
+      {can('stock') && <RestockCard />}
       {can('stock') && <PriceWatchCard />}
       {can('stock') && <SeasonCard book={book} full />}
       <div className="list" id="products">

@@ -766,4 +766,19 @@ await test('closing summary: closing the day sends the owner sales, profit, cash
   assert.equal(Number(d.warnings) <= counted, true);
 });
 
+await test('pay small-small plans: cashiers start them, cannot back-date them; strangers see nothing', async () => {
+  const now = '(extract(epoch from now()) * 1000)::bigint';
+  await as('cashier');
+  const C = (await q('select id from contacts where org_id = $1 limit 1', [ORG])).rows[0]?.id ?? '00000000-0000-4000-8000-000000000000';
+  await q(`insert into layaways (id, org_id, created_at, updated_at, contact_id, item, total, date) values (gen_random_uuid(), $1, ${now}, ${now}, $2, 'Tecno phone', 300000, current_date)`, [ORG, C]);
+  await rejects(q(`insert into layaways (id, org_id, created_at, updated_at, contact_id, item, total, date) values (gen_random_uuid(), $1, ${now}, ${now}, $2, 'Mattress', 50000, current_date - 9)`, [ORG, C]), /backdated/);
+  await rejects(q(`insert into layaways (id, org_id, created_at, updated_at, contact_id, item, total, date, status) values (gen_random_uuid(), $1, ${now}, ${now}, $2, 'Bad', 1000, current_date, 'stolen')`, [ORG, C]));
+  await as('stranger');
+  assert.equal((await q('select * from layaways')).rows.length, 0);
+  await as('owner');
+  assert.equal((await q('select count(*)::int as c from layaways')).rows[0].c, 1);
+  await q(`update savings_goals set auto_pct = 10 where org_id = $1`, [ORG]);
+  await rejects(q(`update savings_goals set auto_pct = 150 where org_id = $1`, [ORG]));
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

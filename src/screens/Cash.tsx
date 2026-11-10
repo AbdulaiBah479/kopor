@@ -1,3 +1,4 @@
+import { JarsSheet, jarShares } from '@/ui/Jars';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApp, useBook } from '@/state/app';
@@ -328,7 +329,7 @@ function CloseDaySheet() {
   const { t } = useTranslation();
   const book = useBook();
   const { ctx } = useApp();
-  const { closeSheet, toast, fail } = useOverlay();
+  const { closeSheet, openSheet, toast, fail } = useOverlay();
   const [float, setFloat] = useState(0);
   const [counted, setCounted] = useState(0);
   const [note, setNote] = useState('');
@@ -349,7 +350,9 @@ function CloseDaySheet() {
           counted: formatMoney(counted), diff: formatMoney(diff, { sign: true }), owed: formatMoney(owed),
           top: top.length ? top.map((p) => ` ×${p.qty}`).join(', ') : '—',
         });
-        closeSheet(); toast(t('closing.saved'), { share: { label: t('closing.sendSummary'), href: `https://wa.me/?text=${encodeURIComponent(text)}` } });
+        toast(t('closing.saved'), { share: { label: t('closing.sendSummary'), href: `https://wa.me/?text=${encodeURIComponent(text)}` } });
+        // Money jars: put part of today's sales aside now, before it is spent.
+        if (jarShares(book).length) openSheet(t('jars.title'), <JarsSheet />); else closeSheet();
       } catch (err) { fail(err); }
     }}>
       <div className="small muted">{t('closing.help')}</div>

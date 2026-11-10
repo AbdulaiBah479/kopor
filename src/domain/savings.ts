@@ -19,12 +19,12 @@ export function goalProgress(book: Book, goal: SavingsGoal, now = today()) {
   return { saved, left, pct: Math.min(100, Math.round((saved / goal.target) * 100)), reached: saved >= goal.target, days, perWeek };
 }
 
-export interface GoalInput { name: string; target: number; due_date?: string | null; kept_in?: string }
+export interface GoalInput { name: string; target: number; due_date?: string | null; kept_in?: string; auto_pct?: number | null }
 export async function saveGoal(ctx: Ctx, input: GoalInput, id?: string) {
   assertCan(ctx.role, 'record');
   if (!input.name.trim()) throw new AppError('err.nameRequired');
   if (!(input.target > 0)) throw new AppError('err.amount');
-  const data = { name: input.name.trim().slice(0, 80), target: Math.round(input.target), due_date: input.due_date || null, kept_in: input.kept_in || 'cash' };
+  const data = { name: input.name.trim().slice(0, 80), target: Math.round(input.target), due_date: input.due_date || null, kept_in: input.kept_in || 'cash', auto_pct: input.auto_pct && input.auto_pct > 0 ? Math.min(100, input.auto_pct) : null };
   if (id) return update(ctx, 'savings_goals', id, data, `Edited savings goal ${data.name}`);
   return insert(ctx, 'savings_goals', { ...data, archived: 0 }, `New savings goal ${data.name}`);
 }

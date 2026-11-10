@@ -88,8 +88,13 @@ export interface GroupLoan extends Base {
   group_id: string; member_id: string; type: 'loan' | 'repay'; amount: number; interest: number; date: string; due_date: string | null; note: string;
 }
 /** Money set aside for a purpose ("cashbox"): Kopor only keeps the record; the money stays where it is kept. */
-export interface SavingsGoal extends Base { name: string; target: number; due_date: string | null; kept_in: string; archived: 0 | 1 }
+export interface SavingsGoal extends Base { name: string; target: number; due_date: string | null; kept_in: string; archived: 0 | 1; auto_pct?: number | null } // auto_pct: share of each day's sales (money jar)
 export interface SavingsMove extends Base { goal_id: string; amount: number; date: string; note: string }
+/** Pay small-small (domain/layaway.ts): goods kept for a customer who pays in parts; payments are ledger entries. */
+export interface Layaway extends Base {
+  branch_id: string | null; contact_id: string; item: string; product_id: string | null; qty: number; total: number;
+  date: string; due_date: string | null; status: 'open' | 'collected' | 'cancelled'; txn_id: string | null;
+}
 /** Mobile money agent book (domain/agent.ts): deposits, withdrawals, commission, float swaps and balance checks. */
 export interface AgentMove extends Base {
   branch_id: string | null; date: string; kind: 'deposit' | 'withdraw' | 'commission' | 'buy_float' | 'sell_float' | 'count';
@@ -143,7 +148,7 @@ export interface Meta { key: string; value: unknown }
 export const SYNC_TABLES = [
   'orgs', 'branches', 'members', 'contacts', 'ledger', 'transactions', 'products', 'stock_moves',
   'groups', 'contributions', 'invoices', 'payment_requests', 'closings', 'group_loans', 'savings_goals', 'savings_moves', 'group_claims',
-  'attendance', 'staff_terms', 'staff_pay', 'agent_moves', 'audit',
+  'attendance', 'staff_terms', 'staff_pay', 'agent_moves', 'layaways', 'audit',
 ] as const;
 export type SyncTable = (typeof SYNC_TABLES)[number];
 
@@ -151,7 +156,7 @@ export interface RowOf {
   orgs: Org; branches: Branch; members: Member; contacts: Contact; ledger: LedgerEntry; transactions: Txn;
   products: Product; stock_moves: StockMove; groups: Group; contributions: Contribution; invoices: Invoice;
   payment_requests: PaymentRequest; closings: Closing; group_loans: GroupLoan; savings_goals: SavingsGoal; savings_moves: SavingsMove; group_claims: GroupClaim;
-  attendance: Attendance; staff_terms: StaffTerms; staff_pay: StaffPay; agent_moves: AgentMove; audit: AuditEntry;
+  attendance: Attendance; staff_terms: StaffTerms; staff_pay: StaffPay; agent_moves: AgentMove; layaways: Layaway; audit: AuditEntry;
 }
 
 export class KoporDB extends Dexie {
@@ -176,6 +181,7 @@ export class KoporDB extends Dexie {
   staff_terms!: Table<StaffTerms, string>;
   staff_pay!: Table<StaffPay, string>;
   agent_moves!: Table<AgentMove, string>;
+  layaways!: Table<Layaway, string>;
   audit!: Table<AuditEntry, string>;
   meta!: Table<Meta, string>;
 
@@ -207,6 +213,8 @@ export class KoporDB extends Dexie {
     this.version(5).stores({ attendance: 'id, org_id, member_id, date, dirty', staff_terms: 'id, org_id, member_id, dirty', staff_pay: 'id, org_id, member_id, dirty' });
     // v6: mobile money agent book.
     this.version(6).stores({ agent_moves: 'id, org_id, date, dirty' });
+    // v7: pay small-small plans.
+    this.version(7).stores({ layaways: 'id, org_id, contact_id, dirty' });
   }
   /** Typed access to a synced table by name. */
   t<K extends SyncTable>(name: K): Table<RowOf[K], string> {
