@@ -1,7 +1,7 @@
 // Mobile money / card payments through Monime (licensed by the Bank of Sierra Leone). Either the business connects its
 // own Monime account, or (easy payments) it just gives a mobile money number and each payment is sent on to it.
 // Secrets live only in the Supabase Edge Function (supabase/functions/monime); the phone never sees them.
-import { callFunction } from './supabase';
+import { callFunction, getAnonSupabase, getSupabase } from './supabase';
 
 const call = <T,>(body: Record<string, unknown>) => callFunction<T>('monime', body);
 
@@ -27,6 +27,30 @@ export const createUssdCode = (orgId: string, args: { invoiceId?: string; groupI
 /** Whether a payment link or code has been paid (confirmed by Monime and double-checked by Kopor's server). */
 export const paymentStatus = (orgId: string, requestId: string) =>
   call<{ status: 'pending' | 'processing' | 'completed' | 'failed' | 'expired' | 'cancelled' | 'reversed'; amount: number; kind: string }>({ action: 'request', orgId, requestId });
+
+/** The pay-QR poster's secret link (made the first time; renew = a new poster, the old one stops working). */
+export async function posterToken(orgId: string, renew = false): Promise<string> {
+  const sb = await getSupabase();
+  if (!sb) throw new Error('err.noCloud');
+  const { data, error } = await sb.rpc('kopor_pay_token', { o: orgId, renew });
+  if (error) throw new Error(error.message);
+  return data as string;
+}
+
+/** Customer side of the poster (no sign-in). */
+async function publicCall<T>(body: Record<string, unknown>): Promise<T> {
+  const sb = await getAnonSupabase();
+  if (!sb) throw new Error('err.noCloud');
+  const { data, error } = await sb.functions.invoke('monime', { body });
+  if (error) {
+    const ctx = (error as { context?: Response }).context;
+    const server = ctx && typeof ctx.json === 'function' ? await ctx.json().catch(() => null) : null;
+    throw new Error(server?.error ?? error.message);
+  }
+  return data as T;
+}
+export const posterInfo = (token: string) => publicCall<{ name: string; ready: boolean }>({ action: 'public-pay-info', token });
+export const posterPay = (token: string, amount: number, name: string) => publicCall<{ url: string }>({ action: 'public-pay', token, amount, name });
 
 export const momoProviders = (orgId: string) => call<{ providers: { id: string; name: string }[] }>({ action: 'providers', orgId });
 

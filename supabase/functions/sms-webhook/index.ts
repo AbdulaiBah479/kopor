@@ -1,5 +1,5 @@
 // Texts that arrive on the shop's phone (SMS Gateway for Android webhook, event sms:received). A customer who texts
-// BAL gets their balance back. Deploy with --no-verify-jwt (the phone has no Supabase login).
+// BAL gets their balance back; STMT gets their last 5 entries and the balance (a mini-statement). Deploy with --no-verify-jwt (the phone has no Supabase login).
 // Security: the address carries a per-business secret, the body must carry the app's HMAC-SHA256 signature
 // (X-Signature over body + X-Timestamp), and old messages (more than 5 minutes) are refused.
 import { admin, json } from '../_shared/util.ts';
@@ -7,6 +7,7 @@ import { gateFor, leones, sameHex, sendText, sentToday, signature } from '../_sh
 import { normalizeSlPhone } from '../_shared/momo.ts';
 
 const ASK = /^\s*(bal|balance|my balance|how much|ɔw|ow|solde)\s*\??\s*$/i;
+const STMT = /^\s*(stmt|statement|mini statement|history|stetmɛnt|relevé|releve)\s*\??\s*$/i;
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -25,7 +26,8 @@ Deno.serve(async (req) => {
     const evt = JSON.parse(raw);
     if (evt?.event !== 'sms:received') return json({ ignored: true });
     const text = String(evt.payload?.message ?? ''), from = normalizeSlPhone(String(evt.payload?.sender ?? ''));
-    if (!g.bal || !from || !ASK.test(text)) return json({ ignored: true });
+    const wantsStatement = STMT.test(text);
+    if (!g.bal || !from || !(ASK.test(text) || wantsStatement)) return json({ ignored: true });
     if ((await sentToday(orgId)) >= g.limit) return json({ ignored: 'daily limit' });
 
     const db = admin();
@@ -37,11 +39,17 @@ Deno.serve(async (req) => {
     let reply: string;
     if (!c) reply = `${org!.name}: we could not find your account with this number.${org?.phone ? ` Please call ${org.phone}.` : ''}`;
     else {
-      const { data: rows } = await db.from('ledger').select('type, amount').eq('org_id', orgId).eq('contact_id', c.id).eq('deleted', 0);
+      const { data: rows } = await db.from('ledger').select('type, amount, date, created_at').eq('org_id', orgId).eq('contact_id', c.id).eq('deleted', 0);
       const bal = (rows ?? []).reduce((s, e) => s + (e.type === 'gave' ? e.amount : -e.amount), 0);
       reply = bal > 0 ? `${org!.name}: ${c.name.split(' ')[0]}, you owe ${leones(bal)}. Thank you.`
         : bal < 0 ? `${org!.name}: ${c.name.split(' ')[0]}, we owe you ${leones(-bal)}.`
         : `${org!.name}: ${c.name.split(' ')[0]}, you owe nothing. Thank you!`;
+      if (wantsStatement) {
+        // Newest last, short enough for one or two texts: "12/11 took Le 500", "14/11 paid Le 300".
+        const last = [...(rows ?? [])].sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.created_at - b.created_at).slice(-5);
+        const lines = last.map((e) => `${String(e.date).slice(8, 10)}/${String(e.date).slice(5, 7)} ${e.type === 'gave' ? 'took' : 'paid'} ${leones(e.amount)}`);
+        reply = `${reply}${lines.length ? ` Last: ${lines.join('; ')}.` : ''}`;
+      }
     }
     await sendText(g, from, reply);
     await db.from('sms_log').insert({ org_id: orgId, contact_id: c?.id ?? null, kind: 'balance' });

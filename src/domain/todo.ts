@@ -6,9 +6,10 @@ import { isLow, stockLevels } from './stock';
 import { cashPlan } from './bills';
 import { expiring } from './expiry';
 import { openPlans, progress } from './layaway';
+import { budgetStatus } from './budgets';
 import type { Book } from './book';
 
-export interface Todo { kind: 'chase' | 'reorder' | 'bill' | 'supplier' | 'layaway' | 'expiry' | 'alerts'; key: string; to: string; params: Record<string, string | number>; urgent: boolean }
+export interface Todo { kind: 'chase' | 'reorder' | 'bill' | 'supplier' | 'layaway' | 'expiry' | 'alerts' | 'budget'; key: string; to: string; params: Record<string, string | number>; urgent: boolean }
 
 export function todayList(book: Book, opts: { unseenAlerts?: number; bills?: boolean } = {}, now = today()): Todo[] {
   const out: Todo[] = [];
@@ -33,6 +34,10 @@ export function todayList(book: Book, opts: { unseenAlerts?: number; bills?: boo
     if (!p.late) continue;
     const c = book.contacts.find((x) => x.id === plan.contact_id);
     out.push({ kind: 'layaway', key: `lay-${plan.id}`, to: '/layaway', params: { name: c?.name ?? '', item: plan.item, amount: p.left }, urgent: false });
+  }
+  // Spending over (or nearly at) its monthly budget.
+  for (const l of budgetStatus(book, now.slice(0, 7)).filter((x) => x.state !== 'ok').slice(0, 2)) {
+    out.push({ kind: 'budget', key: `budget-${l.category}`, to: '/cash', params: { category: l.category, pct: l.pct }, urgent: l.state === 'over' });
   }
   // Goods expiring within a week.
   const soon = expiring(book, 7, now);

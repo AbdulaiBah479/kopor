@@ -84,6 +84,9 @@ const extra = {
     deleted: 'Account deleted',
   },
   errx: {
+    posterGone: 'This pay poster no longer works.',
+    payNotReady: 'Online payments are not set up for this shop yet.',
+    tooMany: 'Too many payments started in the last hour. Please try again later.',
     updated: 'Kopor was just updated. Close Kopor completely and open it again.',
     signInOrRole: 'Kopor’s server refused this. Sign in first (More → Cloud & account), or ask the owner if your role allows it.',
     payoutDailyMax: 'Today’s limit for sending money is reached. Try tomorrow or raise the limit in Fraud watch → Stay safe.',

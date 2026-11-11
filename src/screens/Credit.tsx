@@ -49,6 +49,7 @@ export function useEntryConfirm() {
 import { createUssdCode } from '@/cloud/payments';
 import { WaitForPaid } from '@/ui/WaitForPaid';
 import { trustOf } from '@/domain/trust';
+import { addInstalments, nextToPay, schedule, type Every } from '@/domain/instalments';
 
 /** Polite reminder message in the current language. */
 export function useReminderText() {
@@ -152,6 +153,7 @@ export function ContactDetail() {
         <div className="muted small">{b > 0 ? t('credit.willGet') : b < 0 ? t('credit.willGive') : t('credit.settled')}</div>
         <div className={`big num ${b > 0 ? 'good' : b < 0 ? 'bad' : ''}`}>{formatMoney(Math.abs(b))}</div>
         {od && <span className="badge bad">{t('credit.overdue')} · {fmt(od)}</span>}
+        {b > 0 && (() => { const n = nextToPay(book.ledger, c.id); return n?.due ? <div className="small" data-testid="next-to-pay">{t('inst.next', { amount: formatMoney(n.amount), date: fmt(n.due) })}</div> : null; })()}
       </div>
       {c.kind !== 'supplier' && <TrustCard contactId={c.id} />}
       <div className="contact-actions">
@@ -266,17 +268,41 @@ function EntrySheet({ contact, type }: { contact: Contact; type: 'gave' | 'got' 
   const { ctx } = useApp();
   const { closeSheet, toast, fail } = useOverlay();
   const [f, setF] = useState(newEntry);
+  const [inst, setInst] = useState({ on: false, count: 4, every: 'week' as Every, first: addDays(today(), 7) });
+  const { fmt } = useDate();
+  const plan = inst.on && f.amount > 0 ? schedule(f.amount, inst.count, inst.every, inst.first) : [];
   return (
     <form className="form" onSubmit={async (e) => {
       e.preventDefault();
       try {
         const share = confirm(contact, type, f.amount, f.note);
+        if (plan.length) {
+          const entries = await addInstalments(ctx, { contactId: contact.id, total: f.amount, count: inst.count, every: inst.every, first: inst.first, note: f.note, date: f.date });
+          closeSheet(); toast(t('inst.saved', { n: entries.length }), { undo: async () => { for (const x of entries) await removeEntry(ctx, x.id); }, share });
+          return;
+        }
         const entry = await addEntry(ctx, { contactId: contact.id, type, amount: f.amount, note: f.note, date: f.date, dueDate: f.due });
         closeSheet(); toast(t('common.saved'), { undo: () => removeEntry(ctx, entry.id), share });
       } catch (err) { fail(err); }
     }}>
       {type === 'gave' && contact.kind !== 'supplier' && <TrustCard contactId={contact.id} warnOnly />}
       <EntryFields type={type} f={f} setF={setF} supplier={contact.kind === 'supplier' && type === 'got'} />
+      {type === 'gave' && contact.kind !== 'supplier' && (
+        <div className="card flat stack" data-testid="instalments">
+          <label className="row" style={{ gap: 8 }}><input type="checkbox" name="instalments" checked={inst.on} onChange={(e) => setInst({ ...inst, on: e.target.checked })} /> <b>{t('inst.toggle')}</b></label>
+          {inst.on && (
+            <>
+              <div className="grid2">
+                <Field label={t('inst.count')}><select name="inst_count" value={inst.count} onChange={(e) => setInst({ ...inst, count: Number(e.target.value) })}>{[2, 3, 4, 5, 6, 8, 10, 12].map((n) => <option key={n} value={n}>{n}</option>)}</select></Field>
+                <Field label={t('inst.first')}><input type="date" name="inst_first" value={inst.first} onChange={(e) => setInst({ ...inst, first: e.target.value })} /></Field>
+              </div>
+              <Seg value={inst.every} onChange={(every) => setInst({ ...inst, every })} options={[['week', t('inst.week')], ['twoWeeks', t('inst.twoWeeks')], ['month', t('inst.month')]]} />
+              {plan.length > 0 && <div className="small" data-testid="inst-plan">{plan.map((p) => `${fmt(p.due)}: ${formatMoney(p.amount)}`).join(' · ')}</div>}
+              <div className="small muted">{t('inst.help')}</div>
+            </>
+          )}
+        </div>
+      )}
       <button className={`btn ${type === 'gave' ? 'give' : 'get'} block`}>{t('common.save')}</button>
     </form>
   );

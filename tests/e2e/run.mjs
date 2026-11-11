@@ -1098,6 +1098,21 @@ await step('pay small-small: start a plan with a first payment, pay the rest, th
   if (await page.getByTestId('layaway').filter({ hasText: 'Mattress' }).count()) throw new Error('plan still open after collecting');
 });
 
+await step('instalments: give credit in 3 weekly payments; the customer page shows the next one to pay', async () => {
+  await go('/credit');
+  await page.locator('.item', { hasText: 'Haja Mansaray' }).first().click();
+  await page.getByRole('button', { name: /You gave/ }).click();
+  const f = page.locator('form.form').last();
+  await f.locator('[name=amount]').fill('300');
+  await f.locator('[name=note]').fill('Phone');
+  await f.locator('[name=instalments]').check();
+  await f.locator('[name=inst_count]').selectOption('3');
+  await f.getByTestId('inst-plan').waitFor();
+  await tapInSheet(f.getByRole('button', { name: 'Save' }));
+  await page.getByText(/Saved as 3 instalments/).waitFor();
+  await page.getByTestId('next-to-pay').waitFor();
+});
+
 await step('health report', async () => {
   await go('/health');
   await page.getByText('Record keeping').waitFor();

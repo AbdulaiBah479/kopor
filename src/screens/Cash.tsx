@@ -1,3 +1,5 @@
+import { BudgetsCard } from '@/ui/Budgets';
+import { budgetStatus } from '@/domain/budgets';
 import { JarsSheet, jarShares } from '@/ui/Jars';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -94,6 +96,7 @@ export function CashBook() {
         </div>
       )}
       {top.length > 0 && <div className="card flat small"><b>{t('cash.bestSellers')}:</b> {top.map((p) => `${p.name} (${formatMoney(p.amount)})`).join(' · ')}</div>}
+      {can('reports') && <BudgetsCard />}
       <div className="list">
         {entries.length ? [...days].map(([date, rows]) => (
           <div key={date}>
@@ -201,6 +204,10 @@ export function ExpenseSheet({ prefill = {} }: { prefill?: { amount?: number; ca
       try {
         const txn = await recordExpense(ctx, f);
         closeSheet(); toast(t('cash.expenseSaved'), { undo: () => deleteTxn(ctx, txn.id) });
+        const { loadBook } = await import('@/domain/book');
+        const after = await loadBook(ctx.orgId, ctx.branchId);
+        const b = after && budgetStatus(after).find((l) => l.category === f.category && l.state !== 'ok');
+        if (b) toast(t(b.state === 'over' ? 'budget.over' : 'budget.near', { amount: formatMoney(Math.abs(b.limit - b.spent)), pct: b.pct }), { tone: b.state === 'over' ? 'error' : 'info' });
       } catch (err) { fail(err); }
     }}>
       <Field label={t('common.amount')}><MoneyInput big autoFocus required value={f.amount} onChange={(amount) => setF({ ...f, amount })} name="amount" /></Field>

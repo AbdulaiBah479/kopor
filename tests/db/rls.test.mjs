@@ -781,4 +781,20 @@ await test('pay small-small plans: cashiers start them, cannot back-date them; s
   await rejects(q(`update savings_goals set auto_pct = 150 where org_id = $1`, [ORG]));
 });
 
+await test('pay-QR poster link: managers make it, cashiers cannot; renewing changes it; budgets must be a list of limits', async () => {
+  await as('cashier');
+  await rejects(q('select kopor_pay_token($1, false) as t', [ORG]), /errx.role/);
+  await as('owner');
+  const first = (await q('select kopor_pay_token($1, false) as t', [ORG])).rows[0].t;
+  assert.ok(/^[0-9a-f]{64}$/.test(first));
+  assert.equal((await q('select kopor_pay_token($1, false) as t', [ORG])).rows[0].t, first);   // same poster until renewed
+  const again = (await q('select kopor_pay_token($1, true) as t', [ORG])).rows[0].t;
+  assert.notEqual(again, first);
+  await as('stranger');
+  await rejects(q('select kopor_pay_token($1, false) as t', [ORG]), /errx.role/);
+  await as('owner');
+  await q(`update orgs set budgets = '{"transport": 50000}'::jsonb where id = $1`, [ORG]);
+  await rejects(q(`update orgs set budgets = '[1, 2]'::jsonb where id = $1`, [ORG]));
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

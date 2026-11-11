@@ -349,6 +349,8 @@
   .ring b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 22px; font-weight: 700; }
   .meter { height: 6px; border-radius: 99px; background: var(--fill); overflow: hidden; }
   .meter i { display: block; height: 100%; border-radius: 99px; background: var(--primary); transition: width .4s; }
+  .meter.warn i { background: var(--warn); }
+  .meter.bad i { background: var(--bad); }
   .method-bars { display: flex; flex-direction: column; gap: 10px; }
   .method-bars .row span:first-child { width: 112px; font-size: 15px; color: var(--muted-foreground); }
   .method-bars .meter { flex: 1; }
@@ -420,6 +422,14 @@
   .pin-dots i { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--foreground); }
   .pin-dots i.on { background: var(--foreground); }
   .code-box { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 24px; font-weight: 700; letter-spacing: .04em; text-align: center; padding: 18px; border-radius: 14px; background: var(--fill); }
+  /* Pay-QR poster (screens/PayPoster.tsx): big and simple, prints on one A4 page. */
+  .poster { display: grid; justify-items: center; gap: 10px; text-align: center; padding: 20px; border: 3px solid var(--good); border-radius: 18px; background: #fff; color: #111; }
+  .poster-name { font-size: 26px; font-weight: 800; }
+  .poster-title { font-size: 20px; font-weight: 700; color: #047857; }
+  .poster-qr { width: min(260px, 70vw); background: #fff; padding: 8px; }
+  .poster-how { font-size: 15px; }
+  .poster-nets { font-size: 14px; font-weight: 600; }
+  .poster-foot { font-size: 12px; color: #555; }
   /* Quantity buttons on the public price list (order by WhatsApp). */
   .qty-step { display: inline-flex; align-items: center; gap: 6px; }
   .qty-step button { width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--line, #ccc); background: var(--fill); font: inherit; font-weight: 700; color: inherit; }
@@ -551,6 +561,14 @@
 }
 
 @media print {
+  /* Printing the pay-QR poster: only the poster, filling the page. */
+  body:has(.poster) * { visibility: hidden; }
+  body:has(.poster) .poster, body:has(.poster) .poster * { visibility: visible; }
+  body:has(.poster) .poster { position: fixed; inset: 10mm; border-width: 4px; }
+  body:has(.poster) .poster-name { font-size: 44px; }
+  body:has(.poster) .poster-title { font-size: 34px; }
+  body:has(.poster) .poster-qr { width: 120mm; }
+  body:has(.poster) .poster-how, body:has(.poster) .poster-nets { font-size: 22px; }
   body { background: #fff; }
   .topbar, .nav, .fab, .no-print, .sticky-actions, [data-sonner-toaster], .large-title { display: none !important; }
   .shell { padding: 0; max-width: none; }

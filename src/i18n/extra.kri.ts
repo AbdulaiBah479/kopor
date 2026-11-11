@@ -86,6 +86,9 @@ const extra: ExtraDict = {
     deleted: 'Akawnt dɔn dilit',
   },
   errx: {
+    posterGone: 'Dis pe pɔsta nɔ de wok igen.',
+    payNotReady: 'Dis shɔp nɔ sɛt pemɛnt na intanɛt yet.',
+    tooMany: 'Tumɔs pemɛnt dɔn stat insay di las awa. Tray bak lɛta.',
     updated: 'Kopor jɔs apdet. Klos Kopor ɔlsay ɛn opin am bak.',
     signInOrRole: 'Kopor in sava nɔ gri. Sayn in fɔs (More → Cloud & account), ɔ aks di ɔna if yu wok alaw am.',
     payoutDailyMax: 'Tide in limit fɔ sɛn mɔni dɔn rich. Tray tumara ɔ es di limit na Fraud watch → Stay safe.',

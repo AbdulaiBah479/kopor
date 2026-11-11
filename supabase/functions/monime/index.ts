@@ -2,6 +2,7 @@
 //  - easy: the owner only enters a mobile money number. Payments land in the business's own money box inside Kopor's
 //    Monime account and are sent on to that number straight away (sweepToOwner), so money does not stay with Kopor.
 //  - own: the business connects its own Monime account (Space ID + token) and the money stays there.
+// Public (no sign-in, from the shop's pay-QR poster): public-pay-info | public-pay
 // Actions: easy | connect | status | request | disconnect | checkout | link | ussd | providers | payout | wallet | history
 import { admin, caller, cors, json, requireLevel, seal, HttpError, env, nowMs, randomSecret } from '../_shared/util.ts';
 import { credsFor, easyAvailable, ensurePlatformWebhook, monime, WEBHOOK_EVENTS, monimeList, platformCreds, settleTo, SLE, sweepToOwner, type MonimeCreds } from '../_shared/monime.ts';
@@ -18,10 +19,52 @@ interface MonimeTxn {
   ownershipGraph?: { owner?: { type?: string; metadata?: Record<string, string> | null } | null } | null; metadata?: Record<string, string> | null;
 }
 
+/** A Monime checkout link for any amount; recorded as money received when Monime confirms it (monime-webhook). */
+async function createLink(orgId: string, amount: number, name: string, note: string) {
+  const db = admin();
+  const { data: org } = await db.from('orgs').select('name').eq('id', orgId).single();
+  const label = name.trim().slice(0, 100) || org!.name;
+  const requestId = crypto.randomUUID();
+  const appUrl = Deno.env.get('PUBLIC_APP_URL');
+  const c = await credsFor(orgId);
+  const session = await monime<{ id: string; redirectUrl: string }>(c, 'POST', '/checkout-sessions', {
+    name: `${org!.name} · ${label}`.slice(0, 150), lineItems: [{ type: 'custom', name: label, price: SLE(amount), quantity: 1 }], reference: requestId.slice(0, 64), ...settleTo(c),
+    ...(appUrl ? { successUrl: appUrl, cancelUrl: appUrl } : {}), brandingOptions: { primaryColor: '#047857' }, metadata: { orgId, requestId },
+  }, `link-${requestId}`);
+  await db.from('payment_requests').insert({
+    id: requestId, org_id: orgId, created_at: nowMs(), updated_at: nowMs(), kind: 'checkout', amount, status: 'pending',
+    provider_ref: session.id, url: session.redirectUrl, note: note.slice(0, 200),
+  });
+  return { url: session.redirectUrl, requestId };
+}
+
+/** The shop behind a pay-QR poster, if the poster's secret is still valid. */
+async function posterShop(token: string) {
+  if (!/^[0-9a-f]{32,80}$/.test(token)) return null;
+  const { data } = await admin().from('orgs').select('id, name, deleted').eq('pay_token', token).maybeSingle();
+  return data && !data.deleted ? data : null;
+}
+const POSTER_PER_HOUR = 60;
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const body = await req.json();
+    // Pay-QR poster: anyone with the printed QR may pay this shop. They can only create a payment TO the shop.
+    if (body.action === 'public-pay-info' || body.action === 'public-pay') {
+      const shop = await posterShop(String(body.token ?? ''));
+      if (!shop) throw new HttpError(404, 'errx.posterGone');
+      const ready = await credsFor(shop.id).then(() => true, () => false);
+      if (body.action === 'public-pay-info') return json({ name: shop.name, ready });
+      if (!ready) throw new HttpError(409, 'errx.payNotReady');
+      const amount = Math.round(Number(body.amount));
+      if (!(amount >= 100) || amount > 100_000_000) throw new HttpError(400, 'Invalid amount');
+      const hour = nowMs() - 3_600_000;
+      const { count } = await admin().from('payment_requests').select('id', { count: 'exact', head: true }).eq('org_id', shop.id).like('note', 'QR poster%').gt('created_at', hour);
+      if ((count ?? 0) >= POSTER_PER_HOUR) throw new HttpError(429, 'errx.tooMany');
+      const who = String(body.name ?? '').replace(/[^\p{L}\p{N} .'-]/gu, '').trim().slice(0, 40);
+      return json(await createLink(shop.id, amount, who ? `Payment from ${who}` : 'Payment', `QR poster${who ? ` · ${who}` : ''}`));
+    }
     const action = body.action as keyof typeof LEVEL;
     const orgId = String(body.orgId ?? '');
     if (!(action in LEVEL) || !/^[0-9a-f-]{36}$/.test(orgId)) throw new HttpError(400, 'Bad request');
@@ -132,20 +175,8 @@ Deno.serve(async (req) => {
       case 'link': {
         const amount = Math.round(Number(body.amount));
         if (!(amount > 0) || amount > 1_000_000_000) throw new HttpError(400, 'Invalid amount');
-        const { data: org } = await db.from('orgs').select('name').eq('id', orgId).single();
-        const name = String(body.name ?? '').trim().slice(0, 100) || org!.name;
-        const requestId = crypto.randomUUID();
-        const appUrl = Deno.env.get('PUBLIC_APP_URL');
-        const c = await credsFor(orgId);
-        const session = await monime<{ id: string; redirectUrl: string }>(c, 'POST', '/checkout-sessions', {
-          name: `${org!.name} · ${name}`.slice(0, 150), lineItems: [{ type: 'custom', name, price: SLE(amount), quantity: 1 }], reference: requestId.slice(0, 64), ...settleTo(c),
-          ...(appUrl ? { successUrl: appUrl, cancelUrl: appUrl } : {}), brandingOptions: { primaryColor: '#047857' }, metadata: { orgId, requestId },
-        }, `link-${requestId}`);
-        await db.from('payment_requests').insert({
-          id: requestId, org_id: orgId, created_at: nowMs(), updated_at: nowMs(), kind: 'checkout', amount, status: 'pending',
-          provider_ref: session.id, url: session.redirectUrl, note: name,
-        });
-        return json({ url: session.redirectUrl, requestId });
+        const name = String(body.name ?? '');
+        return json(await createLink(orgId, amount, name, name.trim().slice(0, 100)));
       }
       case 'ussd': {
         const amount = Math.round(Number(body.amount));

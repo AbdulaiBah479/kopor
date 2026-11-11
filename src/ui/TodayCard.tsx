@@ -18,7 +18,8 @@ export function TodayCard({ book, unseenAlerts }: { book: Book; unseenAlerts: nu
   const shown = items.filter((i) => !done.includes(i.key));
   if (!items.length) return null;
   const tick = (i: Todo) => { const next = [...done, i.key]; setDone(next); void setMeta(doneKey(ctx.orgId), next); };
-  const text = (i: Todo) => t(`todo.${i.kind}`, { ...i.params, amount: typeof i.params.amount === 'number' ? formatMoney(i.params.amount) : '' });
+  const text = (i: Todo) => t(`todo.${i.kind}`, { ...i.params, amount: typeof i.params.amount === 'number' ? formatMoney(i.params.amount) : '',
+    ...(i.kind === 'budget' ? { category: t(`categories.${i.params.category}`) } : {}) });
   return (
     <section className="card stack" data-testid="today-card" aria-label={t('todo.title')}>
       <div className="row between"><b><Icon name="check" size={18} className="mr-1 inline" />{t('todo.title')}</b><span className="small muted">{shown.length ? t('todo.left', { count: shown.length }) : ''}</span></div>

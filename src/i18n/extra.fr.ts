@@ -86,6 +86,9 @@ const extra: ExtraDict = {
     deleted: 'Compte supprimé',
   },
   errx: {
+    posterGone: 'Cette affiche de paiement ne fonctionne plus.',
+    payNotReady: 'Les paiements en ligne ne sont pas encore prêts pour cette boutique.',
+    tooMany: 'Trop de paiements lancés dans la dernière heure. Réessayez plus tard.',
     updated: 'Kopor vient d’être mis à jour. Fermez complètement Kopor et rouvrez-le.',
     signInOrRole: 'Le serveur de Kopor a refusé. Connectez-vous d’abord (Plus → Cloud et compte), ou demandez au propriétaire si votre rôle le permet.',
     payoutDailyMax: 'La limite d’envoi du jour est atteinte. Réessayez demain ou augmentez la limite dans Fraud watch → Stay safe.',

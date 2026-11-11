@@ -36,6 +36,8 @@ export interface Org extends Base {
   credit_limit?: number | null;
   daily_target?: number | null; // sales the owner aims for each day (Home shows progress)
   bills?: import('@/domain/bills').Bill[]; // regular bills for the cash plan (domain/bills.ts)
+  budgets?: Record<string, number>;   // monthly limit per expense category (domain/budgets.ts)
+  pay_token?: string | null;          // secret link of the pay-QR poster (set by the server)
   approve_over?: number | null; // refunds above this need the owner (default Le 1,000; 0 = off)
   payout_daily_max?: number | null; // most money that can be sent out in one day (default Le 20,000) // minor units: cashiers cannot take one customer above this (null = no limit)
   open_at?: string | null;     // business hours (HH:MM) for live location; default 08:00-18:00

@@ -16,6 +16,7 @@ import { shareText } from '@/lib/share';
 import { getSupabase } from '@/cloud/supabase';
 import { WaitForPaid } from '@/ui/WaitForPaid';
 import { DollarCard } from '@/ui/DollarCard';
+import { PosterSheet } from './PayPoster';
 import { createPayLink, createUssdCode, monimeStatus, walletBalance, walletHistory, type WalletAccount, type WalletTxn } from '@/cloud/payments';
 import { updateOrg } from '@/domain/org';
 import { recordSale, recordExpense, itemsLabel, EXPENSE_CATEGORIES } from '@/domain/cash';
@@ -290,6 +291,9 @@ function ReceiveSheet({ monime }: { monime: boolean }) {
           <button type="button" className="btn ghost" disabled={busy} onClick={() => auto('link')}><Icon name="link" size={18} /> {t('money.instantLink')}</button>
           <button type="button" className="btn ghost" disabled={busy} onClick={() => auto('ussd')}><Icon name="phone" size={18} /> {t('money.instantUssd')}</button>
         </div>
+      )}
+      {monime && (
+        <button type="button" className="btn tinted block" data-testid="pay-poster" onClick={() => openSheet(t('poster.title'), <PosterSheet />)}><Icon name="qr" size={18} /> {t('poster.title')}</button>
       )}
       <button type="button" className="btn get block" data-testid="money-got"
         onClick={() => openSheet(t('money.got'), <RecordInSheet amount={f.amount} from={f.from} note={f.reason} />)}>

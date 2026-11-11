@@ -35,6 +35,7 @@ const PublicPassport = lazyRetry(() => import('./screens/Passport').then((m) => 
 const PublicCatalog = lazyRetry(() => import('./screens/PublicCatalog').then((m) => ({ default: m.PublicCatalog })));
 const Passport = lazyRetry(() => import('./screens/Passport').then((m) => ({ default: m.Passport })));
 const PublicGroup = lazyRetry(() => import('./screens/PublicGroup').then((m) => ({ default: m.PublicGroup })));
+const PosterPayRoute = lazyRetry(() => import('./screens/PayPoster').then((m) => ({ default: m.PosterPayRoute })));
 const Layaway = lazyRetry(() => import('./screens/Layaway').then((m) => ({ default: m.Layaway })));
 const Messages = lazyRetry(() => import('./screens/Messages').then((m) => ({ default: m.Messages })));
 const Bills = lazyRetry(() => import('./screens/Bills').then((m) => ({ default: m.Bills })));
@@ -58,7 +59,7 @@ function Gate() {
   const { ready, session, book, locked } = useApp();
   const { pathname } = useLocation();
   // Public pages work without a business or sign-in (customer invoice, statement and Credit Passport links, legal pages).
-  if (pathname.startsWith('/i/') || pathname.startsWith('/s/') || pathname.startsWith('/p/') || pathname.startsWith('/c/') || pathname.startsWith('/g/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/')) return (
+  if (pathname.startsWith('/i/') || pathname.startsWith('/s/') || pathname.startsWith('/p/') || pathname.startsWith('/c/') || pathname.startsWith('/g/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/') || pathname.startsWith('/shop-pay/')) return (
     <Suspense fallback={<Boot />}><Routes>
       <Route path="/i/:token" element={<PublicInvoice />} />
       <Route path="/s/:token" element={<PublicStatement />} />
@@ -67,6 +68,7 @@ function Gate() {
       <Route path="/g/:token" element={<PublicGroup />} />
       <Route path="/legal/:doc" element={<Legal />} />
       <Route path="/pay/:data" element={<PayPage />} />
+      <Route path="/shop-pay/:token" element={<PosterPayRoute />} />
     </Routes></Suspense>
   );
   if (!ready || (session && book === undefined)) return <Boot />;
