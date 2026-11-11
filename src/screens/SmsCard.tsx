@@ -30,6 +30,7 @@ export function SmsCard() {
           <div className="small"><span className="badge good">{t('sms.connected')}</span> {t('sms.sentToday', { n: s.sentToday, limit: s.limit })}</div>
           <label className="check"><input type="checkbox" checked={s.auto} onChange={(e) => set({ auto: e.target.checked })} /> {t('sms.auto')}</label>
           <label className="check"><input type="checkbox" checked={s.bal} onChange={(e) => set({ bal: e.target.checked })} /> {t('sms.bal')}</label>
+          <label className="check"><input type="checkbox" name="sms_receipts" checked={s.receipts} onChange={(e) => set({ receipts: e.target.checked })} /> {t('sms.receipts')}</label>
           {!s.signed && <div className="small warn">{t('sms.needKey')}</div>}
           <Field label={t('sms.limit')}><select value={s.limit} onChange={(e) => set({ limit: Number(e.target.value) })}>{[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n}</option>)}</select></Field>
           <div className="btn-row">

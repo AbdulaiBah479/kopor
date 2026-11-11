@@ -10,18 +10,29 @@ type Lang = 'en' | 'kri' | 'fr';
 export interface Alert { id: number; org_id: string; kind: string; who: string; amount: number; detail: string; at: string }
 
 /** The closing summary the database put in the alert (migration 0042). */
+const WEEKDAYS: Record<Lang, string[]> = {
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  kri: ['Sɔnde', 'Mɔnde', 'Tyuzde', 'Wɛnsde', 'Tɔsde', 'Fraide', 'Satide'],
+  fr: ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'],
+};
+const weekday = (date: string, lang: Lang) => WEEKDAYS[lang][new Date(`${date}T12:00:00Z`).getUTCDay()] ?? '';
+
 function day(a: Alert) {
   let d: Record<string, unknown> = {};
   try { d = JSON.parse(a.detail); } catch { /* an older alert without a summary */ }
   const n = (k: string) => Number(d[k] ?? 0) || 0;
-  return { sales: n('sales'), profit: n('sales') - n('cost') - n('expenses'), diff: n('diff'), owed: Math.max(0, n('owed')), warnings: n('warnings'), date: String(d.date ?? ''), branch: d.branch ? ` · ${d.branch}` : '' };
+  // "Unusual day": today's sales against the average of the same weekday over the last 4 weeks.
+  const usual = n('usual'), sales = n('sales');
+  const trend = usual > 0 && sales < usual * 0.6 ? 'low' : usual > 0 && sales > usual * 1.4 ? 'high' : '';
+  return { sales, profit: sales - n('cost') - n('expenses'), diff: n('diff'), owed: Math.max(0, n('owed')), warnings: n('warnings'), date: String(d.date ?? ''), branch: d.branch ? ` · ${d.branch}` : '', usual, trend };
 }
 
 const L = {
   en: {
     short: (a: Alert) => [`Cash short: ${leones(a.amount)}`, a.detail.includes('handover') ? `${a.who || 'Someone'} handed over the drawer ${leones(a.amount)} short.` : `${a.who || 'Someone'} closed ${a.detail.slice(0, 10)} short by ${leones(a.amount)}${a.detail.includes('momo') ? ' (mobile money too)' : ''}.`],
     reversal: (a: Alert) => [`Payment pulled back: ${leones(a.amount)}`, a.detail === 'outside' ? `A mobile money payment of ${leones(a.amount)} was reversed. Check who paid it.` : `A customer${a.who ? ` (${a.who})` : ''} had ${leones(a.amount)} reversed after paying${a.detail && a.detail !== 'group' ? ` (${a.detail})` : ''}. Kopor has put it back as unpaid.`],
-    closing: (a: Alert) => { const d = day(a); return [`Day closed${d.branch}`, `${a.who || 'Someone'} closed ${d.date}. Sales ${leones(d.sales)} · profit about ${leones(d.profit)} · ${d.diff < 0 ? `cash short ${leones(-d.diff)}` : d.diff > 0 ? `cash over ${leones(d.diff)}` : 'cash correct'} · customers owe ${leones(d.owed)} · ${d.warnings ? `${d.warnings} warning${d.warnings > 1 ? 's' : ''}` : 'no warnings'}.`]; },
+    closing: (a: Alert) => { const d = day(a); return [`Day closed${d.branch}`, `${a.who || 'Someone'} closed ${d.date}. Sales ${leones(d.sales)} · profit about ${leones(d.profit)} · ${d.diff < 0 ? `cash short ${leones(-d.diff)}` : d.diff > 0 ? `cash over ${leones(d.diff)}` : 'cash correct'} · customers owe ${leones(d.owed)} · ${d.warnings ? `${d.warnings} warning${d.warnings > 1 ? 's' : ''}` : 'no warnings'}.${d.trend === 'low' ? ` Sales are much lower than a usual ${weekday(d.date, 'en')} (${leones(d.usual)}).` : d.trend === 'high' ? ` Better than a usual ${weekday(d.date, 'en')} (${leones(d.usual)})!` : ''}`]; },
+    notClosed: (a: Alert) => [`Day not closed${a.detail ? ` · ${a.detail}` : ''}`, `Sales of ${leones(a.amount)} today, but nobody has counted the drawer. Ask the cashier to close the day now.`],
     test: () => ['Test notification', 'Kopor alerts are working on this phone. You can ignore this message.'],
     approval: (a: Alert) => ['Approval needed', `${a.who} asks you to approve: ${a.detail}. Open Fraud watch.`],
     newDevice: (a: Alert) => ['New phone signed in', `${a.who} signed in on a new phone (${a.detail}). If this was not them, sign it out in Team.`],
@@ -31,11 +42,14 @@ const L = {
     left: (a: Alert) => ['Left the shop area', `${a.who} is about ${a.detail} m from the shop during working hours.`],
     fake: (a: Alert) => ['Fake location app', `${a.who}'s phone is sending a position from a fake-GPS app.`],
     weekly: (n: string) => `${n}: last week`,
+    monthly: (n: string, m: string) => `${n}: ${m}`,
+    month: (s: string, e: string, p: string, ls: string, lp: string) => `Sales ${s} · spending ${e} · profit about ${p}. The month before: sales ${ls}, profit about ${lp}.`,
     week: (s: string, e: string, p: string, late: string, warn: string) => `Sales ${s} · expenses ${e} · profit about ${p}.${late ? ` Late/absent: ${late}.` : ''}${warn ? ` Warnings: ${warn}.` : ' No warnings.'}`,
   },
   kri: {
     reversal: (a: Alert) => [`Dɛn pul pemɛnt bak: ${leones(a.amount)}`, a.detail === 'outside' ? `Dɛn pul mobayl mɔni pemɛnt fɔ ${leones(a.amount)} bak. Chɛk udat pe am.` : `Kɔstɔma${a.who ? ` (${a.who})` : ''} pul ${leones(a.amount)} bak afta i pe${a.detail && a.detail !== 'group' ? ` (${a.detail})` : ''}. Kopor dɔn mek am nɔ pe yet.`],
-    closing: (a: Alert) => { const d = day(a); return [`Dɛn klos di de${d.branch}`, `${a.who || 'Sɔmbɔdi'} klos ${d.date}. Sel ${leones(d.sales)} · prɔfit lɛk ${leones(d.profit)} · ${d.diff < 0 ? `kach shɔt ${leones(-d.diff)}` : d.diff > 0 ? `kach ɛkstra ${leones(d.diff)}` : 'kach kɔrɛkt'} · kɔstɔma dɛn gɛt fɔ pe ${leones(d.owed)} · ${d.warnings ? `${d.warnings} wɔnin` : 'no wɔnin'}.`]; },
+    closing: (a: Alert) => { const d = day(a); return [`Dɛn klos di de${d.branch}`, `${a.who || 'Sɔmbɔdi'} klos ${d.date}. Sel ${leones(d.sales)} · prɔfit lɛk ${leones(d.profit)} · ${d.diff < 0 ? `kach shɔt ${leones(-d.diff)}` : d.diff > 0 ? `kach ɛkstra ${leones(d.diff)}` : 'kach kɔrɛkt'} · kɔstɔma dɛn gɛt fɔ pe ${leones(d.owed)} · ${d.warnings ? `${d.warnings} wɔnin` : 'no wɔnin'}.${d.trend === 'low' ? ` Sɛl smɔl pas aw i kin bi ${weekday(d.date, 'kri')} (${leones(d.usual)}).` : d.trend === 'high' ? ` I bɛtɛ pas aw i kin bi ${weekday(d.date, 'kri')} (${leones(d.usual)})!` : ''}`]; },
+    notClosed: (a: Alert) => [`Dɛn nɔ klos di de yet${a.detail ? ` · ${a.detail}` : ''}`, `Sɛl fɔ ${leones(a.amount)} tide, bɔt nobɔdi nɔ kɔnt di drɔ. Tɛl di kashia fɔ klos di de naw.`],
     test: () => ['Tɛst nɔtifikeshɔn', 'Kopor wɔnin de wok na dis fon. Yu kin lɛf dis mɛsej.'],
     approval: (a: Alert) => ['Yu fɔ gri', `${a.who} de aks yu fɔ gri: ${a.detail}. Opin Fraud watch.`],
     newDevice: (a: Alert) => ['Nyu fon dɔn sayn in', `${a.who} sayn in pan nyu fon (${a.detail}). If nɔto am, sayn am aut na Team.`],
@@ -46,11 +60,14 @@ const L = {
     left: (a: Alert) => ['Lɛf di shɔp eria', `${a.who} de lɛk ${a.detail} m frɔm di shɔp na wok awa.`],
     fake: (a: Alert) => ['Fek lokeshɔn ap', `${a.who} in fon de sɛn lokeshɔn frɔm fek GPS ap.`],
     weekly: (n: string) => `${n}: las wik`,
+    monthly: (n: string, m: string) => `${n}: ${m}`,
+    month: (s: string, e: string, p: string, ls: string, lp: string) => `Sɛl ${s} · spɛn ${e} · prɔfit lɛk ${p}. Di mɔnt bifo: sɛl ${ls}, prɔfit lɛk ${lp}.`,
     week: (s: string, e: string, p: string, late: string, warn: string) => `Sel ${s} · ɛkspɛns ${e} · prɔfit lɛk ${p}.${late ? ` Lat/nɔ kam: ${late}.` : ''}${warn ? ` Wɔnin: ${warn}.` : ' No wɔnin.'}`,
   },
   fr: {
     reversal: (a: Alert) => [`Paiement annulé : ${leones(a.amount)}`, a.detail === 'outside' ? `Un paiement mobile money de ${leones(a.amount)} a été annulé. Vérifiez qui l’avait payé.` : `Un client${a.who ? ` (${a.who})` : ''} a fait annuler ${leones(a.amount)} après avoir payé${a.detail && a.detail !== 'group' ? ` (${a.detail})` : ''}. Kopor l’a remis comme impayé.`],
-    closing: (a: Alert) => { const d = day(a); return [`Journée clôturée${d.branch}`, `${a.who || 'Quelqu’un'} a clôturé le ${d.date}. Ventes ${leones(d.sales)} · bénéfice env. ${leones(d.profit)} · ${d.diff < 0 ? `caisse : ${leones(-d.diff)} manquant` : d.diff > 0 ? `caisse : ${leones(d.diff)} en trop` : 'caisse juste'} · les clients doivent ${leones(d.owed)} · ${d.warnings ? `${d.warnings} signal(aux)` : 'aucun signal'}.`]; },
+    closing: (a: Alert) => { const d = day(a); return [`Journée clôturée${d.branch}`, `${a.who || 'Quelqu’un'} a clôturé le ${d.date}. Ventes ${leones(d.sales)} · bénéfice env. ${leones(d.profit)} · ${d.diff < 0 ? `caisse : ${leones(-d.diff)} manquant` : d.diff > 0 ? `caisse : ${leones(d.diff)} en trop` : 'caisse juste'} · les clients doivent ${leones(d.owed)} · ${d.warnings ? `${d.warnings} signal(aux)` : 'aucun signal'}.${d.trend === 'low' ? ` Ventes bien plus basses qu’un ${weekday(d.date, 'fr')} habituel (${leones(d.usual)}).` : d.trend === 'high' ? ` Mieux qu’un ${weekday(d.date, 'fr')} habituel (${leones(d.usual)}) !` : ''}`]; },
+    notClosed: (a: Alert) => [`Journée non clôturée${a.detail ? ` · ${a.detail}` : ''}`, `${leones(a.amount)} de ventes aujourd’hui, mais personne n’a compté la caisse. Demandez au caissier de clôturer maintenant.`],
     test: () => ['Notification de test', 'Les alertes Kopor fonctionnent sur ce téléphone. Vous pouvez ignorer ce message.'],
     approval: (a: Alert) => ['Approbation demandée', `${a.who} vous demande d’approuver : ${a.detail}. Ouvrez Fraud watch.`],
     newDevice: (a: Alert) => ['Nouveau téléphone connecté', `${a.who} s’est connecté sur un nouveau téléphone (${a.detail}). Si ce n’est pas lui, déconnectez-le dans Équipe.`],
@@ -61,6 +78,8 @@ const L = {
     left: (a: Alert) => ['A quitté la zone de la boutique', `${a.who} est à environ ${a.detail} m de la boutique pendant les heures de travail.`],
     fake: (a: Alert) => ['Appli de fausse position', `Le téléphone de ${a.who} envoie une position d’une appli de faux GPS.`],
     weekly: (n: string) => `${n} : la semaine dernière`,
+    monthly: (n: string, m: string) => `${n} : ${m}`,
+    month: (s: string, e: string, p: string, ls: string, lp: string) => `Ventes ${s} · dépenses ${e} · bénéfice env. ${p}. Le mois d’avant : ventes ${ls}, bénéfice env. ${lp}.`,
     week: (s: string, e: string, p: string, late: string, warn: string) => `Ventes ${s} · dépenses ${e} · bénéfice env. ${p}.${late ? ` Retards/absences : ${late}.` : ''}${warn ? ` Signaux : ${warn}.` : ' Aucun signal.'}`,
   },
 };
@@ -136,7 +155,7 @@ export async function flushAlerts(keys: VapidKeys, subject: string, app: string,
       const kind = a.kind as keyof typeof L.en;
       pushed += await pushAll(r, (lang) => {
         const [title, body] = (L[lang][kind] as (a: Alert) => string[])(a);
-        return { title: `${r.name}: ${title}`, body, url: `${app}#/${a.kind === 'closing' ? 'report' : 'watch'}`, tag: `alert-${a.id}` };
+        return { title: `${r.name}: ${title}`, body, url: `${app}#/${a.kind === 'closing' ? 'report' : a.kind === 'notClosed' ? 'cash' : 'watch'}`, tag: `alert-${a.id}` };
       }, keys, subject);
       const [title, body] = (L.en[kind] as (a: Alert) => string[])(a);
       texted += a.kind === 'closing'
@@ -170,4 +189,53 @@ export async function weeklyReports(keys: VapidKeys, subject: string, app: strin
   }
   await db.from('weekly_runs').update({ sent }).eq('week', week);
   return { week, businesses: (data ?? []).length, sent };
+}
+
+const MONTHS: Record<Lang, string[]> = {
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  kri: ['Jenwari', 'Fɛbwari', 'Mach', 'Ɛpril', 'Me', 'Jun', 'Julay', 'Ɔgɔs', 'Sɛptɛmba', 'Ɔktoba', 'Novɛmba', 'Disɛmba'],
+  fr: ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
+};
+
+/** On the 1st (or the first run after it): last month's report to every owner, with the month before. Once a month. */
+export async function monthlyReports(keys: VapidKeys, subject: string, app: string, now = new Date()) {
+  const db = admin();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const month = start.toISOString().slice(0, 10);
+  const { error: claimed } = await db.from('monthly_runs').insert({ month });
+  if (claimed) return { skipped: 'already sent this month' };
+  const { data, error } = await db.rpc('kopor_month_report', { s: month });
+  if (error) throw new Error(error.message);
+  type T = { sales: number; expenses: number; cost: number };
+  const profit = (t: T) => Number(t.sales) - Number(t.cost) - Number(t.expenses);
+  let sent = 0;
+  for (const r of (data ?? []) as { org_id: string; name: string; this_month: T; last_month: T }[]) {
+    const rec = await recipients(r.org_id);
+    const text = (lang: Lang) => L[lang].month(leones(Number(r.this_month.sales)), leones(Number(r.this_month.expenses)), leones(profit(r.this_month)),
+      leones(Number(r.last_month.sales)), leones(profit(r.last_month)));
+    const title = (lang: Lang) => L[lang].monthly(r.name, MONTHS[lang][start.getUTCMonth()]);
+    sent += await pushAll(rec, (lang) => ({ title: title(lang), body: text(lang), url: `${app}#/pnl`, tag: `monthly-${month}` }), keys, subject);
+    sent += await textAll(r.org_id, rec.phones, `Kopor (${title('en')}): ${text('en')}`, 'weekly');
+  }
+  await db.from('monthly_runs').update({ sent }).eq('month', month);
+  return { month, businesses: (data ?? []).length, sent };
+}
+
+/** 9 pm: businesses that sold today but nobody closed the day get a "day not closed" alert (once a day). */
+export async function notClosed(keys: VapidKeys, subject: string, app: string, now = new Date()) {
+  const db = admin();
+  const d = now.toISOString().slice(0, 10); // Sierra Leone is on UTC
+  const { error: claimed } = await db.from('job_claims').insert({ name: 'notClosed', slot: Math.floor(now.getTime() / 86_400_000) });
+  if (claimed) return { skipped: 'already checked today' };
+  const { data, error } = await db.rpc('kopor_not_closed', { d });
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as { org_id: string; branch_id: string | null; sales: number }[];
+  const branchIds = rows.map((r) => r.branch_id).filter(Boolean) as string[];
+  const { data: branches } = branchIds.length ? await db.from('branches').select('id, name').in('id', branchIds) : { data: [] };
+  const names = new Map((branches ?? []).map((b: { id: string; name: string }) => [b.id, b.name]));
+  for (const r of rows) {
+    await db.rpc('kopor_alert', { o: r.org_id, k: 'notClosed', r: `${d}:${r.branch_id ?? 'all'}`, w: '', a: Number(r.sales), d: r.branch_id ? names.get(r.branch_id) ?? '' : '' });
+  }
+  if (rows.length) await flushAlerts(keys, subject, app);
+  return { date: d, notClosed: rows.length };
 }

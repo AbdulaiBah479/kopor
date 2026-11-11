@@ -653,6 +653,7 @@ const v3: V3Dict = {
     creditLimit: 'Kredit limit fɔ wan kɔstɔma',
     creditLimitHelp: 'Kashia nɔ go ebul gi kɔstɔma kredit pas dis. Manija ɛn ɔna kin du am. Lɛf am ɛmti if yu nɔ want limit.',
     alert: {
+      notClosed: 'Dɛn nɔ klos di de: dɛn sɛl {{amount}}, bɔt nobɔdi nɔ kɔnt di drɔ',
       reversal: 'Kɔstɔma{{who}} pul {{amount}} bak afta i pe. Kopor dɔn mek am nɔ pe yet',
       reversalOutside: 'Dɛn pul mobayl mɔni pemɛnt fɔ {{amount}} bak. Chɛk udat pe am',
       test: 'Tɛst: Kopor wɔnin de wok',
@@ -865,6 +866,7 @@ const v3: V3Dict = {
     tested: 'Tɛst tɛks dɔn go to di biznɛs fon',
     auto: 'Tɛks kɔstɔma we leyt ɔtomatik (ɛni wan wan tɛm fɔ wik, na mɔnin)',
     bal: 'Ansa kɔstɔma dɛn we tɛks BAL (dɛn balans) ɔ STMT (dɛn las 5 tin)',
+    receipts: 'Tɛks kɔstɔma risit we dɛn pe dɛt (wetin dɛn pe ɛn wetin lɛf)',
     limit: 'Mɔs tɛks fɔ wan de',
     sentToday: '{{n}} pan {{limit}} tɛks dɔn go tide',
     needKey: 'Ad di signing ki fɔ ansa BAL tɛks.',

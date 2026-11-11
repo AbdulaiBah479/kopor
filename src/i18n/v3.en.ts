@@ -651,6 +651,7 @@ const v3 = {
     creditLimit: 'Credit limit per customer',
     creditLimitHelp: 'Cashiers cannot give a customer credit above this. Managers and owners can. Leave empty for no limit.',
     alert: {
+      notClosed: 'Day not closed: {{amount}} sold, but nobody counted the drawer',
       reversal: 'A customer{{who}} had {{amount}} pulled back after paying. Kopor put it back as unpaid',
       reversalOutside: 'A mobile money payment of {{amount}} was pulled back. Check who paid it',
       test: 'Test notification: Kopor alerts are working',
@@ -863,6 +864,7 @@ const v3 = {
     tested: 'Test text sent to the business phone',
     auto: 'Text late customers automatically (each at most once a week, in the morning)',
     bal: 'Answer customers who text BAL (their balance) or STMT (their last 5 entries)',
+    receipts: 'Text customers a receipt when they pay a debt (what was received and what is left)',
     limit: 'Most texts a day',
     sentToday: '{{n}} of {{limit}} texts sent today',
     needKey: 'Add the signing key to answer BAL texts.',

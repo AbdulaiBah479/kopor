@@ -9,10 +9,10 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
-export interface SmsStatus { connected: boolean; auto: boolean; bal: boolean; limit: number; signed: boolean; sentToday: number }
+export interface SmsStatus { connected: boolean; auto: boolean; bal: boolean; receipts: boolean; limit: number; signed: boolean; sentToday: number }
 export const smsStatus = (orgId: string) => call<SmsStatus>({ action: 'status', orgId });
 export const smsConnect = (orgId: string, a: { user: string; pass: string; signingKey: string }) => call<{ ok: true }>({ action: 'connect', orgId, ...a });
-export const smsSettings = (orgId: string, a: { auto?: boolean; bal?: boolean; limit?: number; signingKey?: string }) => call<{ ok: true }>({ action: 'settings', orgId, ...a });
+export const smsSettings = (orgId: string, a: { auto?: boolean; bal?: boolean; receipts?: boolean; limit?: number; signingKey?: string }) => call<{ ok: true }>({ action: 'settings', orgId, ...a });
 export const smsDisconnect = (orgId: string) => call<{ ok: true }>({ action: 'disconnect', orgId });
 export const smsTest = (orgId: string) => call<{ ok: true; to: string }>({ action: 'test', orgId });
 /** One message to chosen customers from the shop's phone ({name} becomes each customer's first name). */

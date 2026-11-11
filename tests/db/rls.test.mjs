@@ -797,4 +797,32 @@ await test('pay-QR poster link: managers make it, cashiers cannot; renewing chan
   await rejects(q(`update orgs set budgets = '[1, 2]'::jsonb where id = $1`, [ORG]));
 });
 
+await test('automations: day not closed, monthly totals, usual sales for this weekday; receipts table is server-only', async () => {
+  const now = '(extract(epoch from now()) * 1000)::bigint';
+  await q('reset role'); await q(`select set_config('request.jwt.claim.role', 'service_role', false)`);
+  const B = 'b7b7b7b7-b7b7-4b7b-8b7b-b7b7b7b7b7b7';
+  await q(`insert into branches (id, org_id, created_at, updated_at, name) values ($1, $2, 1, 1, 'Lumley') on conflict do nothing`, [B, ORG]);
+  // Sales at a branch today and nobody closed it: listed.
+  await q(`insert into transactions (id, org_id, created_at, updated_at, type, category, amount, method, date, branch_id)
+           values (gen_random_uuid(), $1, ${now}, ${now}, 'in', 'sale', 70000, 'cash', current_date, $2)`, [ORG, B]);
+  let open = (await q('select * from kopor_not_closed(current_date) where org_id = $1 and branch_id = $2', [ORG, B])).rows;
+  assert.equal(open.length, 1);
+  assert.equal(Number(open[0].sales), 70000);
+  await q(`insert into closings (id, org_id, created_at, updated_at, date, expected, counted, difference, branch_id)
+           values (gen_random_uuid(), $1, ${now}, ${now}, current_date, 70000, 70000, 0, $2)`, [ORG, B]);
+  open = (await q('select * from kopor_not_closed(current_date) where org_id = $1 and branch_id = $2', [ORG, B])).rows;
+  assert.equal(open.length, 0);
+  // Usual sales: the same weekday one and two weeks ago.
+  await q(`insert into transactions (id, org_id, created_at, updated_at, type, category, amount, method, date, branch_id)
+           values (gen_random_uuid(), $1, 1, 1, 'in', 'sale', 100000, 'cash', current_date - 7, $2), (gen_random_uuid(), $1, 1, 1, 'in', 'sale', 200000, 'cash', current_date - 14, $2)`, [ORG, B]);
+  const s = (await q('select kopor_day_summary($1, current_date, $2) as s', [ORG, B])).rows[0].s;
+  assert.equal(Number(s.usual), 150000);
+  // Monthly totals: this month's report lists the business.
+  const m = (await q(`select * from kopor_month_report(date_trunc('month', current_date)::date) where org_id = $1`, [ORG])).rows[0];
+  assert.ok(Number(m.this_month.sales) >= 70000);
+  await as('owner');
+  const hidden = await q('select * from sms_receipted').then((r) => r.rows.length === 0, (e) => /permission denied/.test(e.message));
+  assert.ok(hidden);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

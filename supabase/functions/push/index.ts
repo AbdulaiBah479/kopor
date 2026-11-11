@@ -10,7 +10,7 @@
 //   weekly                                -> last week's report to owners and managers, once per week
 import { admin, caller, cors, json, HttpError } from '../_shared/util.ts';
 import { generateVapidKeys, sendPush, type VapidKeys } from '../_shared/webpush.ts';
-import { flushAlerts, weeklyReports } from '../_shared/alerts.ts';
+import { flushAlerts, monthlyReports, notClosed, weeklyReports } from '../_shared/alerts.ts';
 import { scanReversals } from '../_shared/reversals.ts';
 
 const SUBJECT = Deno.env.get('PUSH_SUBJECT') ?? 'mailto:babdulai225.2@gmail.com';
@@ -117,6 +117,12 @@ Deno.serve(async (req) => {
         if ('found' in r && r.found) await flushAlerts(await vapid(), SUBJECT, APP);
         return json(r);
       }
+
+      case 'monthly':
+        return json(await monthlyReports(await vapid(), SUBJECT, APP));
+
+      case 'not-closed':
+        return json(await notClosed(await vapid(), SUBJECT, APP));
 
       case 'weekly':
         return json(await weeklyReports(await vapid(), SUBJECT, APP));

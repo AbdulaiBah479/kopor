@@ -653,6 +653,7 @@ const v3: V3Dict = {
     creditLimit: 'Plafond de crédit par client',
     creditLimitHelp: 'Les caissiers ne peuvent pas dépasser ce crédit pour un client. Les gérants et propriétaires peuvent. Laissez vide pour aucun plafond.',
     alert: {
+      notClosed: 'Journée non clôturée : {{amount}} vendus, mais personne n’a compté la caisse',
       reversal: 'Un client{{who}} a fait annuler {{amount}} après avoir payé. Kopor l’a remis comme impayé',
       reversalOutside: 'Un paiement mobile money de {{amount}} a été annulé. Vérifiez qui l’avait payé',
       test: 'Test : les alertes Kopor fonctionnent',
@@ -865,6 +866,7 @@ const v3: V3Dict = {
     tested: 'SMS de test envoyé au téléphone du commerce',
     auto: 'Envoyer automatiquement un SMS aux clients en retard (au plus une fois par semaine, le matin)',
     bal: 'Répondre aux clients qui envoient BAL (leur solde) ou STMT (leurs 5 dernières opérations)',
+    receipts: 'Envoyer un reçu par SMS quand un client paie une dette (montant reçu et reste dû)',
     limit: 'SMS maximum par jour',
     sentToday: '{{n}} SMS sur {{limit}} envoyés aujourd’hui',
     needKey: 'Ajoutez la clé de signature pour répondre aux SMS BAL.',

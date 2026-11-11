@@ -28,3 +28,6 @@ jobs:
           # Monday (or the first run after it): last week's report to every owner. Sent once per week.
           curl -fsS -X POST "$URL/functions/v1/push" -H "Authorization: Bearer $KEY" -H "apikey: $KEY" \
             -H 'Content-Type: application/json' -d '{"action":"weekly"}' | tee -a "$GITHUB_STEP_SUMMARY" || echo "::warning::Weekly report did not run"
+          # Backup for the database timer: last month's report (sent once per month, so extra runs do nothing).
+          curl -fsS -X POST "$URL/functions/v1/push" -H "Authorization: Bearer $KEY" -H "apikey: $KEY" \
+            -H 'Content-Type: application/json' -d '{"action":"monthly"}' | tee -a "$GITHUB_STEP_SUMMARY" || echo "::warning::Monthly report did not run"

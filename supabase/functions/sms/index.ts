@@ -1,12 +1,14 @@
 // Text messages from the shop's own phone (SMS Gateway for Android). Actions:
 //   { action: 'status', orgId }                                   -> connected, settings, sent today (managers+)
 //   { action: 'connect', orgId, user, pass, signingKey }          -> check the login, register the BAL webhook (owner)
-//   { action: 'settings', orgId, auto?, bal?, limit? }            -> automatic reminders / BAL replies (owner)
+//   { action: 'settings', orgId, auto?, bal?, limit?, receipts? } -> automatic reminders / BAL replies / receipts (owner)
 //   { action: 'disconnect', orgId }                               (owner)
 //   { action: 'test', orgId }                                     -> a test text to the business's own phone (owner)
 //   { action: 'remind', orgId, contactId }                        -> text one customer what they owe now (managers+)
 //   { action: 'broadcast', orgId, contactIds, text }              -> one message to chosen customers, {name} filled in
 //                                                                    (managers+; within the daily text limit)
+//   { action: 'receipts' }                                        -> every few minutes: a text to customers who just paid
+//                                                                    (shops that switched receipts on)
 //   { action: 'run' }                                             -> daily: automatic reminders for every business that
 //                                                                    turned them on (at most once a day, like push)
 import { admin, caller, cors, env, HttpError, json, randomSecret, requireLevel, seal } from '../_shared/util.ts';
@@ -71,6 +73,77 @@ async function remindAll(orgId: string): Promise<number> {
     await db.from('sms_log').insert({ org_id: orgId, contact_id: c.id, kind: 'reminder', ok });
     if (!ok) break; // the phone is offline: try again tomorrow
   }
+  // A friendly word the day before a payment is due (an instalment or any dated credit), before it is late.
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  const { data: soonLog } = await db.from('sms_log').select('contact_id').eq('org_id', orgId).eq('kind', 'dueSoon').gte('at', new Date(Date.now() - 2 * 86_400_000).toISOString());
+  const told = new Set((soonLog ?? []).map((r) => r.contact_id));
+  for (const c of people ?? []) {
+    if (left <= 0) break;
+    if (told.has(c.id) || texted.has(c.id)) continue;
+    const rows = ledger.get(c.id) ?? [];
+    const due = dueOn(rows, tomorrow);
+    const to = normalizeSlPhone(c.phone);
+    if (!due || !to || overdue(rows, today)) continue;
+    let ok = true;
+    try {
+      await sendText(g, to, `${org!.name}: Hello ${c.name.split(' ')[0]}, ${leones(due)} is due tomorrow. Thank you.${g.bal ? ' Text BAL to check your balance.' : ''}`);
+      sent++; left--;
+    } catch (e) { ok = false; console.error('sms due soon', orgId, e); }
+    await db.from('sms_log').insert({ org_id: orgId, contact_id: c.id, kind: 'dueSoon', ok });
+    if (!ok) break;
+  }
+  return sent;
+}
+
+/** What is still unpaid on credits due on this day (payments clear the oldest credit first). */
+function dueOn(rows: Entry[], day: string): number {
+  const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date) || a.created_at - b.created_at);
+  let paid = sorted.filter((e) => e.type === 'got').reduce((s, e) => s + e.amount, 0), sum = 0;
+  for (const e of sorted) {
+    if (e.type !== 'gave') continue;
+    const covered = Math.min(paid, e.amount);
+    paid -= covered;
+    if (covered < e.amount && e.due_date === day) sum += e.amount - covered;
+  }
+  return sum;
+}
+
+/** Payment receipts: customers who just paid a debt get a text with what was received and what is left. */
+async function receiptsFor(orgId: string): Promise<number> {
+  const db = admin();
+  const g = await gateFor(orgId);
+  if (!g) return 0;
+  let left = g.limit - (await sentToday(orgId));
+  if (left <= 0) return 0;
+  const since = Date.now() - 6 * 3_600_000; // payments recorded in the last 6 hours (phones may sync late)
+  const { data: paid } = await db.from('ledger').select('id, contact_id, amount, created_at').eq('org_id', orgId).eq('deleted', 0).eq('type', 'got').gt('created_at', since).limit(200);
+  if (!paid?.length) return 0;
+  const { data: done } = await db.from('sms_receipted').select('ledger_id').in('ledger_id', paid.map((p) => p.id));
+  const skip = new Set((done ?? []).map((d) => d.ledger_id));
+  const todo = paid.filter((p) => !skip.has(p.id));
+  if (!todo.length) return 0;
+  const [{ data: org }, { data: people }] = await Promise.all([
+    db.from('orgs').select('name').eq('id', orgId).single(),
+    db.from('contacts').select('id, name, phone, kind').in('id', [...new Set(todo.map((p) => p.contact_id))]),
+  ]);
+  let sent = 0;
+  for (const p of todo) {
+    if (left <= 0) break;
+    const c = (people ?? []).find((x) => x.id === p.contact_id);
+    const to = c && c.kind !== 'supplier' ? normalizeSlPhone(c.phone) : null;
+    // Claim it first, so a payment is never texted twice.
+    const { error: taken } = await db.from('sms_receipted').insert({ ledger_id: p.id, org_id: orgId });
+    if (taken || !to || !c) continue;
+    const rows = (await owing(orgId, c.id)).get(c.id) ?? [];
+    const bal = rows.reduce((s, e) => s + (e.type === 'gave' ? e.amount : -e.amount), 0);
+    let ok = true;
+    try {
+      await sendText(g, to, `${org!.name}: received ${leones(p.amount)} from ${c.name.split(' ')[0]}. ${bal > 0 ? `You now owe ${leones(bal)}.` : 'You owe nothing now.'} Thank you!`);
+      sent++; left--;
+    } catch (e) { ok = false; console.error('sms receipt', orgId, e); await db.from('sms_receipted').delete().eq('ledger_id', p.id); }
+    await db.from('sms_log').insert({ org_id: orgId, contact_id: c.id, kind: 'receipt', ok });
+    if (!ok) break;
+  }
   return sent;
 }
 
@@ -79,6 +152,15 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const db = admin();
+    if (body.action === 'receipts') {
+      const { error: busy } = await db.from('job_claims').insert({ name: 'receipts', slot: Math.floor(Date.now() / 120_000) });
+      if (busy) return json({ skipped: 'ran in the last 2 minutes' });
+      await db.from('job_claims').delete().eq('name', 'receipts').lt('slot', Math.floor(Date.now() / 120_000) - 720);
+      const { data: orgs } = await db.from('org_secrets').select('org_id').eq('sms_receipts', true).not('sms_user', 'is', null);
+      let sent = 0;
+      for (const o of orgs ?? []) sent += await receiptsFor(o.org_id).catch((e) => { console.error('receipts', o.org_id, e); return 0; });
+      return json({ sent, businesses: (orgs ?? []).length });
+    }
     if (body.action === 'run') {
       const day = new Date().toISOString().slice(0, 10);
       const { error: claimed } = await db.from('sms_runs').insert({ day });
@@ -100,7 +182,8 @@ Deno.serve(async (req) => {
     switch (body.action) {
       case 'status': {
         const g = await gateFor(orgId);
-        return json({ connected: !!g, auto: g?.auto ?? false, bal: g?.bal ?? true, limit: g?.limit ?? 20, signed: !!g?.sign, sentToday: g ? await sentToday(orgId) : 0 });
+        const { data: rc } = await db.from('org_secrets').select('sms_receipts').eq('org_id', orgId).maybeSingle();
+        return json({ connected: !!g, auto: g?.auto ?? false, bal: g?.bal ?? true, receipts: !!rc?.sms_receipts, limit: g?.limit ?? 20, signed: !!g?.sign, sentToday: g ? await sentToday(orgId) : 0 });
       }
       case 'connect': {
         const user = String(body.user ?? '').trim(), pass = String(body.pass ?? '').trim(), sign = String(body.signingKey ?? '').trim();
@@ -119,6 +202,7 @@ Deno.serve(async (req) => {
       case 'settings': {
         const patch: Record<string, unknown> = {};
         if (typeof body.auto === 'boolean') patch.sms_auto = body.auto;
+        if (typeof body.receipts === 'boolean') patch.sms_receipts = body.receipts;
         if (typeof body.bal === 'boolean') patch.sms_bal = body.bal;
         if (Number.isInteger(body.limit) && body.limit >= 1 && body.limit <= 200) patch.sms_daily_limit = body.limit;
         if (typeof body.signingKey === 'string' && body.signingKey.trim()) patch.sms_sign_enc = await seal(body.signingKey.trim());
