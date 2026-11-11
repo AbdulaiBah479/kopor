@@ -60,7 +60,7 @@ jobs:
           [ -n "$URL" ] && [ -n "$KEY" ] || { echo "::warning::VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not set: no timers"; exit 0; }
           sed -e "s|__URL__|${URL%/}|g" -e "s|__KEY__|$KEY|g" supabase/timers.sql | jq -Rs '{query: .}' |
             curl -fsS -X POST "https://api.supabase.com/v1/projects/$PROJECT/database/query" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"               -H 'Content-Type: application/json' --data-binary @- -o /dev/null
-          echo "Timers set: payment reversals every minute" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Timers set: reversals every minute, receipts every 2 minutes, day-not-closed at 21:00, monthly report on the 1st" | tee -a "$GITHUB_STEP_SUMMARY"
       - if: env.SUPABASE_ACCESS_TOKEN != ''
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
