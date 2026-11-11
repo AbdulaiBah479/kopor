@@ -29,4 +29,5 @@ jobs:
           curl -fsS -X POST "$URL/functions/v1/push" -H "Authorization: Bearer $KEY" -H "apikey: $KEY" \
             -H 'Content-Type: application/json' -d '{"action":"alerts"}' | tee -a "$GITHUB_STEP_SUMMARY"
           # Mobile money payments a customer had pulled back (Monime sends no message for these).
-          curl -fsS -X POST "$URL/functions/v1/push" -H "Authorization: Bearer $KEY" -H "apikey: $KEY" \n            -H 'Content-Type: application/json' -d '{"action":"reversals"}' | tee -a "$GITHUB_STEP_SUMMARY"
+          curl -fsS -X POST "$URL/functions/v1/push" -H "Authorization: Bearer $KEY" -H "apikey: $KEY" \
+            -H 'Content-Type: application/json' -d '{"action":"reversals"}' | tee -a "$GITHUB_STEP_SUMMARY"
