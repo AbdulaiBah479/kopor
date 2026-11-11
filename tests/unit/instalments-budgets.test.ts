@@ -37,6 +37,12 @@ describe('instalment plans', () => {
     b = await book();
     expect(nextToPay(b.ledger, c.id)).toEqual({ amount: 70_000, due: addDays(today(), -1) });
   });
+  it('an older debt without a due date does not hide the next instalment', async () => {
+    const c = await ensureContact(ctx, 'Haja', '076 900 111');
+    await addEntry(ctx, { contactId: c.id, type: 'gave', amount: 125_000, date: addDays(today(), -30), dueDate: null });
+    await addInstalments(ctx, { contactId: c.id, total: 30_000, count: 3, every: 'week', first: addDays(today(), 7) });
+    expect(nextToPay((await book()).ledger, c.id)).toEqual({ amount: 10_000, due: addDays(today(), 7) });
+  });
 });
 
 describe('expense budgets', () => {

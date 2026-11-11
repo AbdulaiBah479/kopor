@@ -43,7 +43,10 @@ export async function addInstalments(ctx: Ctx, i: { contactId: string; total: nu
   });
 }
 
-/** The next amount to pay and its date (payments clear the oldest credit first), or null when nothing is owed. */
+/**
+ * The next dated amount to pay (payments clear the oldest credit first), or null when nothing with a due date is
+ * owed. Older debts without a due date are still counted against the payments, but do not hide the next instalment.
+ */
 export function nextToPay(ledger: LedgerEntry[], contactId: string): { amount: number; due: string | null } | null {
   const rows = ledger.filter((e) => e.contact_id === contactId && !e.deleted)
     .sort((a, b) => (a.due_date ?? a.date).localeCompare(b.due_date ?? b.date) || a.created_at - b.created_at);
@@ -52,7 +55,7 @@ export function nextToPay(ledger: LedgerEntry[], contactId: string): { amount: n
     if (e.type !== 'gave') continue;
     const covered = Math.min(paid, e.amount);
     paid -= covered;
-    if (covered < e.amount) return { amount: e.amount - covered, due: e.due_date };
+    if (covered < e.amount && e.due_date) return { amount: e.amount - covered, due: e.due_date };
   }
   return null;
 }
