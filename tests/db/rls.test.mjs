@@ -825,4 +825,27 @@ await test('automations: day not closed, monthly totals, usual sales for this we
   assert.ok(hidden);
 });
 
+await test('repeat invoices: each month is claimed once, by managers only; the shop page shows hours and the pay button', async () => {
+  await as('owner');
+  const inv = { id: 'e9e9e9e9-e9e9-4e9e-8e9e-e9e9e9e9e9e9' };
+  await q(`insert into invoices (id, org_id, created_at, updated_at, number, customer, items, date, status, public_token)
+           values ($1, $2, 1, 1, 'INV-9001', 'Kamara School', '[]', current_date, 'unpaid', 'inv_repeat_token_0001') on conflict do nothing`, [inv.id, ORG]);
+  {
+    assert.equal((await q('select kopor_claim_repeat($1, $2, current_date) as ok', [ORG, inv.id])).rows[0].ok, true);
+    assert.equal((await q('select kopor_claim_repeat($1, $2, current_date) as ok', [ORG, inv.id])).rows[0].ok, false);   // never twice
+    await as('cashier');
+    await rejects(q('select kopor_claim_repeat($1, $2, current_date + 31) as ok', [ORG, inv.id]), /errx.role/);
+  }
+  await as('owner');
+  const tok = (await q('select kopor_catalog_token($1, false) as t', [ORG])).rows[0].t;
+  await q(`update orgs set open_at = '08:00', close_at = '20:00', work_days = 63 where id = $1`, [ORG]);
+  const pay = (await q('select kopor_pay_token($1, false) as t', [ORG])).rows[0].t;
+  await as(null);
+  const page = (await q('select public_catalog($1) as c', [tok])).rows[0].c;
+  assert.equal(page.open_at, '08:00');
+  assert.equal(page.work_days, 63);
+  assert.equal(page.pay_token, pay);
+  assert.ok(!('pin' in page) && !JSON.stringify(page).includes('cost'));
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

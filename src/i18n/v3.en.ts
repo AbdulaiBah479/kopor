@@ -89,7 +89,7 @@ const v3 = {
     kind: { bug: 'App not working', money: 'Wrong amount', payment: 'Payment problem', account: 'Account or PIN', abuse: 'Complaint about a business', suggestion: 'Suggestion', other: 'Something else' },
     ph: { bug: 'e.g. When I tap Save sale, nothing happens', money: 'e.g. My profit for today shows Le 0 but I sold 3 bags of rice', payment: 'e.g. I paid with Orange Money but the invoice still says unpaid',
       account: 'e.g. I cannot sign in on my new phone', abuse: 'e.g. This business keeps sending me messages for a debt I already paid', suggestion: 'e.g. Please add …', other: 'Tell us what happened' },
-  },  pnl: { title: 'Profit & loss', sub: 'What the business really earned', month: 'This month', last: 'Last month', quarter: '3 months', year: 'This year', revenue: 'Sales (revenue)', revenueHelp: '{{count}} sales, after tax and refunds', cogs: 'Cost of goods sold', cogsHelp: 'Buying price of the items you sold', gross: 'Gross profit', operating: 'Running costs', net: 'Net profit', stockNote: 'Stock you bought in this period ({{amount}}) is not a cost until it is sold: it is still on your shelves.', cogsWarn: 'Many sales were typed as amounts without products, so their buying cost is unknown and profit may look higher than it is. Add products to sales for an exact statement.' },
+  },  pnl: { title: 'Profit & loss', sub: 'What the business really earned', month: 'This month', last: 'Last month', quarter: '3 months', year: 'This year', revenue: 'Sales (revenue)', revenueHelp: '{{count}} sales, after tax and refunds', cogs: 'Cost of goods sold', cogsHelp: 'Buying price of the items you sold', gross: 'Gross profit', operating: 'Running costs', net: 'Net profit', stockNote: 'Stock you bought in this period ({{amount}}) is not a cost until it is sold: it is still on your shelves.', cogsWarn: 'Many sales were typed as amounts without products, so their buying cost is unknown and profit may look higher than it is. Add products to sales for an exact statement.', explain: 'Explain this with AI', explaining: 'Thinking…', explainNote: 'An explanation from AI, based only on the figures above. Check before acting.', explainAsk: 'Here are my business figures. Now: {{now}}. The period before: {{before}}. In 4 short, simple sentences, explain why my profit went up or down between the two periods, then give 3 practical things to do. Use only these numbers.' },
   catalog: { share: 'Share price list', soldOut: 'sold out', msg: '*{{business}}: price list*\n\n{{lines}}\n\nOrder: {{phone}}\nPay: {{momo}}\n\n(Kopor)' },
   pwa: {
     install: 'Install Kopor', installHelp: 'Put Kopor on your home screen. It opens like an app and works without internet.',
@@ -1397,6 +1397,29 @@ const v3 = {
     pay: 'Pay now',
     safe: 'You pay on Monime’s secure page with your own PIN. The shop sees the payment straight away.',
     failed: 'Could not start the payment. Check your internet and try again.',
+  },
+  repeat: {
+    toggle: 'Repeat every month',
+    help: 'For customers who pay every month (rent, school fees, a monthly supply). Kopor makes each month’s invoice for you.',
+    next: 'Next invoice on {{date}}',
+    made_one: '{{count}} repeat invoice is ready to send',
+    made_other: '{{count}} repeat invoices are ready to send',
+  },
+  shop: {
+    open: 'Open',
+    everyDay: 'Every day',
+    map: 'Show on map',
+    pay: 'Pay now',
+    d0: 'Mon',
+    d1: 'Tue',
+    d2: 'Wed',
+    d3: 'Thu',
+    d4: 'Fri',
+    d5: 'Sat',
+    d6: 'Sun',
+  },
+  smsx: {
+    commands: 'From any phone, you (owner or manager) can text this shop phone TODAY, OWE or STOCK with your 6-digit Kopor PIN, for example “TODAY 123456” or “STOCK 123456 rice”. The answer comes back only to your own number.',
   },
 };
 export default v3;

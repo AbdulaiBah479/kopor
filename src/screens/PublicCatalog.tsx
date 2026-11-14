@@ -1,5 +1,6 @@
 // The public price list a customer opens from the shop's link or QR code: the real prices, so nobody can charge more.
 // Customers can also pick what they want and send the order to the shop on WhatsApp, with the total worked out.
+// It is the shop's page too: opening hours and days, a map link, and "Pay now" when the shop has a pay-QR poster.
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +9,14 @@ import { LoadFailed } from './PublicStatement';
 import { openCatalog, type Catalog } from '@/cloud/catalog';
 import { formatMoney, setCurrencySymbol } from '@/lib/money';
 import { waLink } from '@/lib/phone';
+
+/** "Mon–Sat", "Every day", or the days listed (bits, Monday = 1 … Sunday = 64). */
+function days(bits: number, t: (k: string) => string) {
+  if ((bits & 127) === 127) return t('shop.everyDay');
+  const on = [0, 1, 2, 3, 4, 5, 6].filter((d) => bits & (1 << d));
+  const run = on.length > 1 && on.every((d, i) => i === 0 || d === on[i - 1] + 1);
+  return run ? `${t(`shop.d${on[0]}`)}–${t(`shop.d${on.at(-1)}`)}` : on.map((d) => t(`shop.d${d}`)).join(', ');
+}
 
 export function PublicCatalog() {
   const { token } = useParams();
@@ -36,6 +45,15 @@ export function PublicCatalog() {
         <div className="doc" data-testid="public-catalog">
           <h2>{c.name}</h2>
           <div className="small">{c.address}{c.phone && <><br />{c.phone}</>}{c.momo && <><br />{t('stmt.payTo')}: {c.momo}</>}</div>
+          {(c.open_at || c.lat != null || c.pay_token) && (
+            <div className="small stack" style={{ marginTop: 8, gap: 6 }} data-testid="shop-info">
+              {c.open_at && c.close_at && <div><b>{t('shop.open')}:</b> {days(c.work_days ?? 63, t)} · {c.open_at}–{c.close_at}</div>}
+              <div className="btn-row" style={{ flexWrap: 'wrap' }}>
+                {c.lat != null && c.lng != null && <a className="btn sm" target="_blank" rel="noopener noreferrer" href={`https://www.google.com/maps/search/?api=1&query=${c.lat.toFixed(6)},${c.lng.toFixed(6)}`}>{t('shop.map')}</a>}
+                {c.pay_token && <a className="btn sm get" data-testid="shop-pay" href={`#/shop-pay/${c.pay_token}`}>{t('shop.pay')}</a>}
+              </div>
+            </div>
+          )}
           <div className="card flat small" style={{ marginTop: 12 }}>{t('price.trust')}</div>
           {c.products.length > 8 && <input className="input" style={{ marginTop: 12 }} type="search" placeholder={t('price.search')} aria-label={t('price.search')} value={q} onChange={(e) => setQ(e.target.value)} />}
           <table>

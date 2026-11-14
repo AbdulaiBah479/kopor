@@ -2,7 +2,11 @@
 import { getSupabase } from './supabase';
 
 export interface CatalogItem { name: string; unit: string; price: number; pack_name: string | null; pack_size: number | null; pack_price: number | null; in_stock: boolean }
-export interface Catalog { name: string; phone: string; address: string; momo: string; currency: string; products: CatalogItem[] }
+export interface Catalog {
+  name: string; phone: string; address: string; momo: string; currency: string; products: CatalogItem[];
+  // The shop page (migration 0049): opening hours, working days (bits, Monday = 1 … Sunday = 64), map position, pay poster.
+  open_at?: string | null; close_at?: string | null; work_days?: number | null; lat?: number | null; lng?: number | null; pay_token?: string | null;
+}
 
 const sb = async () => { const s = await getSupabase(); if (!s) throw new Error('err.noCloud'); return s; };
 

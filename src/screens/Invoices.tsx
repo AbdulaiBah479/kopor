@@ -1,3 +1,4 @@
+import { setRepeat } from '@/domain/repeat';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -146,6 +147,12 @@ export function InvoiceDetail() {
           } catch (e) { fail(e); }
         }} />
       </div>
+      {!quote && inv.status !== 'void' && can('edit') && (
+        <label className="card flat row no-print" style={{ gap: 8 }} data-testid="repeat-invoice" aria-label={t('repeat.toggle')}>
+          <input type="checkbox" name="repeat" checked={inv.repeat_every === 'month'} onChange={(e) => setRepeat(ctx, inv, e.target.checked).then(() => toast(t('common.saved'))).catch(fail)} />
+          <span><b>{t('repeat.toggle')}</b><br /><span className="small muted">{inv.repeat_every === 'month' && inv.repeat_next ? t('repeat.next', { date: fmt(inv.repeat_next) }) : t('repeat.help')}</span></span>
+        </label>
+      )}
       {inv.status === 'quote' && (
         <>
           <button className="btn ghost block no-print" onClick={() => navigator.clipboard?.writeText(publicUrl).then(() => toast(t('common.copied')))}><Icon name="link" size={18} /> {t('inv.publicLink')}</button>

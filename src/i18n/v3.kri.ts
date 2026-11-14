@@ -91,7 +91,7 @@ const v3: V3Dict = {
     kind: { bug: 'Ap nɔ de wok', money: 'Ɔmɔs nɔ rayt', payment: 'Pement prɔblɛm', account: 'Akawnt ɔ PIN', abuse: 'Kɔmplen bɔt biznɛs', suggestion: 'Advays', other: 'Ɔda tin' },
     ph: { bug: 'Lɛk: We a tap Sev sɛl, natin nɔ de apin', money: 'Lɛk: Mi prɔfit tide sho Le 0 bɔt a sɛl 3 bag rɛs', payment: 'Lɛk: A pe wit Orange Money bɔt di invɔys stil se nɔ pe',
       account: 'Lɛk: A nɔ kin sayn in na mi nyu fon', abuse: 'Lɛk: Dis biznɛs de sɛn mi mɛsej fɔ dɛt we a dɔn pe', suggestion: 'Lɛk: Duya ad …', other: 'Tɛl wi wetin apin' },
-  },  pnl: { title: 'Prɔfit ɛn lɔs', sub: 'Wetin di biznɛs rili mek', month: 'Dis mɔnt', last: 'Las mɔnt', quarter: '3 mɔnt', year: 'Dis ia', revenue: 'Sɛl', revenueHelp: '{{count}} sɛl, afta taks ɛn rifɔn', cogs: 'Kɔst fɔ di tin dɛn we yu sɛl', cogsHelp: 'Di prays we yu bay di tin dɛn we yu sɛl', gross: 'Gros prɔfit', operating: 'Rɔnin kɔst', net: 'Nɛt prɔfit', stockNote: 'Stɔk we yu bay na dis tɛm ({{amount}}) nɔto kɔst te yu sɛl am: i stil de na yu shɛlf.', cogsWarn: 'Bɔku sɛl na jɔs ɔmɔs widawt prɔdak, so wi nɔ no di kɔst ɛn di prɔfit kin tan lɛk i big pas aw i bi. Ad prɔdak to sɛl fɔ kɔrɛkt ripɔt.' },
+  },  pnl: { title: 'Prɔfit ɛn lɔs', sub: 'Wetin di biznɛs rili mek', month: 'Dis mɔnt', last: 'Las mɔnt', quarter: '3 mɔnt', year: 'Dis ia', revenue: 'Sɛl', revenueHelp: '{{count}} sɛl, afta taks ɛn rifɔn', cogs: 'Kɔst fɔ di tin dɛn we yu sɛl', cogsHelp: 'Di prays we yu bay di tin dɛn we yu sɛl', gross: 'Gros prɔfit', operating: 'Rɔnin kɔst', net: 'Nɛt prɔfit', stockNote: 'Stɔk we yu bay na dis tɛm ({{amount}}) nɔto kɔst te yu sɛl am: i stil de na yu shɛlf.', cogsWarn: 'Bɔku sɛl na jɔs ɔmɔs widawt prɔdak, so wi nɔ no di kɔst ɛn di prɔfit kin tan lɛk i big pas aw i bi. Ad prɔdak to sɛl fɔ kɔrɛkt ripɔt.', explain: 'Mek AI ɛksplen dis', explaining: 'I de tink…', explainNote: 'Na AI ɛksplen dis, frɔm di nɔmba dɛn ɔp de nɔmɔ. Chɛk bifo yu du sɔntin.', explainAsk: 'Na mi biznɛs nɔmba dɛn dis. Naw: {{now}}. Di tɛm bifo: {{before}}. Insay 4 shɔt, izi sɛntɛns, ɛksplen wetin mek mi prɔfit go ɔp ɔ dɔŋ, dɔn gi 3 tin fɔ du. Yuz dis nɔmba dɛn nɔmɔ. Ansa na Krio.' },
   catalog: { share: 'Sheb prays list', soldOut: 'dɔn', msg: '*{{business}}: prays list*\n\n{{lines}}\n\nFɔ ɔda: {{phone}}\nFɔ pe: {{momo}}\n\n(Kopor)' },
   pwa: {
     install: 'Put Kopor na yu fon', installHelp: 'Put Kopor na yu om skrin. I go opin lɛk ap ɛn i de wok widawt nɛt.',
@@ -1399,6 +1399,29 @@ const v3: V3Dict = {
     pay: 'Pe naw',
     safe: 'Yu de pe na Monime in sef pej wit yu yon PIN. Di shɔp go si di pemɛnt wantɛm.',
     failed: 'Wi nɔ ebul stat di pemɛnt. Chɛk yu intanɛt ɛn tray bak.',
+  },
+  repeat: {
+    toggle: 'Du am bak ɛni mɔnt',
+    help: 'Fɔ kɔstɔma we de pe ɛni mɔnt (rɛnt, skul fi, mɔnt sɔplay). Kopor go mek ɛni mɔnt invɔys fɔ yu.',
+    next: 'Nɛks invɔys na {{date}}',
+    made_one: '{{count}} invɔys rɛdi fɔ sɛn',
+    made_other: '{{count}} invɔys dɛn rɛdi fɔ sɛn',
+  },
+  shop: {
+    open: 'Opin',
+    everyDay: 'Ɛvride',
+    map: 'Sho am na map',
+    pay: 'Pe naw',
+    d0: 'Mɔn',
+    d1: 'Tyu',
+    d2: 'Wɛn',
+    d3: 'Tɔs',
+    d4: 'Fra',
+    d5: 'Sat',
+    d6: 'Sɔn',
+  },
+  smsx: {
+    commands: 'Frɔm ɛni fon, yu (ona ɔ manija) kin tɛks dis shɔp fon TODAY, OWE ɔ STOCK wit yu 6-nɔmba Kopor PIN, lɛk “TODAY 123456” ɔ “STOCK 123456 rɛs”. Di ansa go kam bak to yu yon nɔmba nɔmɔ.',
   },
 };
 export default v3;

@@ -7,6 +7,8 @@ import { Icon } from './Icon';
 import { formatMoney } from '@/lib/money';
 import { getMeta, setMeta } from '@/db/repo';
 import { doneKey, todayList, type Todo } from '@/domain/todo';
+import { repeatsDue, runRepeats } from '@/domain/repeat';
+import { useOverlay } from './overlay';
 import type { Book } from '@/domain/book';
 
 export function TodayCard({ book, unseenAlerts }: { book: Book; unseenAlerts: number }) {
@@ -14,6 +16,13 @@ export function TodayCard({ book, unseenAlerts }: { book: Book; unseenAlerts: nu
   const { ctx, can } = useApp();
   const [done, setDone] = useState<string[]>([]);
   useEffect(() => { getMeta<string[]>(doneKey(ctx.orgId), []).then(setDone).catch(() => {}); }, [ctx.orgId]);
+  // Repeat invoices due this month are created once a day, here on a manager's phone (domain/repeat.ts).
+  const { toast } = useOverlay();
+  useEffect(() => {
+    if (!can('edit') || !repeatsDue(book).length) return;
+    void runRepeats(ctx, book).then((made) => { if (made.length) toast(t('repeat.made', { count: made.length }), { view: '/invoices' }); }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per opening; the next opening catches anything new
+  }, [ctx.orgId]);
   const items = useMemo(() => todayList(book, { unseenAlerts, bills: can('business') }), [book, unseenAlerts, can]);
   const shown = items.filter((i) => !done.includes(i.key));
   if (!items.length) return null;

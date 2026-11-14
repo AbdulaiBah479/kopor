@@ -129,6 +129,7 @@ export interface Invoice extends Base {
   // 'quote' = a quotation (records nothing yet); 'accepted' = a quotation that was turned into an invoice.
   status: 'unpaid' | 'paid' | 'void' | 'quote' | 'accepted'; paid_date: string | null; public_token: string; txn_id: string | null; ledger_id: string | null;
   discount?: number; tax?: number; total?: number; // total = what the customer pays (after discount, with tax)
+  repeat_every?: 'month' | null; repeat_next?: string | null; // repeat invoices (domain/repeat.ts)
 }
 /** End-of-day cash count: what the drawer should hold vs what was counted. */
 export interface Closing extends Base {

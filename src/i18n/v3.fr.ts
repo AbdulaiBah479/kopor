@@ -91,7 +91,7 @@ const v3: V3Dict = {
     kind: { bug: 'L’app ne marche pas', money: 'Montant faux', payment: 'Problème de paiement', account: 'Compte ou PIN', abuse: 'Plainte contre un commerce', suggestion: 'Suggestion', other: 'Autre chose' },
     ph: { bug: 'ex. Quand je touche Enregistrer la vente, rien ne se passe', money: 'ex. Mon bénéfice du jour affiche 0 alors que j’ai vendu 3 sacs de riz', payment: 'ex. J’ai payé par Orange Money mais la facture est toujours impayée',
       account: 'ex. Je n’arrive pas à me connecter sur mon nouveau téléphone', abuse: 'ex. Ce commerce me relance pour une dette déjà payée', suggestion: 'ex. Ajoutez s’il vous plaît …', other: 'Dites-nous ce qui s’est passé' },
-  },  pnl: { title: 'Compte de résultat', sub: 'Ce que le commerce a vraiment gagné', month: 'Ce mois', last: 'Mois dernier', quarter: '3 mois', year: 'Cette année', revenue: 'Ventes (chiffre d’affaires)', revenueHelp: '{{count}} ventes, hors taxes et remboursements', cogs: 'Coût des marchandises vendues', cogsHelp: 'Prix d’achat des articles vendus', gross: 'Marge brute', operating: 'Charges', net: 'Bénéfice net', stockNote: 'Le stock acheté sur la période ({{amount}}) n’est pas une charge tant qu’il n’est pas vendu : il est encore en rayon.', cogsWarn: 'Beaucoup de ventes ont été saisies sans produits : leur coût d’achat est inconnu et le bénéfice peut paraître plus élevé. Ajoutez les produits aux ventes pour un compte exact.' },
+  },  pnl: { title: 'Compte de résultat', sub: 'Ce que le commerce a vraiment gagné', month: 'Ce mois', last: 'Mois dernier', quarter: '3 mois', year: 'Cette année', revenue: 'Ventes (chiffre d’affaires)', revenueHelp: '{{count}} ventes, hors taxes et remboursements', cogs: 'Coût des marchandises vendues', cogsHelp: 'Prix d’achat des articles vendus', gross: 'Marge brute', operating: 'Charges', net: 'Bénéfice net', stockNote: 'Le stock acheté sur la période ({{amount}}) n’est pas une charge tant qu’il n’est pas vendu : il est encore en rayon.', cogsWarn: 'Beaucoup de ventes ont été saisies sans produits : leur coût d’achat est inconnu et le bénéfice peut paraître plus élevé. Ajoutez les produits aux ventes pour un compte exact.', explain: 'Expliquer avec l’IA', explaining: 'Réflexion…', explainNote: 'Explication de l’IA, basée uniquement sur les chiffres ci-dessus. Vérifiez avant d’agir.', explainAsk: 'Voici les chiffres de mon commerce. Maintenant : {{now}}. Période précédente : {{before}}. En 4 phrases courtes et simples, expliquez pourquoi mon bénéfice a monté ou baissé, puis donnez 3 actions concrètes. N’utilisez que ces chiffres. Répondez en français.' },
   catalog: { share: 'Partager la liste de prix', soldOut: 'épuisé', msg: '*{{business}} : liste de prix*\n\n{{lines}}\n\nCommander : {{phone}}\nPayer : {{momo}}\n\n(Kopor)' },
   pwa: {
     install: 'Installer Kopor', installHelp: 'Ajoutez Kopor à votre écran d’accueil. Il s’ouvre comme une application et marche sans internet.',
@@ -1399,6 +1399,29 @@ const v3: V3Dict = {
     pay: 'Payer maintenant',
     safe: 'Vous payez sur la page sécurisée de Monime avec votre propre code. La boutique voit le paiement aussitôt.',
     failed: 'Impossible de lancer le paiement. Vérifiez votre connexion et réessayez.',
+  },
+  repeat: {
+    toggle: 'Répéter chaque mois',
+    help: 'Pour les clients qui paient chaque mois (loyer, frais scolaires, livraison mensuelle). Kopor crée la facture de chaque mois pour vous.',
+    next: 'Prochaine facture le {{date}}',
+    made_one: '{{count}} facture répétée est prête à envoyer',
+    made_other: '{{count}} factures répétées sont prêtes à envoyer',
+  },
+  shop: {
+    open: 'Ouvert',
+    everyDay: 'Tous les jours',
+    map: 'Voir sur la carte',
+    pay: 'Payer maintenant',
+    d0: 'lun',
+    d1: 'mar',
+    d2: 'mer',
+    d3: 'jeu',
+    d4: 'ven',
+    d5: 'sam',
+    d6: 'dim',
+  },
+  smsx: {
+    commands: 'Depuis n’importe quel téléphone, vous (patron ou gérant) pouvez envoyer à ce téléphone TODAY, OWE ou STOCK avec votre code Kopor à 6 chiffres, par ex. « TODAY 123456 » ou « STOCK 123456 riz ». La réponse ne va qu’à votre propre numéro.',
   },
 };
 export default v3;

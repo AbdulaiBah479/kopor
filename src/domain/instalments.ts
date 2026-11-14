@@ -11,7 +11,7 @@ export type Every = 'week' | 'twoWeeks' | 'month';
 export interface Instalment { n: number; due: string; amount: number }
 
 /** The same day of the month, i months later; a day the month does not have (the 31st) falls on its last day. */
-function monthsLater(first: string, i: number) {
+export function monthsLater(first: string, i: number) {
   const y = Number(first.slice(0, 4)), m = Number(first.slice(5, 7)) - 1 + i, d = Number(first.slice(8, 10));
   const year = y + Math.floor(m / 12), month = m % 12;
   const day = Math.min(d, new Date(year, month + 1, 0).getDate());
