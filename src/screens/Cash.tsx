@@ -1,3 +1,4 @@
+import { UsdHelper, usdNote, usdToLe } from '@/ui/Usd';
 import { BudgetsCard } from '@/ui/Budgets';
 import { budgetStatus } from '@/domain/budgets';
 import { JarsSheet, jarShares } from '@/ui/Jars';
@@ -132,6 +133,7 @@ export function SaleSheet({ prefill = {} }: { prefill?: { items?: Partial<LineIt
   const confirm = useEntryConfirm();
   const [note, setNote] = useState(prefill.note ?? '');
   const [date, setDate] = useState(today());
+  const [amountKey, setAmountKey] = useState(0);
   const real = items.filter((i) => i.name?.trim());
   const hasItems = real.length > 0;
   const tax = taxSettings(book.org);
@@ -165,7 +167,8 @@ export function SaleSheet({ prefill = {} }: { prefill?: { items?: Partial<LineIt
       <ProductTiles book={book} items={items} onAdd={(p) => { setItems(addToCart(items, p)); haptic(8); }} />
       <ScanToggle onCode={addScanned} />
       <ItemsEditor items={items} onChange={setItems} products={book.products} subtotal={!!(totals.discount || totals.tax)} />
-      {!hasItems && <Field label={t('cash.amountAuto')}><MoneyInput big value={amount} onChange={setAmount} name="amount" /></Field>}
+      {!hasItems && <Field label={t('cash.amountAuto')}><MoneyInput key={amountKey} big value={amount} onChange={setAmount} name="amount" /></Field>}
+      {!hasItems && <UsdHelper onUse={(le, n) => { setAmount(le); setAmountKey((k) => k + 1); setNote((x) => `${x} ${n}`.trim()); }} />}
       <TotalsBlock totals={totals} book={book} />
       <Field label={t('cash.method')}><MethodChips value={method} onChange={setMethod} methods={METHODS} /></Field>
       {(method === 'credit' || customer) && (
@@ -197,7 +200,7 @@ export function ExpenseSheet({ prefill = {} }: { prefill?: { amount?: number; ca
   const { t } = useTranslation();
   const { ctx } = useApp();
   const { closeSheet, toast, fail } = useOverlay();
-  const [f, setF] = useState({ amount: prefill.amount ?? 0, category: prefill.category ?? 'other', method: 'cash' as Method, note: prefill.note ?? '', date: today() });
+  const [f, setF] = useState<{ amount: number; category: string; method: Method; note: string; date: string; usdKey?: number }>({ amount: prefill.amount ?? 0, category: prefill.category ?? 'other', method: 'cash', note: prefill.note ?? '', date: today() });
   return (
     <form className="form" data-testid="expense-form" onSubmit={async (e) => {
       e.preventDefault();
@@ -210,7 +213,8 @@ export function ExpenseSheet({ prefill = {} }: { prefill?: { amount?: number; ca
         if (b) toast(t(b.state === 'over' ? 'budget.over' : 'budget.near', { amount: formatMoney(Math.abs(b.limit - b.spent)), pct: b.pct }), { tone: b.state === 'over' ? 'error' : 'info' });
       } catch (err) { fail(err); }
     }}>
-      <Field label={t('common.amount')}><MoneyInput big autoFocus required value={f.amount} onChange={(amount) => setF({ ...f, amount })} name="amount" /></Field>
+      <Field label={t('common.amount')}><MoneyInput key={f.usdKey ?? 0} big autoFocus required value={f.amount} onChange={(amount) => setF({ ...f, amount })} name="amount" /></Field>
+      <UsdHelper onUse={(le, n) => setF((x) => ({ ...x, amount: le, note: `${x.note} ${n}`.trim(), usdKey: (x.usdKey ?? 0) + 1 }))} />
       <Field label={t('cash.category')}>
         <select value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })}>{EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{t(`categories.${c}`)}</option>)}</select>
       </Field>
@@ -340,8 +344,10 @@ function CloseDaySheet() {
   const [float, setFloat] = useState(0);
   const [counted, setCounted] = useState(0);
   const [note, setNote] = useState('');
+  const [usd, setUsd] = useState({ amount: '', rate: '' });
+  const usdLe = Number(usd.amount) > 0 && Number(usd.rate) > 0 ? usdToLe(Number(usd.amount), Number(usd.rate)) : 0;
   const x = expectedCash(book, today(), float);
-  const diff = counted - x.expected;
+  const diff = counted + usdLe - x.expected;
   const momoExp = expectedMomo(book);
   const [momo, setMomo] = useState<Record<string, number>>({});
   return (
@@ -349,12 +355,14 @@ function CloseDaySheet() {
       e.preventDefault();
       try {
         const checked = Object.fromEntries(Object.entries(momoExp).filter(([k]) => momo[k] !== undefined).map(([k, v]) => [k, { expected: v ?? 0, counted: momo[k] }]));
-        await closeDay(ctx, { openingFloat: float, counted, expected: x.expected, note, momo: checked });
+        // Dollar notes in the drawer count at the rate typed, and the note keeps how many dollars there were.
+        const usdText = usdLe ? usdNote(Number(usd.amount), Number(usd.rate)) : '';
+        await closeDay(ctx, { openingFloat: float, counted: counted + usdLe, expected: x.expected, note: `${note} ${usdText}`.trim(), momo: checked });
         // A day summary the owner can send to themselves or a partner on WhatsApp.
         const d = today(), s = summary(book, d, d), owed = creditTotals(book).get, top = topProducts(book, d, d, 3);
         const text = t('closing.summary', {
           business: book.org.name, date: d, sales: formatMoney(s.sales), expenses: formatMoney(s.expenses), profit: formatMoney(s.profit),
-          counted: formatMoney(counted), diff: formatMoney(diff, { sign: true }), owed: formatMoney(owed),
+          counted: formatMoney(counted + usdLe), diff: formatMoney(diff, { sign: true }), owed: formatMoney(owed),
           top: top.length ? top.map((p) => ` ×${p.qty}`).join(', ') : '—',
         });
         toast(t('closing.saved'), { share: { label: t('closing.sendSummary'), href: `https://wa.me/?text=${encodeURIComponent(text)}` } });
@@ -371,7 +379,15 @@ function CloseDaySheet() {
         {x.repaid > 0 && <div className="muted">{t('closing.repaidNote', { amount: formatMoney(x.repaid) })}</div>}
       </div>
       <Field label={t('closing.counted')}><MoneyInput big required value={counted} onChange={setCounted} name="counted" /></Field>
-      {counted > 0 && (
+      <details className="card flat" data-testid="usd-drawer">
+        <summary className="small"><b>{t('usd.drawer')}</b></summary>
+        <div className="grid2" style={{ marginTop: 8 }}>
+          <label className="field"><span>{t('usd.dollars')}</span><input name="usd_counted" inputMode="decimal" value={usd.amount} placeholder="0" onChange={(e) => setUsd({ ...usd, amount: e.target.value.replace(/[^\d.]/g, '') })} onFocus={() => !usd.rate && import('@/lib/freeApis').then((m) => m.dollarRate()).then((r) => r && setUsd((u) => (u.rate ? u : { ...u, rate: r.rate.toFixed(2) }))).catch(() => {})} /></label>
+          <label className="field"><span>{t('usd.rate')}</span><input name="usd_counted_rate" inputMode="decimal" value={usd.rate} placeholder="23.00" onChange={(e) => setUsd({ ...usd, rate: e.target.value.replace(/[^\d.]/g, '') })} /></label>
+        </div>
+        {usdLe > 0 && <div className="small">{t('usd.drawerValue', { amount: formatMoney(usdLe) })}</div>}
+      </details>
+      {counted + usdLe > 0 && (
         <div className={`alert ${diff < 0 ? 'bad' : ''}`} style={diff === 0 ? { background: 'var(--good-soft)' } : undefined}>
           <Icon name={diff === 0 ? 'check' : 'alert'} />
           <div>{diff === 0 ? t('closing.balanced') : diff > 0 ? t('closing.over', { amount: formatMoney(diff) }) : t('closing.short', { amount: formatMoney(-diff) })}</div>

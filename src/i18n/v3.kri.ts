@@ -1423,5 +1423,14 @@ const v3: V3Dict = {
   smsx: {
     commands: 'Frɔm ɛni fon, yu (ona ɔ manija) kin tɛks dis shɔp fon TODAY, OWE ɔ STOCK wit yu 6-nɔmba Kopor PIN, lɛk “TODAY 123456” ɔ “STOCK 123456 rɛs”. Di ansa go kam bak to yu yon nɔmba nɔmɔ.',
   },
+  usd: {
+    open: 'Dɛn pe wit dɔla?',
+    dollars: 'Dɔla ($)',
+    rate: 'Ret (Le fɔ $1)',
+    use: 'Yuz {{amount}}',
+    help: 'Tide ret dɔn de. Chenj am to di ret we yu rili gɛt. Di dɔla go de na di nɔt.',
+    drawer: 'Dɔla nɔt dɛn na di drɔ',
+    drawerValue: 'Dɛn kɔnt am lɛk {{amount}} na Lion',
+  },
 };
 export default v3;

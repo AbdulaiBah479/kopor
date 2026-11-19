@@ -1423,5 +1423,14 @@ const v3: V3Dict = {
   smsx: {
     commands: 'Depuis n’importe quel téléphone, vous (patron ou gérant) pouvez envoyer à ce téléphone TODAY, OWE ou STOCK avec votre code Kopor à 6 chiffres, par ex. « TODAY 123456 » ou « STOCK 123456 riz ». La réponse ne va qu’à votre propre numéro.',
   },
+  usd: {
+    open: 'Payé en dollars ?',
+    dollars: 'Dollars US ($)',
+    rate: 'Taux (Le pour 1 $)',
+    use: 'Utiliser {{amount}}',
+    help: 'Le taux du jour est rempli. Changez-le pour le taux réellement obtenu. Les dollars restent dans la note.',
+    drawer: 'Billets en dollars dans la caisse',
+    drawerValue: 'Comptés comme {{amount}} en leones',
+  },
 };
 export default v3;

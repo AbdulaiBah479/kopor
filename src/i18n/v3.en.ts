@@ -1421,6 +1421,15 @@ const v3 = {
   smsx: {
     commands: 'From any phone, you (owner or manager) can text this shop phone TODAY, OWE or STOCK with your 6-digit Kopor PIN, for example “TODAY 123456” or “STOCK 123456 rice”. The answer comes back only to your own number.',
   },
+  usd: {
+    open: 'Paid in dollars?',
+    dollars: 'US dollars ($)',
+    rate: 'Rate (Le for $1)',
+    use: 'Use {{amount}}',
+    help: 'Today’s rate is filled in. Change it to the rate you really got. The dollars are kept in the note.',
+    drawer: 'Dollar notes in the drawer',
+    drawerValue: 'Counted as {{amount}} in Leones',
+  },
 };
 export default v3;
 export type V3Dict = typeof v3;

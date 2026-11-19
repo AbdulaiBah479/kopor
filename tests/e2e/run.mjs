@@ -1113,6 +1113,20 @@ await step('instalments: give credit in 3 weekly payments; the customer page sho
   await page.getByTestId('next-to-pay').waitFor();
 });
 
+await step('paid in dollars: $10 at Le 23 becomes a Le 230 expense with the dollars in the note', async () => {
+  await go('/cash');
+  await page.getByTestId('new-expense').click();
+  const f = page.getByTestId('expense-form');
+  await f.getByTestId('usd-open').click();
+  await f.locator('[name=usd]').fill('10');
+  await f.locator('[name=usd_rate]').fill('23');
+  await f.getByTestId('usd-use').click();
+  if ((await f.locator('[name=amount]').inputValue()).replace(/\D/g, '') !== '230') throw new Error('amount: ' + await f.locator('[name=amount]').inputValue());
+  await tapInSheet(f.getByRole('button', { name: /Save expense/ }));
+  await page.getByText('Expense saved').waitFor();
+  await page.getByText(/\(\$10 @ Le 23\.00\)/).first().waitFor();
+});
+
 await step('health report', async () => {
   await go('/health');
   await page.getByText('Record keeping').waitFor();
