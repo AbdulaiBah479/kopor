@@ -69,12 +69,13 @@ takes mobile money payments, and answers questions about the business in English
 
 ## Free outside services
 
-No account or key is needed for either; both are named in the app's Content-Security-Policy (`vite.config.ts`).
+The dollar rate is fetched by the `rates` server function at most once an hour and shared by every phone; Open Food Facts and the fallback rate source are named in the app's Content-Security-Policy (`vite.config.ts`).
 
 | Service | Used for | Terms |
 |---|---|---|
 | [Open Food Facts](https://world.openfoodfacts.org) | Fills in a new product's name from its barcode | Data under the Open Database License; credited in the app |
-| [ExchangeRate-API open endpoint](https://www.exchangerate-api.com/docs/free) | Today's US dollar rate in Leones (Money screen), kept 12 hours on the phone | Free with attribution, shown under the rate |
+| [Bank of Sierra Leone](https://bsl.gov.sl/) official rate via [AllRatesToday](https://allratestoday.com/central-bank-rates-api/bsl/) | The official US dollar rate, when the free `ALLRATES_API_KEY` secret is set | Free key (register, no card) |
+| [ExchangeRate-API open endpoint](https://www.exchangerate-api.com/docs/free) and [currency-api](https://github.com/fawazahmed0/exchange-api) | The market US dollar rate (their average) when the official one is not set up | Free, credited under the rate |
 
 ## Krio and Nigerian Pidgin
 

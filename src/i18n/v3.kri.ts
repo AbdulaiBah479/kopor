@@ -1269,10 +1269,11 @@ const v3: V3Dict = {
     respect: 'Sɛn nyus we gɛt yus nɔmɔ, nɔ ɛvride: kɔstɔma we gɛt tumɔs mɛsej kin stɔp fɔ rid dɛn.',
   },
   fx: {
+    official: 'Bank of Sierra Leone ɔfishal ret · {{date}}', market: 'Makit ret (avrej frɔm tu ples) · {{date}}',
     title: 'Dɔla ret tide: $1 = Le {{rate}}',
     old: 'di las ret we wi sev',
     usd: 'Dɔla',
-    source: 'Frɔm ExchangeRate-API (open.er-api.com), dɛn de chenj am wan tɛm ɛvride. Bank ɛn mɔni chenja kin gi smɔl difrɛn ret.',
+    source: 'Kopor de chɛk di ret ɛni awa: di Bank of Sierra Leone ɔfishal ret (tru AllRatesToday) we i de, ɔ di avrej frɔm ExchangeRate-API ɛn currency-api. Bank ɛn mɔni chenja kin gi difrɛn ret.',
     named: 'Wi put di nem frɔm Open Food Facts: {{name}}',
   },
   todo: {

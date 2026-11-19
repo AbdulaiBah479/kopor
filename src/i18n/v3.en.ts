@@ -1267,10 +1267,11 @@ const v3 = {
     respect: 'Send only useful news, not every day: customers who get too many messages stop reading them.',
   },
   fx: {
+    official: 'Official Bank of Sierra Leone rate · {{date}}', market: 'Market rate (average of two sources) · {{date}}',
     title: 'Dollar rate today: $1 = Le {{rate}}',
     old: 'last saved rate',
     usd: 'US dollars',
-    source: 'From ExchangeRate-API (open.er-api.com), updated once a day. Banks and money changers may give a slightly different rate.',
+    source: 'Kopor checks the rate every hour: the official Bank of Sierra Leone rate (via AllRatesToday) when available, otherwise the average of ExchangeRate-API and currency-api. Banks and money changers may give a different rate.',
     named: 'Name filled in from Open Food Facts: {{name}}',
   },
   todo: {

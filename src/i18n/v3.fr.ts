@@ -1269,10 +1269,11 @@ const v3: V3Dict = {
     respect: 'N’envoyez que des nouvelles utiles, pas tous les jours : les clients qui en reçoivent trop ne les lisent plus.',
   },
   fx: {
+    official: 'Taux officiel de la Bank of Sierra Leone · {{date}}', market: 'Taux du marché (moyenne de deux sources) · {{date}}',
     title: 'Taux du dollar aujourd’hui : 1 $ = {{rate}} Le',
     old: 'dernier taux enregistré',
     usd: 'Dollars US',
-    source: 'Source : ExchangeRate-API (open.er-api.com), mis à jour une fois par jour. Les banques et changeurs peuvent donner un taux un peu différent.',
+    source: 'Kopor vérifie le taux toutes les heures : le taux officiel de la Bank of Sierra Leone (via AllRatesToday) quand il est disponible, sinon la moyenne d’ExchangeRate-API et de currency-api. Banques et changeurs peuvent donner un taux différent.',
     named: 'Nom rempli depuis Open Food Facts : {{name}}',
   },
   todo: {
