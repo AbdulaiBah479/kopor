@@ -38,7 +38,8 @@ jobs:
           } > "$f"
           ots stamp "$f"
           gh release view proof-of-authorship >/dev/null 2>&1 || gh release create proof-of-authorship --title "Proof of authorship" \
-            --notes "OpenTimestamps proofs that each version of Kopor existed at its date. Each .txt names a commit; its .ots file is the proof. Verify with: ots verify <file>.ots"
+            --notes "OpenTimestamps proofs that each version of Kopor existed at its date. Each .txt names a commit; its .ots file is the proof. Verify with: ots verify <file>.ots" \
+            || gh release view proof-of-authorship >/dev/null   # already made by another run at the same moment: fine
           gh release upload proof-of-authorship "$f" "$f.ots" --clobber
           echo "Stamped $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
       - name: Complete pending proofs (after Bitcoin confirms them)

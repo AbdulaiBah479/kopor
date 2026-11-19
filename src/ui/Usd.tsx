@@ -15,7 +15,8 @@ export function UsdHelper({ onUse }: { onUse: (amount: number, note: string) => 
   const [open, setOpen] = useState(false);
   const [usd, setUsd] = useState('');
   const [rate, setRate] = useState('');
-  useEffect(() => { if (open && !rate) dollarRate().then((r) => r && setRate(r.rate.toFixed(2))).catch(() => {}); }, [open, rate]);
+  // Fill in today's rate once, without overwriting a rate the person already typed while it was loading.
+  useEffect(() => { if (open) dollarRate().then((r) => r && setRate((cur) => cur || r.rate.toFixed(2))).catch(() => {}); }, [open]);
   if (!open) return <button type="button" className="link small" data-testid="usd-open" onClick={() => setOpen(true)}>{t('usd.open')}</button>;
   const u = Number(usd), r = Number(rate), le = u > 0 && r > 0 ? usdToLe(u, r) : 0;
   return (
