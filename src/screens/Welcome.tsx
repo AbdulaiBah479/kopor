@@ -8,7 +8,7 @@ import { Field } from '@/ui/widgets';
 import { LANGUAGES } from '@/i18n';
 import { createOrg, setPin, getSession } from '@/domain/org';
 import { createDemo } from '@/domain/demo';
-import { ORG_TYPES } from './More';
+import { ORG_TYPES } from '@/domain/orgTypes';
 import { Copyright } from '@/ui/Copyright';
 
 const CloudSignIn = lazyRetry(() => import('./CloudSignIn'));

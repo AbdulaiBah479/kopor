@@ -16,8 +16,6 @@ import { Suspense } from 'react';
 import { lazyRetry } from '@/ui/lazy';
 const ReportSheet = lazyRetry(() => import('./Report').then((m) => ({ default: m.ReportSheet })));
 
-export const ORG_TYPES = ['shop', 'trader', 'wholesale', 'pharmacy', 'restaurant', 'salon', 'tailor', 'transport', 'farm', 'services', 'school', 'church', 'association', 'personal', 'other'];
-
 /** iOS Settings-style row: coloured icon tile, title, detail, chevron. */
 function MenuItem({ to, icon, tile, title, sub }: { to: string; icon: string; tile: string; title: string; sub: string }) {
   return (

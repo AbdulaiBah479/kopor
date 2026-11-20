@@ -31,7 +31,8 @@ export function useErrorText() {
     // A copy of the app from before an update asking for a file that changed: not a connection problem.
     if (/dynamically imported module|Importing a module script failed|Unable to preload/i.test(msg)) return t('errx.updated');
     // Dropped connections are common: say so plainly instead of showing a technical message.
-    if (/failed to fetch|networkerror|load failed|network request failed|err_name_not_resolved|timeout/i.test(msg) || !navigator.onLine) return t('errx.offline');
+    // ("Failed to send a request to the Edge Function" is how the server library says the server could not be reached.)
+    if (/failed to fetch|networkerror|load failed|network request failed|err_name_not_resolved|timeout|failed to send a request/i.test(msg) || !navigator.onLine) return t('errx.offline');
     // The server refusing a request (not signed in, or the role does not allow it): plain words, not database text.
     if (/permission denied|JWT|not authorized|row-level security/i.test(msg)) return t('errx.signInOrRole');
     return /^errx?\./.test(msg) ? t(msg) : msg || t('err.generic');

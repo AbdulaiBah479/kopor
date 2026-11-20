@@ -5,16 +5,26 @@ import { AppProvider, useApp } from './state/app';
 import { OverlayProvider } from './ui/overlay';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { Welcome } from './screens/Welcome';
-import { Home } from './screens/Home';
-import { CreditList } from './screens/Credit';
 import { ApprovalBridge } from './screens/Approvals';
-import { CashBook } from './screens/Cash';
 
 // Less-used screens load on demand to keep the first load small on slow networks (after the first visit they are
 // stored for offline use, so they still open instantly).
 const Lock = lazyRetry(() => import('./screens/Lock').then((m) => ({ default: m.Lock })));
 const ContactDetail = lazyRetry(() => import('./screens/Credit').then((m) => ({ default: m.ContactDetail })));
 const StockList = lazyRetry(() => import('./screens/Stock').then((m) => ({ default: m.StockList })));
+// The main tabs are separate code files so a new phone's first screen loads fast; they are fetched in the
+// background as soon as the app is up (see prefetchTabs), so switching tabs stays instant, also offline.
+const Home = lazyRetry(() => import('./screens/Home').then((m) => ({ default: m.Home })));
+const CreditList = lazyRetry(() => import('./screens/Credit').then((m) => ({ default: m.CreditList })));
+const CashBook = lazyRetry(() => import('./screens/Cash').then((m) => ({ default: m.CashBook })));
+let prefetched = false;
+function prefetchTabs() {
+  if (prefetched) return;
+  prefetched = true;
+  const go = () => { void import('./screens/Home'); void import('./screens/Cash'); void import('./screens/Credit'); void import('./screens/More'); };
+  const idle = (window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => void }).requestIdleCallback;
+  if (idle) idle(go, { timeout: 2000 }); else setTimeout(go, 300);
+}
 const More = lazyRetry(() => import('./screens/More').then((m) => ({ default: m.More })));
 const Groups = lazyRetry(() => import('./screens/Groups').then((m) => ({ default: m.GroupList })));
 const GroupDetail = lazyRetry(() => import('./screens/Groups').then((m) => ({ default: m.GroupDetail })));
@@ -72,6 +82,7 @@ function Gate() {
     </Routes></Suspense>
   );
   if (!ready || (session && book === undefined)) return <Boot />;
+  prefetchTabs();
   if (!session || !book) return <Welcome />;
   if (locked) return <Suspense fallback={<Boot />}><Lock /></Suspense>;
   return (

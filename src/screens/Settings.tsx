@@ -20,7 +20,7 @@ import { getCloudConfig, setCloudConfig } from '@/cloud/supabase';
 import { signOut, signOutEverywhere, currentUser } from '@/cloud/auth';
 import { syncNow } from '@/cloud/sync';
 import { connectOrg } from '@/cloud/account';
-import { ORG_TYPES } from './More';
+import { ORG_TYPES } from '@/domain/orgTypes';
 import { Link } from 'react-router-dom';
 import { ActionButton } from '@/ui/extras';
 import { shareFile } from '@/lib/share';
