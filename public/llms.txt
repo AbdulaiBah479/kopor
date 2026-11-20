@@ -1,0 +1,23 @@
+# Kopor
+
+> Kopor is a free, offline-first business and money app for Sierra Leone, made by Abdulai Bah. It works in English, Krio and French, on Android and the web.
+
+## What it does
+- Credit book (trust book) with reminders by SMS and WhatsApp
+- Cash book, daily profit and an evening closing summary
+- Stock, low-stock alerts and restock orders to suppliers
+- Mobile money payments (Orange Money, Africell money) through Monime, with reversal alerts
+- Osusu groups, savings jars, invoices, receipts, instalments and layaway
+- US dollar rate in Leones, checked every hour
+- Staff logins, branches and an owner's view
+- Krio voice assistant
+
+## Price
+- Free for one shop with up to 3 staff
+- Kopor Pro: Le 75 a month
+
+## Links
+- App: https://abdulaibah479.github.io/kopor/
+- About (English): https://abdulaibah479.github.io/kopor/about/
+- About (Krio): https://abdulaibah479.github.io/kopor/krio/
+- Support: +232 72 082 348

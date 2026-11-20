@@ -91,7 +91,9 @@ export default defineConfig({
         globIgnores: ['**/Scanner-*', '**/pdf-*', '**/excel-*', '**/xlsx-*', '**/html2canvas*', '**/purify*', '**/index.es-*', '**/printer-*', '**/cloud-*', '**/sentry-*', '**/tour-*',
           '**/tesseract/**',
           // French screens: most people in Sierra Leone use English or Krio, so French downloads the first time it is chosen.
-          '**/fr-*', '**/inter-cyrillic*', '**/inter-greek*', '**/inter-vietnamese*', '**/og.*'],
+          '**/fr-*', '**/inter-cyrillic*', '**/inter-greek*', '**/inter-vietnamese*', '**/og.*',
+          // Search-engine pages (landing pages, sitemap): read on the web, never needed offline.
+          'about/**', 'krio/**'],
         runtimeCaching: [{
           urlPattern: ({ url }) => url.pathname.includes('/tesseract/'),
           handler: 'CacheFirst',
@@ -102,6 +104,8 @@ export default defineConfig({
           options: { cacheName: 'kopor-on-demand', expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 90 } },
         }],
         navigateFallback: 'index.html',
+        // The landing pages are real pages: the offline app must not answer for them.
+        navigateFallbackDenylist: [/\/about\//, /\/krio\//, /\.(txt|xml)$/],
         // Reminder notifications (free Web Push): shows them and opens the right page when tapped.
         importScripts: ['push-sw.js'],
         cleanupOutdatedCaches: true,

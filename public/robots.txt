@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://abdulaibah479.github.io/kopor/sitemap.xml

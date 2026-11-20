@@ -150,7 +150,7 @@ await step('scan a supplier receipt (no barcode): stock goes up, new product cre
   await go('/stock');
   await page.waitForFunction((b) => Number(document.querySelector('[data-product="Rice 50kg bag"] [data-qty]')?.getAttribute('data-qty')) === b + 2, before, { timeout: 5000 })
     .catch(async () => { throw new Error(`rice ${before} -> ${await rice()}`); });
-  await page.locator('[data-product="Candles box"]').waitFor();
+  await page.locator('button[data-product="Candles box"]').waitFor();
 });
 
 await step('no AI: the phone reads a printed receipt itself (Tesseract), then again with no internet', async () => {
