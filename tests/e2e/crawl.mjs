@@ -9,7 +9,7 @@ const ROUTES = ['/', '/credit', '/cash', '/stock', '/more', '/groups', '/savings
   '/report', '/team', '/audit', '/settings', '/help', '/plan', '/money', '/pnl', '/account', '/staff', '/watch', '/gst', '/passport', '/wallet',
   '/agent', '/bills', '/messages', '/layaway'];
 // Never tap these: they delete, sign out, void or leave the page (they have their own tests).
-const SKIP = /delete|remove|void|cancel quotation|reset|sign out|log ?out|clear|delete my account|leave|lock|switch user|install|share|whatsapp|sms|call|print|pdf|excel|download|export|choose printer|test receipt|connect monime|upgrade|pay now|camera|scan|take or choose photo|microphone|speak|tap the microphone/i;
+const SKIP = /delete|remove|void|cancel quotation|reset|sign out|log ?out|clear|delete my account|leave|lock|switch user|install|share|whatsapp|sms|call|print|pdf|excel|download|export|choose printer|test receipt|connect monime|upgrade|pay now|camera|scan|take or choose photo|microphone|speak|tap the microphone|^(english|krio|français)$/i; // (languages: keep the app in English for the rest of the run)
 
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
 await new Promise((r) => server.stdout.on('data', (d) => String(d).includes(String(PORT)) && r()));
@@ -52,6 +52,7 @@ for (const route of ROUTES) {
       await page.waitForTimeout(300);
       const btn = page.locator('main button:visible, .sticky-actions button:visible, header button:visible').nth(i);
       if (!(await btn.count())) continue;
+      if (await btn.isDisabled()) continue; // greyed out until the form is filled in
       await btn.click({ timeout: 3000 });
       taps++;
       await page.waitForTimeout(450);
