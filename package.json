@@ -17,6 +17,7 @@
     "android:sync": "npm run build && npx cap sync android",
     "test:a11y": "node tools/a11y.mjs",
     "test:crawl": "node tests/e2e/crawl.mjs",
+    "test:ux": "node tests/e2e/ux-audit.mjs --strict && node tests/e2e/ux-audit.mjs --dark --strict",
     "knip": "knip --no-progress",
     "size": "node tools/size-budget.mjs",
     "typecheck:server": "npx -y deno@2.5.4 check supabase/functions/*/index.ts"

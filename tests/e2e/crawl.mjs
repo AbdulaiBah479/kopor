@@ -23,6 +23,8 @@ let where = '';
 page.on('pageerror', (e) => problems.push(`${where}: CRASH ${e.message.split('\n')[0]}`));
 page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource|net::ERR|internetdisconnected|Failed to fetch/i.test(m.text())) problems.push(`${where}: console ${m.text().slice(0, 160)}`); });
 page.on('dialog', (d) => d.dismiss());
+// Photo pickers: answer them here (some browsers close when a real file window opens in a test).
+page.on('filechooser', () => {});
 
 await page.goto(BASE);
 await page.getByTestId('demo').click();
