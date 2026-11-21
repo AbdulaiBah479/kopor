@@ -451,6 +451,8 @@
   .btn-row > * { flex: 1 1 140px; }
   .btn { text-align: center; line-height: 1.2; }
   .money-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .wallet-more { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .wallet-more .btn { min-height: 48px; padding-inline: 6px; font-size: 14px; flex-direction: column; gap: 4px; white-space: normal; text-align: center; }
   .money-actions .btn { min-height: 54px; border-radius: 16px; font-size: 17px; font-weight: 600; }
   .net-orange { background: #ff7900; }
   .net-afrimoney { background: #7b2d8e; }

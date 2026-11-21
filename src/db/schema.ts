@@ -141,7 +141,7 @@ export interface Closing extends Base {
   handed_to?: string | null;
 }
 export interface PaymentRequest extends Base {
-  kind: 'checkout' | 'ussd' | 'payout'; invoice_id: string | null; group_id: string | null; amount: number;
+  kind: 'checkout' | 'ussd' | 'payout' | 'topup' | 'transfer' | 'transfer_in'; invoice_id: string | null; group_id: string | null; amount: number;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'expired' | 'cancelled' | 'reversed';
   provider_ref: string | null; url: string | null; ussd_code: string | null; phone: string | null; note: string;
 }

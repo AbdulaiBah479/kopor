@@ -848,4 +848,14 @@ await test('repeat invoices: each month is claimed once, by managers only; the s
   assert.ok(!('pin' in page) && !JSON.stringify(page).includes('cost'));
 });
 
+await test('wallet: shop payments and top-ups are allowed payment kinds, and the app still cannot create any', async () => {
+  await q('reset role');
+  for (const kind of ['topup', 'transfer', 'transfer_in']) {
+    await q(`insert into payment_requests (id, org_id, created_at, updated_at, kind, amount, peer_id) values (gen_random_uuid(), $1, 1, 1, $2, 100, gen_random_uuid())`, [ORG, kind]);
+  }
+  await rejects(q(`insert into payment_requests (id, org_id, created_at, updated_at, kind, amount) values (gen_random_uuid(), $1, 1, 1, 'gift', 100)`, [ORG]), /check/);
+  await as('owner');
+  await rejects(q(`insert into payment_requests (id, org_id, created_at, updated_at, kind, amount) values (gen_random_uuid(), $1, 1, 1, 'transfer', 100)`, [ORG]), /row-level security/);
+});
+
 console.log(`\n${passed} database security checks passed${process.exitCode ? ' (with failures)' : ''}`);

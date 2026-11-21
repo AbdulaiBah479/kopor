@@ -86,6 +86,10 @@ const extra: ExtraDict = {
     deleted: 'Akawnt dɔn dilit',
   },
   errx: {
+    paySelf: 'Yu nɔ kin pe yu yon shɔp.',
+    transferEasyOnly: 'Fɔ pe shɔp frɔm di wallet, yu nid Kopor izi pemɛnt (Pemɛnt → Izi pemɛnt).',
+    notPayLink: 'Dis nɔto Kopor shɔp pe link. Skan di shɔp in Kopor pe QR.',
+    transferFailed: 'Monime nɔ ebul muv di mɔni. Dɛn nɔ tek ɛnitin frɔm yu wallet.',
     posterGone: 'Dis pe pɔsta nɔ de wok igen.',
     payNotReady: 'Dis shɔp nɔ sɛt pemɛnt na intanɛt yet.',
     tooMany: 'Tumɔs pemɛnt dɔn stat insay di las awa. Tray bak lɛta.',

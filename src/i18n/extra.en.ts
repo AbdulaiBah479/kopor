@@ -84,6 +84,10 @@ const extra = {
     deleted: 'Account deleted',
   },
   errx: {
+    paySelf: 'You cannot pay your own shop.',
+    transferEasyOnly: 'Paying a shop from the wallet needs Kopor easy payments (Payments → Easy payments).',
+    notPayLink: 'That is not a Kopor shop pay link. Scan the shop\'s Kopor pay QR.',
+    transferFailed: 'Monime could not move the money. Nothing was taken from your wallet.',
     posterGone: 'This pay poster no longer works.',
     payNotReady: 'Online payments are not set up for this shop yet.',
     tooMany: 'Too many payments started in the last hour. Please try again later.',

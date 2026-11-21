@@ -4,12 +4,13 @@
 //  - own: the business connects its own Monime account (Space ID + token) and the money stays there.
 // Public (no sign-in, from the shop's pay-QR poster): public-pay-info | public-pay
 // Actions: easy | connect | status | request | disconnect | checkout | link | ussd | providers | payout | wallet | history
-import { admin, caller, cors, json, requireLevel, seal, HttpError, env, nowMs, randomSecret } from '../_shared/util.ts';
+//          topup (add money to the wallet) | banks | shop (who is behind a pay link) | transfer (pay another Kopor shop)
+import { admin, caller, cors, json, requireLevel, seal, HttpError, env, nowMs, randomSecret, today } from '../_shared/util.ts';
 import { credsFor, easyAvailable, ensurePlatformWebhook, monime, WEBHOOK_EVENTS, monimeList, platformCreds, settleTo, SLE, sweepToOwner, type MonimeCreds } from '../_shared/monime.ts';
 import { maskPhone, networkOf, normalizeSlPhone } from '../_shared/momo.ts';
 
 // wallet / history: the business's own Monime balances and money movements (managers and owners only).
-const LEVEL = { easy: 3, connect: 3, disconnect: 3, status: 0, request: 1, checkout: 2, link: 2, ussd: 2, providers: 3, payout: 3, wallet: 2, history: 2 } as const;
+const LEVEL = { easy: 3, connect: 3, disconnect: 3, status: 0, request: 1, checkout: 2, link: 2, ussd: 2, providers: 3, payout: 3, wallet: 2, history: 2, topup: 2, banks: 3, shop: 3, transfer: 3 } as const;
 
 interface MonimeAccount { id: string; name: string; currency: string; uvan?: string; balance?: { available?: { currency: string; value: number } } | null }
 interface MonimeTxn {
@@ -20,7 +21,7 @@ interface MonimeTxn {
 }
 
 /** A Monime checkout link for any amount; recorded as money received when Monime confirms it (monime-webhook). */
-async function createLink(orgId: string, amount: number, name: string, note: string) {
+async function createLink(orgId: string, amount: number, name: string, note: string, kind: 'checkout' | 'topup' = 'checkout') {
   const db = admin();
   const { data: org } = await db.from('orgs').select('name').eq('id', orgId).single();
   const label = name.trim().slice(0, 100) || org!.name;
@@ -29,10 +30,10 @@ async function createLink(orgId: string, amount: number, name: string, note: str
   const c = await credsFor(orgId);
   const session = await monime<{ id: string; redirectUrl: string }>(c, 'POST', '/checkout-sessions', {
     name: `${org!.name} · ${label}`.slice(0, 150), lineItems: [{ type: 'custom', name: label, price: SLE(amount), quantity: 1 }], reference: requestId.slice(0, 64), ...settleTo(c),
-    ...(appUrl ? { successUrl: appUrl, cancelUrl: appUrl } : {}), brandingOptions: { primaryColor: '#047857' }, metadata: { orgId, requestId },
+    ...(appUrl ? { successUrl: appUrl, cancelUrl: appUrl } : {}), brandingOptions: { primaryColor: '#047857' }, metadata: { orgId, requestId, ...(kind === 'topup' ? { kind } : {}) },
   }, `link-${requestId}`);
   await db.from('payment_requests').insert({
-    id: requestId, org_id: orgId, created_at: nowMs(), updated_at: nowMs(), kind: 'checkout', amount, status: 'pending',
+    id: requestId, org_id: orgId, created_at: nowMs(), updated_at: nowMs(), kind, amount, status: 'pending',
     provider_ref: session.id, url: session.redirectUrl, note: note.slice(0, 200),
   });
   return { url: session.redirectUrl, requestId };
@@ -45,6 +46,46 @@ async function posterShop(token: string) {
   return data && !data.deleted ? data : null;
 }
 const POSTER_PER_HOUR = 60;
+
+/** Money that left this business today (mobile money, bank and shop payments share one daily limit). */
+async function checkDailyMax(orgId: string, amount: number) {
+  const db = admin();
+  const { data: lim } = await db.from('orgs').select('payout_daily_max').eq('id', orgId).single();
+  const max = Number(lim?.payout_daily_max ?? 2_000_000);
+  const dayStart = new Date(); dayStart.setUTCHours(0, 0, 0, 0);
+  const { data: todays } = await db.from('payment_requests').select('amount').eq('org_id', orgId).in('kind', ['payout', 'transfer'])
+    .gte('created_at', dayStart.getTime()).not('status', 'in', '(failed,cancelled,expired)');
+  if ((todays ?? []).reduce((s, r) => s + Number(r.amount), 0) + amount > max) throw new HttpError(409, 'errx.payoutDailyMax');
+}
+
+/** The receiving shop for a pay link: it must use Kopor easy payments, so the money moves inside Monime at once. */
+async function transferTarget(token: string, fromOrg: string) {
+  const shop = await posterShop(token);
+  if (!shop) throw new HttpError(404, 'errx.posterGone');
+  if (shop.id === fromOrg) throw new HttpError(400, 'errx.paySelf');
+  const { data: s } = await admin().from('org_secrets').select('easy_on, easy_fac_id').eq('org_id', shop.id).maybeSingle();
+  return { shop, fac: s?.easy_on && s.easy_fac_id ? String(s.easy_fac_id) : null };
+}
+
+interface TransferRow { id: string; org_id: string; amount: number; provider_ref: string | null; peer_id: string | null; note: string | null }
+/** A shop-to-shop payment finished: mark both sides, and book it in both cash books (money out / money in). */
+async function finishTransfer(pr: TransferRow, status: string) {
+  const db = admin();
+  const now = nowMs();
+  await db.from('payment_requests').update({ status, updated_at: now }).in('id', [pr.id, pr.peer_id].filter(Boolean) as string[]);
+  if (status !== 'completed' || !pr.peer_id) return;
+  const { data: peer } = await db.from('payment_requests').select('org_id, note').eq('id', pr.peer_id).maybeSingle();
+  if (!peer) return;
+  const ref = String(pr.provider_ref ?? pr.id);
+  const row = (orgId: string, type: 'in' | 'out', note: string) => ({
+    id: crypto.randomUUID(), org_id: orgId, created_at: now, updated_at: now, created_by: null, branch_id: null, type,
+    category: type === 'in' ? 'sale' : 'other', amount: pr.amount, method: 'bank', contact_id: null, note: note.slice(0, 200), date: today(),
+    items: [], ledger_id: null, invoice_id: null, discount: 0, tax: 0, refund_of: null, verified_ref: ref,
+  });
+  await db.from('transactions').insert([row(pr.org_id, 'out', pr.note ?? 'Kopor payment'), row(peer.org_id, 'in', peer.note ?? 'Kopor payment')]);
+  const { data: s } = await db.from('org_secrets').select('easy_auto').eq('org_id', peer.org_id).maybeSingle();
+  if (s?.easy_auto !== false) await sweepToOwner(peer.org_id, pr.id).catch((e) => console.error('sweep', e));
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -120,9 +161,14 @@ Deno.serve(async (req) => {
       case 'request': {
         const id = String(body.requestId ?? '');
         if (!/^[0-9a-f-]{36}$/.test(id)) throw new HttpError(400, 'Bad request');
-        const { data } = await db.from('payment_requests').select('status, amount, kind').eq('id', id).eq('org_id', orgId).maybeSingle();
+        const { data } = await db.from('payment_requests').select('id, org_id, status, amount, kind, provider_ref, peer_id, note').eq('id', id).eq('org_id', orgId).maybeSingle();
         if (!data) throw new HttpError(404, 'Not found');
-        return json(data);
+        // Shop-to-shop payments have no webhook: ask Monime while it is still on its way.
+        if (data.kind === 'transfer' && ['pending', 'processing'].includes(data.status) && data.provider_ref) {
+          const t = await monime<{ status: string }>(platformCreds(), 'GET', `/internal-transfers/${encodeURIComponent(data.provider_ref)}`).catch(() => null);
+          if (t && t.status !== data.status) { await finishTransfer(data, t.status); data.status = t.status; }
+        }
+        return json({ status: data.status, amount: data.amount, kind: data.kind });
       }
       case 'status': {
         const { data } = await db.from('org_secrets').select('monime_space_id, easy_on, easy_fac_id, payout_phone, payout_provider, easy_auto').eq('org_id', orgId).maybeSingle();
@@ -228,19 +274,54 @@ Deno.serve(async (req) => {
           })),
         });
       }
+      case 'topup': {
+        // The owner adds their own money to the wallet (from their mobile money, card or bank): not a sale.
+        const amount = Math.round(Number(body.amount));
+        if (!(amount >= 100) || amount > 100_000_000) throw new HttpError(400, 'Invalid amount');
+        return json(await createLink(orgId, amount, 'Add money to wallet', 'Wallet top-up', 'topup'));
+      }
+      case 'banks': {
+        const list = await monime<{ providerId: string; name: string; status?: { active?: boolean } }[]>(await credsFor(orgId), 'GET', '/banks?country=SL&limit=50');
+        return json({ banks: (list ?? []).filter((b) => b.status?.active !== false).map((b) => ({ id: b.providerId, name: b.name })) });
+      }
+      case 'shop': {
+        const { shop, fac } = await transferTarget(String(body.token ?? ''), orgId);
+        return json({ name: shop.name, ready: !!fac });
+      }
+      case 'transfer': {
+        const amount = Math.round(Number(body.amount));
+        if (!(amount >= 100) || amount > 100_000_000) throw new HttpError(400, 'Invalid amount');
+        const c = await credsFor(orgId);
+        if (!c.fac) throw new HttpError(409, 'errx.transferEasyOnly'); // instant shop payments work between Kopor wallets only
+        const { shop, fac } = await transferTarget(String(body.token ?? ''), orgId);
+        if (!fac) throw new HttpError(409, 'errx.payNotReady');
+        await checkDailyMax(orgId, amount);
+        const { data: me } = await db.from('orgs').select('name').eq('id', orgId).single();
+        const extra = String(body.note ?? '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 80);
+        const outNote = `Paid ${shop.name}${extra ? ` · ${extra}` : ''}`, inNote = `From ${me!.name}${extra ? ` · ${extra}` : ''}`;
+        const requestId = crypto.randomUUID(), peerId = crypto.randomUUID();
+        const tr = await monime<{ id: string; status: string }>(c, 'POST', '/internal-transfers', {
+          amount: SLE(amount), sourceFinancialAccount: { id: c.fac }, destinationFinancialAccount: { id: fac },
+          description: `${me!.name} to ${shop.name}`.slice(0, 150), metadata: { orgId, requestId, to: shop.id },
+        }, `transfer-${requestId}`);
+        const base = { created_at: nowMs(), updated_at: nowMs(), amount, status: 'pending', provider_ref: tr.id };
+        await db.from('payment_requests').insert([
+          { ...base, id: requestId, org_id: orgId, kind: 'transfer', peer_id: peerId, note: outNote },
+          { ...base, id: peerId, org_id: shop.id, kind: 'transfer_in', peer_id: requestId, note: inNote },
+        ]);
+        if (tr.status && tr.status !== 'pending') await finishTransfer({ id: requestId, org_id: orgId, amount, provider_ref: tr.id, peer_id: peerId, note: outNote }, tr.status);
+        return json({ status: tr.status ?? 'pending', requestId, name: shop.name });
+      }
       case 'payout': {
         const amount = Math.round(Number(body.amount));
-        const phone = normalizeSlPhone(String(body.phone ?? '')) ?? String(body.phone ?? '').replace(/[^\d+]/g, '');
-        if (!(amount > 0) || phone.length < 8 || !/^m\d+$/.test(String(body.providerId))) throw new HttpError(400, 'Invalid payout');
+        // To a bank account (providerId slb…) or a mobile money number (m…).
+        const bank = /^slb\d+$/.test(String(body.providerId));
+        const account = String(body.accountNumber ?? '').replace(/\D/g, '');
+        const phone = bank ? `bank:${body.providerId}:${account}` : normalizeSlPhone(String(body.phone ?? '')) ?? String(body.phone ?? '').replace(/[^\d+]/g, '');
+        if (!(amount > 0) || (bank ? !/^\d{6,24}$/.test(account) : phone.length < 8 || !/^m\d+$/.test(String(body.providerId)))) throw new HttpError(400, 'Invalid payout');
         // Bank-style safety (migration 0036): a daily limit, and a 24-hour wait before the first payout to a new number,
         // so a stolen phone or a "send it now" scam cannot empty the account in one go.
-        const { data: lim } = await db.from('orgs').select('payout_daily_max').eq('id', orgId).single();
-        const max = Number(lim?.payout_daily_max ?? 2_000_000);
-        const dayStart = new Date(); dayStart.setUTCHours(0, 0, 0, 0);
-        const { data: todays } = await db.from('payment_requests').select('amount').eq('org_id', orgId).eq('kind', 'payout')
-          .gte('created_at', dayStart.getTime()).not('status', 'in', '(failed,cancelled,expired)');
-        const sentToday = (todays ?? []).reduce((s, r) => s + Number(r.amount), 0);
-        if (sentToday + amount > max) throw new HttpError(409, 'errx.payoutDailyMax');
+        await checkDailyMax(orgId, amount);
         const { data: paidBefore } = await db.from('payment_requests').select('id').eq('org_id', orgId).eq('kind', 'payout').eq('phone', phone).eq('status', 'completed').limit(1);
         if (!paidBefore?.length) {
           const { data: payee } = await db.from('payout_payees').select('added_at').eq('org_id', orgId).eq('phone', phone).maybeSingle();
@@ -250,7 +331,7 @@ Deno.serve(async (req) => {
         const requestId = crypto.randomUUID();
         const c = await credsFor(orgId);
         const p = await monime<{ id: string; status: string }>(c, 'POST', '/payouts', {
-          amount: SLE(amount), ...(c.fac ? { source: { financialAccountId: c.fac } } : {}), destination: { type: 'momo', providerId: body.providerId, phoneNumber: phone },
+          amount: SLE(amount), ...(c.fac ? { source: { financialAccountId: c.fac } } : {}), destination: bank ? { type: 'bank', providerId: body.providerId, accountNumber: account } : { type: 'momo', providerId: body.providerId, phoneNumber: phone },
           metadata: { orgId, requestId, note: String(body.note ?? '').slice(0, 100), ...(body.groupId ? { groupId: String(body.groupId) } : {}) },
         }, `payout-${requestId}`);
         await db.from('payment_requests').insert({

@@ -92,7 +92,7 @@ export function Payments() {
       <div className="list">
         {requests.length ? requests.map((p) => (
           <div key={p.id} className="item">
-            <div className="avatar"><Icon name={p.kind === 'payout' ? 'send' : p.kind === 'ussd' ? 'phone' : 'link'} size={18} /></div>
+            <div className="avatar"><Icon name={p.kind === 'payout' || p.kind === 'transfer' ? 'send' : p.kind === 'ussd' ? 'phone' : p.kind === 'topup' || p.kind === 'transfer_in' ? 'down' : 'link'} size={18} /></div>
             <div className="main"><div className="t">{p.note || p.kind}</div><div className="s">{fmt(new Date(p.created_at).toISOString().slice(0, 10))}{p.ussd_code && ` · ${p.ussd_code}`}</div></div>
             <div className="amt num">{formatMoney(p.amount)}<small className={p.status === 'completed' ? 'good' : p.status === 'failed' || p.status === 'reversed' ? 'bad' : ''}>{t(`pay.status.${p.status}`)}</small></div>
           </div>

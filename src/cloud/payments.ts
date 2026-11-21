@@ -67,3 +67,16 @@ export const walletBalance = (orgId: string) => call<{ accounts: WalletAccount[]
 /** Money in and out of the Monime account, newest first, 30 at a time (pass `after` for the next page). */
 export const walletHistory = (orgId: string, after?: string | null, accountId?: string) =>
   call<{ items: WalletTxn[]; next: string | null }>({ action: 'history', orgId, ...(after ? { after } : {}), ...(accountId ? { accountId } : {}) });
+
+/** Add the owner's own money to the wallet (pays with mobile money, card or bank on Monime's page). Not a sale. */
+export const walletTopUp = (orgId: string, amount: number) => call<{ url: string; requestId: string }>({ action: 'topup', orgId, amount });
+/** Banks in Sierra Leone that Monime can send to. */
+export const bankList = (orgId: string) => call<{ banks: { id: string; name: string }[] }>({ action: 'banks', orgId });
+/** Send money from the wallet to a bank account (same safety rules as mobile money: PIN, daily limit, new-account wait). */
+export const bankPayout = (orgId: string, args: { amount: number; providerId: string; accountNumber: string; note: string }) =>
+  call<{ status: string; requestId: string }>({ action: 'payout', orgId, ...args });
+/** The Kopor shop behind a pay link or QR, and whether it can be paid instantly from this wallet. */
+export const shopToPay = (orgId: string, token: string) => call<{ name: string; ready: boolean }>({ action: 'shop', orgId, token });
+/** Pay another Kopor shop straight from the wallet: instant, inside Monime, booked in both cash books. */
+export const payShop = (orgId: string, args: { token: string; amount: number; note: string }) =>
+  call<{ status: string; requestId: string; name: string }>({ action: 'transfer', orgId, ...args });

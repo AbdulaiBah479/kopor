@@ -63,7 +63,8 @@ Deno.serve(async (req) => {
       }
     }
     // A standalone payment link or USSD code (Money → Receive) goes into the cash book as money received.
-    if (status === 'completed' && pr.kind !== 'payout' && !pr.invoice_id && !pr.group_id) {
+    // (A wallet top-up is the owner's own money moving in: not a sale, so it is not booked.)
+    if (status === 'completed' && !['payout', 'topup'].includes(pr.kind) && !pr.invoice_id && !pr.group_id) {
       const now = nowMs();
       await db.from('transactions').insert({
         id: crypto.randomUUID(), org_id: orgId, created_at: now, updated_at: now, created_by: null, branch_id: null, type: 'in', category: 'sale',
@@ -77,7 +78,8 @@ Deno.serve(async (req) => {
       });
     }
     // Easy payments: send the money straight on to the owner's mobile money number (unless they turned that off).
-    if (easy && status === 'completed' && pr.kind !== 'payout') {
+    // (Money added to the wallet on purpose stays there.)
+    if (easy && status === 'completed' && !['payout', 'topup'].includes(pr.kind)) {
       const { data: s } = await db.from('org_secrets').select('easy_auto').eq('org_id', orgId).maybeSingle();
       if (s?.easy_auto !== false) await sweepToOwner(orgId, pr.id).catch((e) => console.error('sweep', e));
     }

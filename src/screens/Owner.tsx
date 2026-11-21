@@ -347,7 +347,7 @@ function OrgView({ id, onBack, onSupport }: { id: string; onBack: () => void; on
             {d.payments.map((p, i) => (
               <div key={i} className="item">
                 <div className="main"><div className="t">{p.note || p.kind}</div><div className="s">{day(p.created_at)} · {t(`pay.status.${p.status}`, { defaultValue: p.status })}</div></div>
-                <div className={`amt num ${p.kind === 'payout' ? '' : 'good'}`}>{p.kind === 'payout' ? '−' : '+'}{formatMoney(p.amount)}</div>
+                <div className={`amt num ${['payout', 'transfer'].includes(p.kind) ? '' : 'good'}`}>{['payout', 'transfer'].includes(p.kind) ? '−' : '+'}{formatMoney(p.amount)}</div>
               </div>
             ))}
           </div>
@@ -393,7 +393,7 @@ function MoneyTab({ onOrg }: { onOrg: (id: string) => void }) {
           {m.latest.map((p, i) => (
             <button key={i} type="button" className="item" style={{ width: '100%', textAlign: 'left' }} onClick={() => onOrg(p.org_id)}>
               <div className="main"><div className="t">{p.business}</div><div className="s">{p.note || p.kind} · {day(p.created_at)} · {t(`pay.status.${p.status}`, { defaultValue: p.status })}</div></div>
-              <div className={`amt num ${p.kind === 'payout' ? '' : 'good'}`}>{p.kind === 'payout' ? '−' : '+'}{formatMoney(p.amount)}</div>
+              <div className={`amt num ${['payout', 'transfer'].includes(p.kind) ? '' : 'good'}`}>{['payout', 'transfer'].includes(p.kind) ? '−' : '+'}{formatMoney(p.amount)}</div>
             </button>
           ))}
         </div>

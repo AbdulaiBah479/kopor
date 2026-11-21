@@ -24,6 +24,7 @@ import { addEntry, balances, ensureContact } from '@/domain/credit';
 import { DIAL_CODE, NETWORKS, NETWORK_NAME, decodePayRequest, dialLink, formatWallets, payLink, walletsOf, type Network, type Wallets } from '@/domain/wallets';
 import type { Book } from '@/domain/book';
 import { PayoutSheet } from './Groups';
+import { BankSheet, PayShopSheet, TopUpSheet } from './WalletPay';
 import { ReportBusinessLink } from './Report';
 
 const MOMO = new Set<string>(NETWORKS);
@@ -190,6 +191,12 @@ export function Wallet() {
               {can('payouts') && <button className="btn on-hero ghost-hero" onClick={() => openSheet(t('pay.payout'), <PayoutSheet amount={0} />)}><Icon name="up" size={20} /> {t('money.send')}</button>}
             </div>
           </div>
+          <div className="wallet-more" data-testid="wallet-actions">
+            <button className="btn ghost" onClick={() => openSheet(t('walletx.addMoney'), <TopUpSheet />)}><Icon name="plus" size={18} /> {t('walletx.addMoney')}</button>
+            {can('payouts') && <button className="btn ghost" onClick={() => openSheet(t('walletx.payShop'), <PayShopSheet />)}><Icon name="store" size={18} /> {t('walletx.payShop')}</button>}
+            {can('payouts') && <button className="btn ghost" onClick={() => openSheet(t('walletx.toBank'), <BankSheet />)}><Icon name="bank" size={18} /> {t('walletx.toBank')}</button>}
+          </div>
+          <div className="small muted">{t('walletx.keepNote', { label: t('easy.auto') })}</div>
           {state === 'error' && <div className="alert small" role="alert"><Icon name="alert" /><div>{t('wallet.loadFail')}</div></div>}
           {bal && bal.accounts.length > 1 && (
             <div className="list">

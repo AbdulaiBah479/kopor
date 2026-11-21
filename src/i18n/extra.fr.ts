@@ -86,6 +86,10 @@ const extra: ExtraDict = {
     deleted: 'Compte supprimé',
   },
   errx: {
+    paySelf: 'Vous ne pouvez pas payer votre propre boutique.',
+    transferEasyOnly: 'Payer une boutique depuis le portefeuille nécessite les paiements faciles Kopor (Paiements → Paiements faciles).',
+    notPayLink: 'Ce n\'est pas un lien de paiement Kopor. Scannez le QR de paiement Kopor de la boutique.',
+    transferFailed: 'Monime n\'a pas pu transférer l\'argent. Rien n\'a été retiré de votre portefeuille.',
     posterGone: 'Cette affiche de paiement ne fonctionne plus.',
     payNotReady: 'Les paiements en ligne ne sont pas encore prêts pour cette boutique.',
     tooMany: 'Trop de paiements lancés dans la dernière heure. Réessayez plus tard.',
