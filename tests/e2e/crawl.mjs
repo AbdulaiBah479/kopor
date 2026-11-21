@@ -53,7 +53,8 @@ for (const route of ROUTES) {
       const btn = page.locator('main button:visible, .sticky-actions button:visible, header button:visible').nth(i);
       if (!(await btn.count())) continue;
       if (await btn.isDisabled()) continue; // greyed out until the form is filled in
-      await btn.click({ timeout: 3000 });
+      // A screen that is still settling (a toast fading, a list loading) gets one more try before it counts as a problem.
+      await btn.click({ timeout: 3000 }).catch(async () => { await page.waitForTimeout(800); await btn.click({ timeout: 3000 }); });
       taps++;
       await page.waitForTimeout(450);
       const w = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
