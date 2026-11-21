@@ -1095,7 +1095,9 @@ await step('pay small-small: start a plan with a first payment, pay the rest, th
   await tapInSheet(pay.getByRole('button', { name: 'Save' }));
   await plan.getByTestId('lay-collect').click();
   await page.getByText(/Mattress collected/).waitFor();
-  if (await page.getByTestId('layaway').filter({ hasText: 'Mattress' }).count()) throw new Error('plan still open after collecting');
+  // The list refreshes a moment after the toast: wait for the plan to leave it.
+  await page.getByTestId('layaway').filter({ hasText: 'Mattress' }).first().waitFor({ state: 'detached', timeout: 5000 })
+    .catch(() => { throw new Error('plan still open after collecting'); });
 });
 
 await step('instalments: give credit in 3 weekly payments; the customer page shows the next one to pay', async () => {
