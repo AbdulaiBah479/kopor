@@ -69,7 +69,11 @@ for (const route of ROUTES) {
         await page.waitForTimeout(250);
       }
       await closeSheets();
-    } catch (e) { problems.push(`${where}: could not tap (${e.message.split('\n')[0].slice(0, 80)})`); await closeSheets(); }
+    } catch (e) {
+      // Say what was in the way (another element on top, off screen…), from Playwright's own log.
+      const why = [...e.message.matchAll(/(<[^\n]{0,140}?>[^\n]{0,80}intercepts pointer events|element is not [a-z ]+|element is outside of the viewport|retrying click action[^\n]{0,60})/g)].slice(-2).map((m) => m[1]).join(' | ');
+      problems.push(`${where}: could not tap (${e.message.split('\n')[0].slice(0, 80)}) ${why}`); await closeSheets();
+    }
   }
 }
 console.log(`Tapped ${taps} buttons on ${ROUTES.length} screens.`);
