@@ -848,6 +848,42 @@ await test('repeat invoices: each month is claimed once, by managers only; the s
   assert.ok(!('pin' in page) && !JSON.stringify(page).includes('cost'));
 });
 
+await test('receipts: anyone can check a sale by its 12-character code; cancelled and refunded sales say so', async () => {
+  await q('reset role');
+  const id = 'abcdef12-3456-4789-8abc-def012345678';
+  await q(`insert into transactions (id, org_id, created_at, updated_at, type, category, amount, method, date, items) values ($1, $2, 1, 1, 'in', 'sale', 2500, 'cash', current_date, '[{"name":"Rice","qty":2,"price":1250}]')`, [id, ORG]);
+  await as(null);
+  const ok = (await q('select public_receipt($1) as r', ['ABCD-EF12-3456'])).rows[0].r;
+  assert.equal(ok.status, 'ok');
+  assert.equal(Number(ok.amount), 2500);
+  assert.equal(ok.items[0].name, 'Rice');
+  assert.ok(!JSON.stringify(ok).includes('contact'));
+  assert.equal((await q('select public_receipt($1) as r', ['abcdef12345'])).rows[0].r, null);   // too short: nothing
+  assert.equal((await q('select public_receipt($1) as r', ['000000000000'])).rows[0].r, null);
+  await as('owner');
+  await q(`insert into transactions (id, org_id, created_at, updated_at, type, category, amount, method, date, refund_of) values (gen_random_uuid(), $1, 2, 2, 'out', 'refund', 2500, 'cash', current_date, $2)`, [ORG, id]);
+  await as(null);
+  assert.equal((await q('select public_receipt($1) as r', ['abcdef123456'])).rows[0].r.status, 'refunded');
+});
+
+await test('referrals: a business cannot give itself Pro or change its invite code or who invited it', async () => {
+  await q('reset role');
+  const before = (await q('select plan, plan_until from orgs where id = $1', [ORG])).rows[0];
+  await as('owner');
+  await q(`update orgs set ref_code = 'FREE01', referred_by = id, plan = 'pro', plan_until = 9999999999999 where id = $1`, [ORG]);
+  await q('reset role');
+  const o = (await q('select ref_code, referred_by, plan, plan_until from orgs where id = $1', [ORG])).rows[0];
+  assert.equal(o.ref_code, null);
+  assert.equal(o.referred_by, null);
+  assert.equal(o.plan, before.plan);
+  assert.equal(String(o.plan_until), String(before.plan_until));
+  await as('owner');
+  // Server-only: the app sees no rewards and cannot add one.
+  assert.equal((await q('select * from referral_rewards')).rows.length, 0);
+  await rejects(q('insert into referral_rewards (invited_org, inviter) values ($1, $1)', [ORG]), /row-level security|permission denied/);
+  await rejects(q('select kopor_active_days($1)', [ORG]), /permission denied/);
+});
+
 await test('wallet: shop payments and top-ups are allowed payment kinds, and the app still cannot create any', async () => {
   await q('reset role');
   for (const kind of ['topup', 'transfer', 'transfer_in']) {

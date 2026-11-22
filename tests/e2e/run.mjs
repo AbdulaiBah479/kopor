@@ -1129,6 +1129,35 @@ await step('paid in dollars: $10 at Le 23 becomes a Le 230 expense with the doll
   await page.getByText(/\(\$10 @ Le 23\.00\)/).first().waitFor();
 });
 
+await step('More is grouped under headings; search finds screens; Money has Receive & send, Wallet and Setup tabs', async () => {
+  await go('/more');
+  for (const h of ['Money', 'Selling', 'Saving and groups', 'Reports', 'Settings and help']) await page.locator('.section-title', { hasText: h }).first().waitFor();
+  await go('/');
+  await page.getByTestId('search').click();
+  await page.getByTestId('search-input').fill('wallet');
+  await page.getByRole('option', { name: /Wallet/ }).first().click();
+  await page.waitForFunction(() => location.hash.includes('/money') && location.hash.includes('tab=wallet'));
+  await page.getByRole('tab', { name: 'Setup' }).click();
+  await page.getByRole('tab', { name: 'Receive & send' }).click();
+  await page.getByTestId('money-receive').waitFor();
+  await go('/payments');                                                   // old links still land in the right tab
+  await page.waitForFunction(() => location.hash.includes('tab=setup'));
+});
+
+await step('a sale has a receipt code anyone can check, and a Send receipt button', async () => {
+  await go('/cash');
+  await page.locator('main .item').first().click();
+  const code = page.getByTestId('receipt-code');
+  if (await code.count()) {
+    if (!/[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}/.test(await code.innerText())) throw new Error('bad receipt code: ' + await code.innerText());
+    await page.getByText('Send receipt').first().waitFor();
+  }
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => { location.hash = '#/r/0000-0000-0000'; }); // a public page (no app frame); no server here, so it says so
+  await page.getByText(/Check a Kopor receipt|could not|try again|No receipt/i).first().waitFor();
+  await go('/');
+});
+
 await step('health report', async () => {
   await go('/health');
   await page.getByText('Record keeping').waitFor();

@@ -11,7 +11,7 @@ import { connectEasy, connectMonime, disconnectMonime, monimeStatus, type Monime
 import { networkOf, normalizeSlPhone } from '@/lib/momo';
 import { PayoutSheet } from './Groups';
 
-export function Payments() {
+export function Payments({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const book = useBook();
   const { ctx, can } = useApp();
@@ -36,8 +36,8 @@ export function Payments() {
   const easyForm = <EasyForm onSaved={(phone) => { toast(t('easy.saved', { phone })); setChanging(false); reload(); }} />;
 
   const requests = [...book.payments].sort((a, b) => b.created_at - a.created_at);
-  return (
-    <Page title={t('pay.title')} sub={t('pay.sub')} back="/more">
+  const body = (
+    <>
       {(status?.mode === 'own' || own || (status && !status.easyAvailable && status.mode !== 'easy')) && <div className="card flat small">{t('pay.intro')}</div>}
       {cloud === false && <div className="alert"><Icon name="cloud" /><div>{t('pay.needCloud')}</div></div>}
       {cloud && (
@@ -98,8 +98,9 @@ export function Payments() {
           </div>
         )) : <Empty icon="phone" title={t('pay.noRequests')} />}
       </div>
-    </Page>
+    </>
   );
+  return embedded ? body : <Page title={t('pay.title')} sub={t('pay.sub')} back="/money">{body}</Page>;
 }
 
 /** Easy payments: the owner types a mobile money number; the network is worked out from it (or picked if unusual). */

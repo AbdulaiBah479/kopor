@@ -53,7 +53,7 @@ describe('expense budgets', () => {
     await recordExpense(ctx, { amount: 500_000, category: 'stock' });             // buying stock is not spending
     const lines = budgetStatus(await book());
     expect(lines.map((l) => [l.category, l.state, l.pct])).toEqual([['food', 'over', 120], ['transport', 'near', 84]]);
-    const todo = todayList(await book());
+    const todo = todayList(await book(), { hour: 9 });
     expect(todo.filter((i) => i.kind === 'budget').map((i) => [i.params.category, i.urgent])).toEqual([['food', true], ['transport', false]]);
   });
 });

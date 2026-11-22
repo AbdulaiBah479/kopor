@@ -7,7 +7,7 @@ import { recordSale } from '@/domain/cash';
 import { addEntry, balances, ensureContact } from '@/domain/credit';
 import { saveProduct, adjustStock, recordPurchase, stockLevels } from '@/domain/stock';
 import { saveGoal } from '@/domain/savings';
-import { expectedCash } from '@/domain/closing';
+import { closeDay, expectedCash } from '@/domain/closing';
 import { addDays, today } from '@/lib/dates';
 import { cancelLayaway, collectLayaway, payLayaway, progress, startLayaway } from '@/domain/layaway';
 import { jarShares } from '@/ui/Jars';
@@ -85,8 +85,17 @@ describe('today’s to-do', () => {
     await addEntry(ctx, { contactId: c.id, type: 'gave', amount: 5_000, date: addDays(today(), -20), dueDate: addDays(today(), -10) });
     const oil = await product('Oil', 3_000, 2_500, 2);
     await adjustStock(ctx, oil.id, 1);
-    const list = todayList(await book());
+    const list = todayList(await book(), { hour: 9 });
     expect(list.map((i) => i.kind)).toEqual(['chase', 'reorder']);
     expect(list[0].params).toMatchObject({ name: 'Sorie', amount: 5_000, days: 10 });
+  });
+  it('asks to close the day from 5 pm once something was sold, and stops once the drawer is counted', async () => {
+    await recordSale(ctx, { amount: 2_000, method: 'cash' });
+    expect(todayList(await book(), { hour: 12 }).some((i) => i.kind === 'close')).toBe(false);
+    const evening = todayList(await book(), { hour: 18 }).find((i) => i.kind === 'close');
+    expect(evening).toMatchObject({ to: '/cash', urgent: false });
+    expect(todayList(await book(), { hour: 21 }).find((i) => i.kind === 'close')?.urgent).toBe(true);
+    await closeDay(ctx, { openingFloat: 0, counted: 2_000, expected: 2_000, note: '' });
+    expect(todayList(await book(), { hour: 21 }).some((i) => i.kind === 'close')).toBe(false);
   });
 });

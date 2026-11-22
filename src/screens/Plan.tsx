@@ -9,7 +9,11 @@ import { ActionButton } from '@/ui/extras';
 import { formatMoney } from '@/lib/money';
 import { isoDate } from '@/lib/dates';
 import { FREE_LIMITS, PRO_PRICE_MINOR, isPro, AI_PER_DAY } from '@/domain/plan';
-import { proStatus, startProCheckout, startProTrial } from '@/cloud/account-extra';
+import { proStatus, referralStatus, startProCheckout, startProTrial, type ReferralStatus } from '@/cloud/account-extra';
+import { clearRef, inviteLink, storedRef } from '@/lib/referral';
+import { APP_URL } from '@/lib/links';
+import { shareText } from '@/lib/share';
+import { Field } from '@/ui/widgets';
 import { syncNow } from '@/cloud/sync';
 import { waLink } from '@/lib/phone';
 
@@ -68,6 +72,40 @@ export function Plan() {
           </>}
         </div>
       )}
+      {can('business') && cloud && <InviteCard />}
     </Page>
+  );
+}
+
+/** Invite a shop, get a free month of Pro: the code, a share button, progress, and "who invited you". */
+function InviteCard() {
+  const { t } = useTranslation();
+  const book = useBook();
+  const { ctx } = useApp();
+  const { toast, fail } = useOverlay();
+  const [r, setR] = useState<ReferralStatus | null>(null);
+  const [code, setCode] = useState(storedRef() ?? '');
+  useEffect(() => {
+    referralStatus(ctx.orgId).then((x) => { setR(x); if (x.added) toast(t('ref.earned', { n: x.added })); }).catch(() => {});
+  }, [ctx.orgId, t, toast]);
+  if (!r?.code) return null;
+  const link = inviteLink(APP_URL, r.code);
+  return (
+    <div className="card stack" data-testid="invite-card">
+      <h2><Icon name="users" size={18} /> {t('ref.title')}</h2>
+      <div className="small">{t('ref.how', { days: 7 })}</div>
+      <div className="row between"><span className="small muted">{t('ref.yourCode')}</span><b className="num" style={{ fontSize: 22, letterSpacing: '.12em' }} data-testid="ref-code">{r.code}</b></div>
+      <button type="button" className="btn primary block" onClick={() => shareText(t('ref.shareMsg', { name: book.org.name, link, code: r.code }))}><Icon name="share" size={18} /> {t('ref.share')}</button>
+      <div className="small muted">{t('ref.progress', { invited: r.invited, rewarded: r.rewarded, pending: r.pending })}</div>
+      {r.canJoin && (
+        <form className="form" onSubmit={async (e) => {
+          e.preventDefault();
+          try { setR(await referralStatus(ctx.orgId, code)); clearRef(); toast(t('ref.joined')); } catch (err) { fail(err); }
+        }}>
+          <Field label={t('ref.invitedBy')}><input value={code} maxLength={8} autoCapitalize="characters" onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ABC234" /></Field>
+          <button className="btn block" disabled={code.trim().length < 6}>{t('ref.join')}</button>
+        </form>
+      )}
+    </div>
   );
 }

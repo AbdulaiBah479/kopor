@@ -5,6 +5,7 @@ import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
 import { health } from '@/domain/health';
 import { isPro } from '@/domain/plan';
+import { EXTRAS, extraOn, groupsFirst, setShowAllFeatures, showAllFeatures, type Extra } from '@/domain/features';
 import { useInstall, APP_URL, type InstallHow } from '@/features/pwa';
 import { shareText } from '@/lib/share';
 import { useOverlay } from '@/ui/overlay';
@@ -12,7 +13,7 @@ import { AppearancePanel } from '@/ui/Appearance';
 import { useEffect, useState } from 'react';
 import { isAppAdmin } from '@/cloud/admin';
 import { Copyright } from '@/ui/Copyright';
-import { Suspense } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { lazyRetry } from '@/ui/lazy';
 const ReportSheet = lazyRetry(() => import('./Report').then((m) => ({ default: m.ReportSheet })));
 
@@ -24,6 +25,36 @@ function MenuItem({ to, icon, tile, title, sub }: { to: string; icon: string; ti
       <div className="main"><div className="t">{title}</div><div className="s">{sub}</div></div>
       <Icon name="chev" size={18} className="text-subtle" />
     </Link>
+  );
+}
+
+/** A titled group of menu rows. */
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (<><div className="section-title"><span>{title}</span></div><div className="list">{children}</div></>);
+}
+
+const EXTRA_ROUTE: Record<Extra, { to: string; icon: string; tile: string }> = {
+  agent: { to: '/agent', icon: 'phone', tile: 'orange' }, groups: { to: '/groups', icon: 'users', tile: 'orange' },
+  gst: { to: '/gst', icon: 'receipt', tile: 'blue' }, staff: { to: '/staff', icon: 'users', tile: 'indigo' },
+};
+/** Screens this kind of business does not usually need: still one tap away, and a switch to show them all in the menu. */
+function ExtrasSheet({ hidden }: { hidden: Extra[] }) {
+  const { t } = useTranslation();
+  const { closeSheet } = useOverlay();
+  return (
+    <div className="stack">
+      <div className="small muted">{t('morex.extraHelp')}</div>
+      <div className="list">
+        {hidden.map((f) => (
+          <Link key={f} className="item" to={EXTRA_ROUTE[f].to} onClick={closeSheet}>
+            <span className="tile" style={{ background: `var(--tile-${EXTRA_ROUTE[f].tile})` }}><Icon name={EXTRA_ROUTE[f].icon} size={18} strokeWidth={2.2} /></span>
+            <div className="main"><div className="t">{t(`morex.f.${f}`)}</div><div className="s">{t(`morex.fs.${f}`)}</div></div>
+            <Icon name="chev" size={18} className="text-subtle" />
+          </Link>
+        ))}
+      </div>
+      <button type="button" className="btn ghost block" data-testid="show-all-features" onClick={() => { setShowAllFeatures(true); closeSheet(); window.location.reload(); }}>{t('morex.showAll')}</button>
+    </div>
   );
 }
 
@@ -51,6 +82,18 @@ export function More() {
   const { openSheet } = useOverlay();
   const [admin, setAdmin] = useState(false);
   useEffect(() => { isAppAdmin().then(setAdmin); }, [sync.status]);
+  const all = showAllFeatures();
+  const on = (f: Extra) => all || extraOn(book, f);
+  // Hidden extras the person is allowed to use (Staff needs 'record', GST needs 'reports').
+  const hidden = EXTRAS.filter((f) => !on(f) && (f !== 'staff' || can('record')) && (f !== 'gst' || can('reports')));
+  const first = groupsFirst(book);
+  const groupsSection = (
+    <Section title={t('morex.saving')}>
+      {on('groups') && <MenuItem to="/groups" icon="users" tile="orange" title={t('groups.title')} sub={t('more.groupsSub', { count: book.groups.length })} />}
+      <MenuItem to="/savings" icon="wallet" tile="green" title={t('save.title')} sub={t('save.menuSub')} />
+      {can('business') && <MenuItem to="/bills" icon="calendar" tile="red" title={t('bills.title')} sub={t('bills.menuSub')} />}
+    </Section>
+  );
   return (
     <Page title={t('nav.more')}>
       {admin && (
@@ -58,34 +101,33 @@ export function More() {
           <MenuItem to="/admin" icon="crown" tile="indigo" title={t('owner.title')} sub={t('owner.sub')} />
         </div>
       )}
-      <div className="list">
-        <MenuItem to="/money" icon="swap" tile="green" title={t('money.title')} sub={t('money.sub')} />
+      <Section title={t('morex.money')}>
+        <MenuItem to="/money" icon="swap" tile="green" title={t('money.title')} sub={t('morex.moneySub')} />
+        <MenuItem to="/invoices" icon="file" tile="blue" title={t('inv.title')} sub={t('more.invoicesSub', { count: book.invoices.length })} />
+      </Section>
+      {first && groupsSection}
+      <Section title={t('morex.selling')}>
+        <MenuItem to="/reminders" icon="bell" tile="red" title={t('settings.reminders')} sub={t('more.remindersSub')} />
+        {can('edit') && <MenuItem to="/messages" icon="sms" tile="blue" title={t('msg.title')} sub={t('msg.menuSub')} />}
+        <MenuItem to="/layaway" icon="box" tile="green" title={t('lay.title')} sub={t('lay.menuSub')} />
+        {on('agent') && <MenuItem to="/agent" icon="phone" tile="orange" title={t('agent.title')} sub={t('agent.menuSub')} />}
+      </Section>
+      {!first && groupsSection}
+      <Section title={t('morex.staff')}>
+        {on('staff') && can('record') && <MenuItem to="/staff" icon="users" tile="indigo" title={t('staff.title')} sub={t('staff.menuSub')} />}
+        <MenuItem to="/team" icon="store" tile="teal" title={t('team.title')} sub={t('more.teamSub', { count: book.members.filter((m) => m.active).length })} />
+      </Section>
+      <Section title={t('morex.reports')}>
+        {can('reports') && <MenuItem to="/health" icon="pulse" tile="pink" title={t('healthx.title')} sub={t('more.healthSub', { score: h.score })} />}
+        {can('reports') && <MenuItem to="/pnl" icon="trendUp" tile="green" title={t('pnl.title')} sub={t('pnl.sub')} />}
+        {can('reports') && on('gst') && <MenuItem to="/gst" icon="receipt" tile="blue" title={t('gst.title')} sub={t('gst.menuSub')} />}
+        {can('reports') && <MenuItem to="/watch" icon="shield" tile="red" title={t('watch.title')} sub={t('watch.menuSub')} />}
+        <MenuItem to="/assistant" icon="spark" tile="indigo" title={t('more.assistant')} sub={t('more.assistantSub')} />
+      </Section>
+      <Section title={t('morex.settings')}>
         <MenuItem to="/account" icon="cloud" tile="blue" title={t('settings.cloud')}
           sub={sync.status === 'off' ? t('settings.syncOff') : sync.status === 'error' ? t('settings.syncError', { error: sync.error ?? '' }).slice(0, 60)
             : sync.status === 'syncing' ? t('settings.syncing') : sync.lastSync ? t('settings.lastSync', { time: new Date(sync.lastSync).toLocaleTimeString() }) : t('settings.syncing')} />
-      </div>
-      <div className="list">
-        <MenuItem to="/assistant" icon="spark" tile="indigo" title={t('more.assistant')} sub={t('more.assistantSub')} />
-        <MenuItem to="/reminders" icon="bell" tile="red" title={t('settings.reminders')} sub={t('more.remindersSub')} />
-      </div>
-      <div className="list">
-        <MenuItem to="/groups" icon="users" tile="orange" title={t('groups.title')} sub={t('more.groupsSub', { count: book.groups.length })} />
-        <MenuItem to="/savings" icon="wallet" tile="green" title={t('save.title')} sub={t('save.menuSub')} />
-        <MenuItem to="/layaway" icon="box" tile="green" title={t('lay.title')} sub={t('lay.menuSub')} />
-        {can('edit') && <MenuItem to="/messages" icon="sms" tile="blue" title={t('msg.title')} sub={t('msg.menuSub')} />}
-        {can('business') && <MenuItem to="/bills" icon="calendar" tile="red" title={t('bills.title')} sub={t('bills.menuSub')} />}
-        <MenuItem to="/agent" icon="phone" tile="orange" title={t('agent.title')} sub={t('agent.menuSub')} />
-        <MenuItem to="/invoices" icon="file" tile="blue" title={t('inv.title')} sub={t('more.invoicesSub', { count: book.invoices.length })} />
-        {can('payments') && <MenuItem to="/payments" icon="wallet" tile="green" title={t('more.payments')} sub={t('more.paymentsSub')} />}
-        {can('reports') && <MenuItem to="/pnl" icon="trendUp" tile="green" title={t('pnl.title')} sub={t('pnl.sub')} />}
-        {can('reports') && <MenuItem to="/gst" icon="receipt" tile="blue" title={t('gst.title')} sub={t('gst.menuSub')} />}
-        {can('reports') && <MenuItem to="/watch" icon="shield" tile="red" title={t('watch.title')} sub={t('watch.menuSub')} />}
-        {can('business') && <MenuItem to="/passport" icon="shield" tile="green" title={t('pass.title')} sub={t('pass.menuSub')} />}
-        {can('reports') && <MenuItem to="/health" icon="pulse" tile="pink" title={t('health.title')} sub={t('more.healthSub', { score: h.score })} />}
-      </div>
-      <div className="list">
-        {can('record') && <MenuItem to="/staff" icon="users" tile="indigo" title={t('staff.title')} sub={t('staff.menuSub')} />}
-        <MenuItem to="/team" icon="store" tile="teal" title={t('team.title')} sub={t('more.teamSub', { count: book.members.filter((m) => m.active).length })} />
         <MenuItem to="/plan" icon="crown" tile="yellow" title={t('plan.title')} sub={isPro(book.org) ? t('plan.proActive') : t('plan.freeSub')} />
         <button className="item" onClick={() => openSheet(t('look.title'), <AppearancePanel />)} data-testid="appearance-row">
           <span className="tile" style={{ background: 'var(--tile-purple)' }}><Icon name="palette" size={18} strokeWidth={2.2} /></span>
@@ -99,7 +141,14 @@ export function More() {
           <div className="main"><div className="t">{t('report.title')}</div><div className="s">{t('report.sub')}</div></div>
           <Icon name="chev" size={18} className="text-subtle" />
         </button>
-      </div>
+        {hidden.length > 0 && (
+          <button className="item" data-testid="more-features" onClick={() => openSheet(t('morex.extraTitle'), <ExtrasSheet hidden={hidden} />)}>
+            <span className="tile" style={{ background: 'var(--tile-gray)' }}><Icon name="grid" size={18} strokeWidth={2.2} /></span>
+            <div className="main"><div className="t">{t('morex.extra', { n: hidden.length })}</div><div className="s">{hidden.map((f) => t(`morex.f.${f}`)).join(', ')}</div></div>
+            <Icon name="chev" size={18} className="text-subtle" />
+          </button>
+        )}
+      </Section>
       <div className="list">
         {how && (
           <button className="item" onClick={() => (how === 'prompt' ? install() : openSheet(t('pwa.install'), <InstallSteps how={how} />))} data-testid="install">

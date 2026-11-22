@@ -9,10 +9,16 @@ import { openPlans, progress } from './layaway';
 import { budgetStatus } from './budgets';
 import type { Book } from './book';
 
-export interface Todo { kind: 'chase' | 'reorder' | 'bill' | 'supplier' | 'layaway' | 'expiry' | 'alerts' | 'budget'; key: string; to: string; params: Record<string, string | number>; urgent: boolean }
+export interface Todo { kind: 'chase' | 'reorder' | 'bill' | 'supplier' | 'layaway' | 'expiry' | 'alerts' | 'budget' | 'close'; key: string; to: string; params: Record<string, string | number>; urgent: boolean }
 
-export function todayList(book: Book, opts: { unseenAlerts?: number; bills?: boolean } = {}, now = today()): Todo[] {
+export function todayList(book: Book, opts: { unseenAlerts?: number; bills?: boolean; hour?: number } = {}, now = today()): Todo[] {
   const out: Todo[] = [];
+  // Close the day: from 5 pm, once something was sold today and the drawer has not been counted yet.
+  const hour = opts.hour ?? new Date().getHours();
+  if (hour >= 17 && book.txns.some((x) => x.date === now && x.type === 'in')
+    && !book.closings.some((c) => c.date === now && (c as { kind?: string }).kind !== 'handover')) {
+    out.push({ kind: 'close', key: 'close', to: '/cash', params: {}, urgent: hour >= 20 });
+  }
   if (opts.unseenAlerts) out.push({ kind: 'alerts', key: 'alerts', to: '/watch', params: { n: opts.unseenAlerts }, urgent: true });
   // Debts to chase: the biggest overdue first.
   for (const o of overdueContacts(book, now).sort((a, b) => b.balance - a.balance).slice(0, 3)) {

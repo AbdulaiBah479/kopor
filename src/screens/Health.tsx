@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useBook } from '@/state/app';
+import { useApp, useBook } from '@/state/app';
 import { Page } from '@/ui/Shell';
 import { Icon } from '@/ui/Icon';
-import { ScoreRing, useDate } from '@/ui/widgets';
+import { ScoreRing, Seg, useDate } from '@/ui/widgets';
+import { Passport } from './Passport';
 import { formatMoney, currencySymbol } from '@/lib/money';
 import { today, addDays, fmtMonth } from '@/lib/dates';
 import { refCode } from '@/lib/crypto';
@@ -23,12 +24,19 @@ function tip(t: (k: string, o?: Record<string, unknown>) => string, p: HealthPar
   return x.hasPrev ? t('health.tips.growth', { change: (x.change > 0 ? '+' : '') + x.change }) : t('health.tips.growthNone');
 }
 
+/** Business health and the Credit Passport on one screen: how the business is doing, and the proof to show a lender. */
 export function Health() {
   const { t } = useTranslation();
   const book = useBook();
+  const { can } = useApp();
+  const [params, setParams] = useSearchParams();
   const h = health(book);
+  const passport = can('business') && params.get('tab') === 'passport';
   return (
-    <Page guide="health" title={t('health.title')} sub={t('health.sub')} back="/more">
+    <Page guide="health" title={t('healthx.title')} sub={t('health.sub')} back="/more">
+      {can('business') && <Seg value={passport ? 'passport' : 'score'} options={[['score', t('health.title')], ['passport', t('pass.title')]]}
+        onChange={(v) => setParams(v === 'passport' ? { tab: 'passport' } : {}, { replace: true })} />}
+      {passport ? <Passport embedded /> : <>
       <div className="card row">
         <ScoreRing score={h.score} size={96} />
         <div><div style={{ fontSize: 22, fontWeight: 800 }}>{t(`health.labels.${h.label}`)}</div><div className="small muted">{t('health.updated')}</div></div>
@@ -45,6 +53,8 @@ export function Health() {
       <Link className="btn primary block" to="/report"><Icon name="bank" size={18} /> {t('health.openReport')}</Link>
       <Link className="btn tinted block" to="/pnl" data-testid="open-pnl"><Icon name="trendUp" size={18} /> {t('pnl.title')}</Link>
       <div className="card flat small">{t('health.reportHelp')}</div>
+      {can('business') && <button type="button" className="btn ghost block" onClick={() => setParams({ tab: 'passport' }, { replace: true })}><Icon name="shield" size={18} /> {t('healthx.toPassport')}</button>}
+      </>}
     </Page>
   );
 }

@@ -14,6 +14,7 @@ import { Field } from '@/ui/widgets';
 import { LANGUAGES } from '@/i18n';
 import { db } from '@/db/schema';
 import { updateOrg, setPin, hasPin, getSession, createOrg, removeOrgFromDevice } from '@/domain/org';
+import { setShowAllFeatures, showAllFeatures } from '@/domain/features';
 import { exportOrg, importOrg, isEncrypted } from '@/domain/backup';
 import { createDemo } from '@/domain/demo';
 import { getCloudConfig, setCloudConfig } from '@/cloud/supabase';
@@ -215,6 +216,7 @@ function PreferencesCard() {
       <div className="lang-pick">{LANGUAGES.map((l) => <button key={l.code} className={device.lang === l.code ? 'on' : ''} aria-pressed={device.lang === l.code} onClick={() => setDevice({ lang: l.code })}>{l.label}</button>)}</div>
       <label className="check"><input type="checkbox" data-testid="simple-mode" checked={device.simple} onChange={(e) => setDevice({ simple: e.target.checked })} /> {t('simple.setting')}</label>
       <div className="small muted">{t('simple.settingHelp')}</div>
+      <ShowAllSwitch />
       <label className="check"><input type="checkbox" data-testid="data-saver" checked={device.dataSaver} onChange={(e) => setDevice({ dataSaver: e.target.checked })} /> {t('prefs.dataSaver')}</label>
       <div className="small muted">{t('prefs.dataSaverHelp')}</div>
       {canSpeak() && <label className="check"><input type="checkbox" checked={device.voice} onChange={(e) => setDevice({ voice: e.target.checked })} /> {t('simple.voiceSetting')}</label>}
@@ -373,5 +375,17 @@ function BusinessesCard() {
       </div>
       {can('business') && <button className="btn danger block" onClick={() => wipe().catch(fail)}><Icon name="trash" size={18} /> {t('settings.reset')}</button>}
     </div>
+  );
+}
+
+/** Show every screen in More, even the ones this kind of business does not usually need (kept on this phone). */
+function ShowAllSwitch() {
+  const { t } = useTranslation();
+  const [on, setOn] = useState(showAllFeatures);
+  return (
+    <>
+      <label className="check"><input type="checkbox" data-testid="show-all" checked={on} onChange={(e) => { setShowAllFeatures(e.target.checked); setOn(e.target.checked); }} /> {t('morex.showAll')}</label>
+      <div className="small muted">{t('morex.showAllHelp')}</div>
+    </>
   );
 }

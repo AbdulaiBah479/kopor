@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { lazyRetry } from '@/ui/lazy';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { clearRef, storedRef } from '@/lib/referral';
 import { useApp, useBook } from '@/state/app';
 import { useOverlay } from '@/ui/overlay';
 import { Page } from '@/ui/Shell';
@@ -40,8 +41,15 @@ type Period = 'today' | 'week' | 'month';
 export function Home() {
   const { t } = useTranslation();
   const book = useBook();
-  const { member, can, session, switchSession, device, setDevice } = useApp();
+  const { member, can, session, switchSession, device, setDevice, sync, ctx } = useApp();
   const { openSheet } = useOverlay();
+  // Opened from a shop's invite link: once signed in as the owner, tell the server who invited this business (once).
+  useEffect(() => {
+    const ref = storedRef();
+    if (!ref || sync.status === 'off' || !can('business')) return;
+    import('@/cloud/account-extra').then((m) => m.referralStatus(ctx.orgId, ref)).then(clearRef)
+      .catch((e: unknown) => { if (/errx\.ref/.test(e instanceof Error ? e.message : '')) clearRef(); }); // a used, wrong or own code: forget it
+  }, [sync.status, ctx.orgId, can]);
   const unseenAlerts = useUnseenAlerts();
   const { fmt } = useDate();
   const remind = useReminderText();

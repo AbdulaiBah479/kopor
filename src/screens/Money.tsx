@@ -2,7 +2,7 @@
 // account. Kopor shows customers where to pay, opens the network's own menu to send, and records the result.
 // With Monime connected, payment links, USSD pay codes and payouts also confirm themselves.
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { QrCode } from '@/ui/QrCode';
 import { useApp, useBook } from '@/state/app';
@@ -26,6 +26,7 @@ import type { Book } from '@/domain/book';
 import { PayoutSheet } from './Groups';
 import { BankSheet, PayShopSheet, TopUpSheet } from './WalletPay';
 import { ReportBusinessLink } from './Report';
+import { Payments } from './Payments';
 
 const MOMO = new Set<string>(NETWORKS);
 
@@ -42,7 +43,26 @@ function useMonime() {
 
 const walletLines = (w: Wallets) => NETWORKS.filter((n) => w[n]).map((n) => `${NETWORK_NAME[n]}: ${w[n]}`).join('\n');
 
+type MoneyTab = 'main' | 'wallet' | 'setup';
+
+/** One Money screen: receive and send, the Monime wallet, and payment setup (one entry instead of three). */
 export function Money() {
+  const { t } = useTranslation();
+  const { can } = useApp();
+  const [params, setParams] = useSearchParams();
+  const tabs: [MoneyTab, string][] = [['main', t('moneyx.main')], ...(can('reports') ? [['wallet', t('wallet.title')] as [MoneyTab, string]] : []),
+    ...(can('payments') ? [['setup', t('moneyx.setup')] as [MoneyTab, string]] : [])];
+  const asked = params.get('tab') as MoneyTab | null;
+  const tab: MoneyTab = tabs.some(([k]) => k === asked) ? asked! : 'main';
+  return (
+    <Page title={t('money.title')} sub={t('money.sub')} back="/" guide="money">
+      {tabs.length > 1 && <Seg value={tab} options={tabs} onChange={(v) => setParams(v === 'main' ? {} : { tab: v }, { replace: true })} />}
+      {tab === 'wallet' ? <Wallet embedded /> : tab === 'setup' ? <Payments embedded /> : <MoneyMain />}
+    </Page>
+  );
+}
+
+function MoneyMain() {
   const { t } = useTranslation();
   const book = useBook();
   const { can } = useApp();
@@ -69,7 +89,7 @@ export function Money() {
   }, [state]);
 
   return (
-    <Page title={t('money.title')} sub={t('money.sub')} back="/" guide="money">
+    <>
       <div className="money-actions">
         <button className="btn primary" onClick={receive} data-testid="money-receive"><Icon name="down" size={20} /> {t('money.receive')}</button>
         <button className="btn tinted" onClick={send} data-testid="money-send"><Icon name="up" size={20} /> {t('money.send')}</button>
@@ -98,7 +118,7 @@ export function Money() {
         <div className="card stack">
           <h2><Icon name="link" size={18} /> {t('money.instantTitle')}</h2>
           <div className="small muted">{t('money.instantHelp')}</div>
-          {!monime && can('business') && <Link className="btn ghost block" to="/payments">{t('money.connect')}</Link>}
+          {!monime && can('business') && <Link className="btn ghost block" to="/money?tab=setup">{t('money.connect')}</Link>}
           {monime && <div className="badge good">{t('pay.connected')}</div>}
         </div>
       )}
@@ -118,7 +138,7 @@ export function Money() {
           </div>
         )) : <Empty icon="wallet" title={t('pay.noRequests')} />}
       </div>
-    </Page>
+    </>
   );
 }
 
@@ -129,7 +149,7 @@ function WalletCard() {
   const [w, setW] = useState<{ total: number } | null | 'error'>(null);
   useEffect(() => { walletBalance(ctx.orgId).then(setW).catch(() => setW('error')); }, [ctx.orgId]);
   return (
-    <Link to="/wallet" className="hero wallet-card" data-testid="wallet-card">
+    <Link to="/money?tab=wallet" className="hero wallet-card" data-testid="wallet-card">
       <span className="label">{t('wallet.title')}</span>
       <span className="big num">{w && w !== 'error' ? formatMoney(w.total) : w === 'error' ? '—' : '…'}</span>
       <span className="small" style={{ opacity: 0.85 }}>{t('wallet.powered')} · {t('wallet.open')} ›</span>
@@ -141,7 +161,7 @@ function WalletCard() {
  * Wallet: the business's own Monime account inside Kopor. Monime (licensed by the Bank of Sierra Leone) holds the
  * money; Kopor shows the balance and history and starts payments and transfers. Managers and owners only.
  */
-export function Wallet() {
+function Wallet({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const { ctx, can } = useApp();
   const { openSheet, fail } = useOverlay();
@@ -165,10 +185,11 @@ export function Wallet() {
   const { fmt } = useDate();
   const day = (iso: string) => fmt(iso.slice(0, 10));
 
-  if (!can('reports')) return <Page title={t('wallet.title')} back="/money"><Empty icon="lock" title={t('wallet.managersOnly')} /></Page>;
-  return (
-    <Page title={t('wallet.title')} sub={t('wallet.sub')} back="/money"
-      right={state !== 'off' && <button className="icon-btn" aria-label={t('ux.refreshing')} onClick={() => { setState('loading'); setAttempt((a) => a + 1); }}><Icon name="refresh" size={20} /></button>}>
+  if (!can('reports')) return <Empty icon="lock" title={t('wallet.managersOnly')} />;
+  const refresh = state !== 'off' && <button className="icon-btn" aria-label={t('ux.refreshing')} onClick={() => { setState('loading'); setAttempt((a) => a + 1); }}><Icon name="refresh" size={20} /></button>;
+  const body = (
+    <>
+      {embedded && refresh && <div className="row between"><span className="small muted">{t('wallet.sub')}</span>{refresh}</div>}
       {state === 'off' ? (
         <div className="card stack" data-testid="wallet-off">
           <h2><Icon name="wallet" size={18} /> {t('wallet.connectTitle')}</h2>
@@ -176,7 +197,7 @@ export function Wallet() {
           <ol className="small" style={{ paddingLeft: 18, margin: 0, display: 'grid', gap: 4 }}>
             <li>{t('wallet.step1')}</li><li>{t('wallet.step2')}</li><li>{t('wallet.step3')}</li>
           </ol>
-          {can('business') && <Link className="btn primary block" to="/payments">{t('money.connect')}</Link>}
+          {can('business') && <Link className="btn primary block" to="/money?tab=setup">{t('money.connect')}</Link>}
         </div>
       ) : (
         <>
@@ -222,8 +243,9 @@ export function Wallet() {
           <div className="alert small"><Icon name="shield" /><div>{t('wallet.safety')}</div></div>
         </>
       )}
-    </Page>
+    </>
   );
+  return embedded ? body : <Page title={t('wallet.title')} sub={t('wallet.sub')} back="/money" right={refresh}>{body}</Page>;
 }
 
 export function WalletsSheet() {

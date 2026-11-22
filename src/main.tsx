@@ -7,9 +7,11 @@ import { App } from './App';
 import { initMonitoring, reportError } from './features/monitoring';
 import { applySavedAppearance } from './state/app';
 import { initInstallPrompt } from './features/pwa';
+import { captureRef } from './lib/referral';
 
 applySavedAppearance(); // before the first paint, so there is no colour flash
 
+captureRef(); // an invite link (#/?ref=CODE): remember who invited this shop
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HashRouter>

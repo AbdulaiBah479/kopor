@@ -4,6 +4,9 @@ import { budgetStatus } from '@/domain/budgets';
 import { JarsSheet, jarShares } from '@/ui/Jars';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { receiptCode, receiptLink, receiptMessage } from '@/domain/receipt';
+import { APP_URL } from '@/lib/links';
+
 import { useApp, useBook } from '@/state/app';
 import { haptic, useOverlay } from '@/ui/overlay';
 import { ProductTiles, MethodChips, addToCart } from '@/ui/Pos';
@@ -23,6 +26,7 @@ import { expectedCash, expectedMomo, closeDay, lastClosing, cashSinceLastCount, 
 import { loyaltyFor } from '@/domain/loyalty';
 import { DeleteButton, useEntryConfirm } from './Credit';
 import { waLink } from '@/lib/phone';
+import { shareText } from '@/lib/share';
 import { creditTotals } from '@/domain/credit';
 
 type Range = 'today' | 'week' | 'month' | 'all';
@@ -256,6 +260,18 @@ function TxnSheet({ txn }: { txn: Txn }) {
         )}
         {(txn.discount || txn.tax) ? <div className="small muted" style={{ marginTop: 6 }}>{txn.discount ? `${t('tax.discount')} ${formatMoney(txn.discount)} · ` : ''}{txn.tax ? `${t('tax.tax')} ${formatMoney(txn.tax)}` : ''}</div> : null}
       </div>
+      {txn.type === 'in' && (() => {
+        // A receipt anyone can check: its code, and a message with the check link for the customer.
+        const phone = txn.contact_id ? book.contacts.find((c) => c.id === txn.contact_id)?.phone : '';
+        const msg = receiptMessage(t, book.org.name, txn, (n) => formatMoney(n), receiptLink(APP_URL, txn.id));
+        return (
+          <>
+            <div className="small muted num" data-testid="receipt-code">{t('rcpt.code')}: {receiptCode(txn.id)}</div>
+            {phone ? <a className="btn primary block" href={waLink(phone, msg, book.org.country_code)} target="_blank" rel="noopener noreferrer"><Icon name="chat" size={18} /> {t('rcpt.send')}</a>
+              : <button type="button" className="btn primary block" onClick={() => shareText(msg)}><Icon name="share" size={18} /> {t('rcpt.send')}</button>}
+          </>
+        );
+      })()}
       {txn.type === 'in' && <ActionButton icon="print" label={t('printer.print')} run={printReceipt} className="btn block" />}
       {txn.type === 'in' && txn.items.length > 0 && can('returns') && (
         <button className="btn block" onClick={() => openSheet(t('returns.title'), <ReturnSheet txn={txn} />)}><Icon name="back" size={18} /> {t('returns.title')}</button>

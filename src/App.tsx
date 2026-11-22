@@ -30,7 +30,6 @@ const Groups = lazyRetry(() => import('./screens/Groups').then((m) => ({ default
 const GroupDetail = lazyRetry(() => import('./screens/Groups').then((m) => ({ default: m.GroupDetail })));
 const Invoices = lazyRetry(() => import('./screens/Invoices').then((m) => ({ default: m.InvoiceList })));
 const InvoiceDetail = lazyRetry(() => import('./screens/Invoices').then((m) => ({ default: m.InvoiceDetail })));
-const Payments = lazyRetry(() => import('./screens/Payments').then((m) => ({ default: m.Payments })));
 const Reminders = lazyRetry(() => import('./screens/Reminders').then((m) => ({ default: m.Reminders })));
 const Assistant = lazyRetry(() => import('./screens/Assistant').then((m) => ({ default: m.Assistant })));
 const Health = lazyRetry(() => import('./screens/Health').then((m) => ({ default: m.Health })));
@@ -41,9 +40,9 @@ const Settings = lazyRetry(() => import('./screens/Settings').then((m) => ({ def
 const Account = lazyRetry(() => import('./screens/Settings').then((m) => ({ default: m.Account })));
 const PublicInvoice = lazyRetry(() => import('./screens/PublicInvoice').then((m) => ({ default: m.PublicInvoice })));
 const PublicStatement = lazyRetry(() => import('./screens/PublicStatement').then((m) => ({ default: m.PublicStatement })));
+const PublicReceipt = lazyRetry(() => import('./screens/PublicReceipt').then((m) => ({ default: m.PublicReceipt })));
 const PublicPassport = lazyRetry(() => import('./screens/Passport').then((m) => ({ default: m.PublicPassport })));
 const PublicCatalog = lazyRetry(() => import('./screens/PublicCatalog').then((m) => ({ default: m.PublicCatalog })));
-const Passport = lazyRetry(() => import('./screens/Passport').then((m) => ({ default: m.Passport })));
 const PublicGroup = lazyRetry(() => import('./screens/PublicGroup').then((m) => ({ default: m.PublicGroup })));
 const PosterPayRoute = lazyRetry(() => import('./screens/PayPoster').then((m) => ({ default: m.PosterPayRoute })));
 const Layaway = lazyRetry(() => import('./screens/Layaway').then((m) => ({ default: m.Layaway })));
@@ -54,7 +53,6 @@ const Savings = lazyRetry(() => import('./screens/Savings').then((m) => ({ defau
 const Staff = lazyRetry(() => import('./screens/Staff').then((m) => ({ default: m.Staff })));
 const Gst = lazyRetry(() => import('./screens/Gst').then((m) => ({ default: m.Gst })));
 const Watch = lazyRetry(() => import('./screens/Watch').then((m) => ({ default: m.Watch })));
-const Wallet = lazyRetry(() => import('./screens/Money').then((m) => ({ default: m.Wallet })));
 const Help = lazyRetry(() => import('./screens/Help').then((m) => ({ default: m.Help })));
 const Legal = lazyRetry(() => import('./screens/Legal').then((m) => ({ default: m.Legal })));
 const Money = lazyRetry(() => import('./screens/Money').then((m) => ({ default: m.Money })));
@@ -69,10 +67,11 @@ function Gate() {
   const { ready, session, book, locked } = useApp();
   const { pathname } = useLocation();
   // Public pages work without a business or sign-in (customer invoice, statement and Credit Passport links, legal pages).
-  if (pathname.startsWith('/i/') || pathname.startsWith('/s/') || pathname.startsWith('/p/') || pathname.startsWith('/c/') || pathname.startsWith('/g/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/') || pathname.startsWith('/shop-pay/')) return (
+  if (pathname.startsWith('/i/') || pathname.startsWith('/s/') || pathname.startsWith('/p/') || pathname.startsWith('/c/') || pathname.startsWith('/g/') || pathname.startsWith('/legal/') || pathname.startsWith('/pay/') || pathname.startsWith('/shop-pay/') || pathname.startsWith('/r/')) return (
     <Suspense fallback={<Boot />}><Routes>
       <Route path="/i/:token" element={<PublicInvoice />} />
       <Route path="/s/:token" element={<PublicStatement />} />
+      <Route path="/r/:code" element={<PublicReceipt />} />
       <Route path="/p/:token" element={<PublicPassport />} />
       <Route path="/c/:token" element={<PublicCatalog />} />
       <Route path="/g/:token" element={<PublicGroup />} />
@@ -101,7 +100,8 @@ function Gate() {
         <Route path="/invoices" element={<Invoices />} />
         <Route path="/invoices/:id" element={<InvoiceDetail />} />
         <Route path="/money" element={<Money />} />
-        <Route path="/payments" element={<Payments />} />
+        {/* Payments and Wallet are tabs of Money now; old links still work. */}
+        <Route path="/payments" element={<Navigate to="/money?tab=setup" replace />} />
         <Route path="/reminders" element={<Reminders />} />
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/health" element={<Health />} />
@@ -122,8 +122,8 @@ function Gate() {
         <Route path="/staff" element={<Staff />} />
         <Route path="/gst" element={<Gst />} />
         <Route path="/watch" element={<Watch />} />
-        <Route path="/passport" element={<Passport />} />
-        <Route path="/wallet" element={<Wallet />} />
+        <Route path="/passport" element={<Navigate to="/health?tab=passport" replace />} />
+        <Route path="/wallet" element={<Navigate to="/money?tab=wallet" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

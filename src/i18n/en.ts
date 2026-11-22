@@ -23,7 +23,7 @@ const base = {
   orgTypes: {
     shop: 'Shop', trader: 'Market trader', wholesale: 'Wholesaler', pharmacy: 'Pharmacy', restaurant: 'Restaurant / cookery',
     salon: 'Salon / barber', tailor: 'Tailor / fashion', transport: 'Transport', farm: 'Farm', services: 'Services', school: 'School',
-    church: 'Church / mosque', association: 'Association / NGO', personal: 'Personal / household', other: 'Other',
+    church: 'Church / mosque', association: 'Association / NGO', agent: 'Mobile money agent', personal: 'Personal / household', other: 'Other',
   },
   roles: { owner: 'Owner', manager: 'Manager', cashier: 'Cashier', viewer: 'Viewer' },
   roleHelp: {

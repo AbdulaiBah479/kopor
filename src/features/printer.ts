@@ -3,6 +3,8 @@
 //   1. Android app: Bluetooth LE via @capacitor-community/bluetooth-le
 //   2. Chrome on Android/desktop: Web Bluetooth (BLE printers)
 //   3. Classic-Bluetooth printers: the free RawBT app (rawbt: link) prints the same bytes
+import { receiptCode, receiptLink } from '@/domain/receipt';
+import { APP_URL } from '@/lib/links';
 import ReceiptPrinterEncoder from '@point-of-sale/receipt-printer-encoder';
 import { Capacitor } from '@capacitor/core';
 import type { Invoice, Txn } from '@/db/schema';
@@ -60,6 +62,12 @@ export function receiptBytes(book: Book, doc: { txn?: Txn; invoice?: Invoice }, 
   if (doc.txn) row(t('cash.method'), pdfSafe(t(`methods.${doc.txn.method}`)));
   e.newline().align('center');
   if (doc.invoice) e.line(pdfSafe(`${t('inv.verify')}: ${invoiceCode(o.name, doc.invoice)}`));
+  // A sale receipt anyone can check: the code, and a QR code that opens the check page.
+  if (doc.txn && doc.txn.type === 'in') {
+    e.line(pdfSafe(`${t('rcpt.code')}: ${receiptCode(doc.txn.id)}`));
+    try { e.qrcode(receiptLink(APP_URL, doc.txn.id), 1, 4, 'm'); } catch { /* printers without QR support still get the code */ }
+    e.line(pdfSafe(t('rcpt.printHelp')));
+  }
   if (o.momo_number && doc.invoice?.status === 'unpaid') e.line(pdfSafe(`${t('inv.payMomo')}: ${o.momo_number}`));
   e.line(pdfSafe(o.receipt_footer || t('printer.thanks'))).line('Kopor').newline(3).cut();
   return e.encode();

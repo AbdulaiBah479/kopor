@@ -15,7 +15,7 @@ import { syncNow } from '@/cloud/sync';
 import { listPassports, makePassport, openPassport, revokePassport, type Passport as P, type PassportRow } from '@/cloud/passport';
 import { LoadFailed } from './PublicStatement';
 
-export function Passport() {
+export function Passport({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const book = useBook();
   const { ctx, can, sync } = useApp();
@@ -29,7 +29,7 @@ export function Passport() {
   const load = () => listPassports(ctx.orgId).then((list) => { const now = Date.now(); setRows(list.map((r) => ({ ...r, live: !r.revoked && new Date(r.expires_at).getTime() > now }))); }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (cloud) load(); }, [ctx.orgId, cloud]);
-  if (!can('business')) return <Page title={t('pass.title')} back="/more"><Empty icon="lock" title={t('pass.ownerOnly')} /></Page>;
+  if (!can('business')) return <Empty icon="lock" title={t('pass.ownerOnly')} />;
   const link = (tok: string) => publicLink(`/p/${tok}`);
   const create = async () => {
     try {
@@ -40,8 +40,8 @@ export function Passport() {
     } catch (e) { fail(e); } finally { setBusy(false); }
   };
   const live = (r: { live: boolean }) => r.live;
-  return (
-    <Page title={t('pass.title')} sub={t('pass.sub')} back="/more">
+  const body = (
+    <>
       <div className="card flat small stack">
         <b>{t('pass.whatTitle')}</b>
         <div>{t('pass.what')}</div>
@@ -80,8 +80,9 @@ export function Passport() {
           </div>
         </>
       )}
-    </Page>
+    </>
   );
+  return embedded ? body : <Page title={t('pass.title')} sub={t('pass.sub')} back="/health">{body}</Page>;
 }
 
 /** What the lender sees from the link (no sign-in needed). */

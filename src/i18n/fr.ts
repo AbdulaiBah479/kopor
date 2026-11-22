@@ -26,7 +26,7 @@ const base: Omit<Dict, keyof ExtraDict | keyof V3Dict> = {
   orgTypes: {
     shop: 'Boutique', trader: 'Commerçant(e) de marché', wholesale: 'Grossiste', pharmacy: 'Pharmacie', restaurant: 'Restaurant / maquis',
     salon: 'Salon / coiffeur', tailor: 'Couture / mode', transport: 'Transport', farm: 'Ferme', services: 'Services', school: 'École',
-    church: 'Église / mosquée', association: 'Association / ONG', personal: 'Personnel / ménage', other: 'Autre',
+    church: 'Église / mosquée', association: 'Association / ONG', agent: 'Agent mobile money', personal: 'Personnel / ménage', other: 'Autre',
   },
   roles: { owner: 'Propriétaire', manager: 'Gérant', cashier: 'Caissier', viewer: 'Lecteur' },
   roleHelp: {
