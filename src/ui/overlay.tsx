@@ -64,7 +64,9 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
   const fail = useCallback((e: unknown) => {
     // Expected problems (validation, permissions, plan limits) are not bugs: show them, but log and report only
     // unexpected errors.
-    if (!(e instanceof AppError) && !(e instanceof PermissionError) && !(e instanceof Error && /^errx?\./.test(e.message))) { console.error(e); reportError(e); }
+    // (No internet is not a bug either: the person sees "you are offline", nothing is reported.)
+    const offline = errText(e) === t('errx.offline');
+    if (!offline && !(e instanceof AppError) && !(e instanceof PermissionError) && !(e instanceof Error && /^errx?\./.test(e.message))) { console.error(e); reportError(e); }
     haptic(40);
     const approval = e instanceof AppError ? (e.params as { approval?: unknown }).approval : undefined;
     if (approval) {
