@@ -124,6 +124,8 @@
 @layer base {
   * { box-sizing: border-box; border-color: var(--separator); }
   html, body { margin: 0; }
+  /* Anything scrolled into view (a field the keyboard jumps to, a Save button) stays clear of the bottom tab bar. */
+  html { scroll-padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 12px); }
   body {
     background: var(--background); color: var(--foreground);
     font: 17px/1.35 var(--font-sans); letter-spacing: -.01em;
@@ -642,6 +644,7 @@
   }
   @media (min-width: 1000px) {
     :root { --side: 232px; }
+    html { scroll-padding-bottom: 12px; } /* the tab bar is on the side here */
     .nav { inset: 0 auto 0 0; width: var(--side); box-shadow: .5px 0 0 var(--separator); padding: calc(24px + env(safe-area-inset-top)) 12px 24px; }
     .nav-inner { display: flex; flex-direction: column; gap: 4px; height: auto; max-width: none; margin: 0; }
     .nav a { flex-direction: row; justify-content: flex-start; gap: 12px; font-size: 15px; padding: 11px 14px; border-radius: 12px; }
